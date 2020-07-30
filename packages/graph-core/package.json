@@ -1,0 +1,34 @@
+{
+  "name": "@czwcode/graph-core",
+  "version": "1.0.61",
+  "description": "",
+  "sideEffects": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "test-watch": "jest --watch",
+    "coverage": "jest --coverage",
+    "build": "tsc -p ./tsconfig.build.json",
+    "pub": "tsc && tnpm run publish",
+    "watch": "tsc --watch  -p ./tsconfig.build.json"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.7.2",
+    "@babel/preset-env": "^7.7.1",
+    "@babel/preset-typescript": "^7.7.2",
+    "@types/jest": "^24.0.23",
+    "babel-jest": "^24.9.0",
+    "jest": "^24.9.0",
+    "ts-lint": "^4.5.1",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.0.1",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "graphlib": "^2.1.8"
+  },
+  "gitHead": "24a52b01b8158b5dab0a1425738f8843231dcc76"
+}

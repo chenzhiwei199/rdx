@@ -1,0 +1,31 @@
+{
+  "name": "root",
+  "private": true,
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "compile": "tsc -p tsconfig.build.json",
+    "clean": " lerna exec -- rm -rf node_modules",
+    "watch": "lerna run --parallel watch",
+    "build": "lerna run build",
+    "pub": "tnpm run build && lerna publish ",
+    "publish": "lerna exec -- tnpm publish . --parallel ",
+    "dev": "cd pack"
+  },
+  "workspaces": [
+    "packages/*",
+    "examples/*",
+    "libs/*"
+  ],
+  "devDependencies": {
+    "@storybook/addon-info": "^5.2.8",
+    "@types/jest": "^24.0.23",
+    "awesome-typescript-loader": "^5.2.1",
+    "jest": "^24.9.0",
+    "react-docgen-typescript-loader": "^3.6.0",
+    "@ali/lerna": "1.0.1",
+    "typescript": "^3.7.3"
+  },
+  "dependencies": {
+    "@czwcode/graph-core": "^1.0.0"
+  }
+}

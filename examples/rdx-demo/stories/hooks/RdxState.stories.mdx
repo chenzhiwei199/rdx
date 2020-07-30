@@ -1,0 +1,15 @@
+import { Meta, Story, Preview } from '@storybook/addon-docs/blocks';
+
+<Meta title='hooks | RdxState' />
+
+为当前组件设置一个响应式函数，响应式函数中可以更新当前节点数据，或者选择触发其他的响应式函数。
+
+
+###  Props
+
+  - initializeState?: { [key: string]: any }
+    设置初始化的的值到Provider中。
+  - value?: { [key: string]: any }
+    受控的方式，设置值到Provider中，当值改变的的时候，当前context的所有组件将被重新执行。
+  - onChange?: (state: {[key: string]: any}) => void
+    当内部任务流状态全部执行结束的时候，onChange将被调用。

@@ -1,0 +1,225 @@
+import { Meta, Story, Preview } from '@storybook/addon-docs/blocks';
+// import { RdxContext, RdxView } from '@czwcode/rdx'
+
+<Meta title='Api| RdxView' />
+
+RdxView, 定义一个模块视图
+
+<br />
+
+### RdxView Props
+
+- props<IModel, IRelyModel, IModuleConfig>
+
+  - id: stirng
+
+    模块的唯一 id。
+
+  - depsIds?: string | { id: string, weight?: number}[]
+
+    当前模块依赖的的模块的 id,配置了依赖模块的 id，可以在 reaction 和 view 中获取到依赖模块的数据，并且当依赖模块发生改变时，当前模块的 reaction 将重新执行。
+
+  - scope?: string
+
+    模块的作用域，当前模块的值修改的时候，只会通知相同作用域的模块。
+
+  - areEqualForTask?: (
+    type: CompareType,
+    preConfig: IModuleConfig,
+    nextConfig: IModuleConfig
+    ) => boolean;
+
+    当模块的配置变更的时候，是否要更新视图或者触发响应式函数，返回 true 时，怎么不会更新，返回 false 则更新。通过 type 来区分当前是视图校验还是响应式函数的执行校验。
+    默认情况下，会通过 shallowequal 方法来进行比较
+
+  - moduleConfig?: IModuleConfig;
+
+    模块的配置，可以在 reaction 和 view 获取到模块的配置信息。
+
+  - defaultValue?: IModel;
+
+    模块的默认状态，当模块状态为 undefined 时，会以该状态作为默认值。
+
+  - reaction?: MixedTask<IModel, IRelyModel, IModuleConfig>;
+
+    响应式函数
+
+  - reactionType?: { [key: string]: any }
+
+    响应式函数的类型， 可选值 ReactionType.Async(异步) 和 ReactionType.Sync(同步)
+
+  - recordStatus?: boolean;
+
+    模块是否记录状态，开启会则模块将会增加 Waiting Loading，默认状态为开启
+
+  - render?: (
+    context: DataContext<IModel, IRelyModel, IModuleConfig>
+    ) => React.ReactNode;
+
+    模块的视图渲染。
+
+  - component?: (
+    context: React.ComponentType<DataContext<IModel, IRelyModel, IModuleConfig>>;;
+
+    模块的视图渲染。
+
+  - reducer?: (
+    state: IModel,
+    action: IAction,
+    context: ShareContextClass<IModel, IRelyModel, IModuleConfig>
+    ) => IModel;
+
+    reducer 定义了当前模块接受到 action 的时候，状态如何改变。
+
+### MixedTask<IModel, IRelyModel, IModuleConfig>
+
+```tsx
+type MixedTask<IModel, IRelyModel, IModuleConfig> =
+  | ASYNC_TASK<IModel, IRelyModel, IModuleConfig>
+  | SYNC_TASK<IModel, IRelyModel, IModuleConfig>;
+```
+
+### ASYNC_TASK<IModel, IRelyModel, IModuleConfig>
+
+```tsx
+type ASYNC_TASK<IModel, IRelyModel, IModuleConfig> = (
+  taskInfo: ReactionContext<IModel, IRelyModel, IModuleConfig>
+) => Promise<void>;
+```
+
+### SYNC_TASK<IModel, IRelyModel, IModuleConfig>
+
+```tsx
+type SYNC_TASK<IModel, IRelyModel, IModuleConfig> = (taskInfo: ReactionContext<IModel, IRelyModel, IModuleConfig>) => void>
+```
+
+### ReactionContext<IModel, IRelyModel, IModuleConfig>
+
+```tsx
+export interface ReactionContext<IModel, IRelyModel, IModuleConfig>
+  extends BaseTaskInfo {
+  /**
+   * 模块唯一id
+   */
+  id: string;
+  value: IModel;
+  /**
+   * 当事件冲突时触发时候的回调
+   *
+   * @memberof ReactionContext
+   */
+  callbackMapWhenConflict: (callback: () => void) => void;
+  /**
+   * 依赖的模块的值
+   */
+  depsValues: IRelyModel;
+  /**
+   * 更新数据的方法
+   */
+  updateState: (v: IModel) => void;
+  /**
+   * 模块的其他配置
+   */
+  moduleConfig?: IModuleConfig;
+  /**
+   * 依赖的模块配置
+   */
+  depsModuleConfig?: IModuleConfig[];
+}
+```
+
+### DataContext<IModel, IRelyModel, IModuleConfig>
+
+```tsx
+export interface DataContext<IModel, IRelyModel, IModuleConfig> {
+  /**
+   * 模块唯一id
+   */
+  id: string;
+  /**
+   * 模块配置
+   */
+  moduleConfig?: IModuleConfig;
+  /**
+   * 派发action后通过reducer进行状态更新
+   */
+  dispatch: (action: any) => void;
+  /**
+   * 派发action后，触发其他模块的reducer进行状态更新
+   */
+  dispatchById: (id: string, action: any) => void;
+  /**
+   * 当模块的状态为Status.Running 或者 Status.Waiting的时候，loading为true
+   */
+  loading: boolean;
+  /**
+   * 当前模块的状态
+   */
+  status: Status;
+  /**
+   * 当前模块的错误信息
+   */
+  errorMsg?: string;
+  /**
+   * 当前模块的数据
+   */
+  value: IModel;
+  /**
+   * 当前模块依赖的模块id
+   */
+  depsIds?: (string | { id: string; weight?: number })[];
+  /**
+   * 当前模块依赖的模块数据
+   */
+  depsValues: IRelyModel;
+  /**
+   * 更新当前模块的数据，并调用当前模块以及下游模块的响应函数
+   */
+  refresh: (value?: IModel) => void;
+  /**
+   * 更新当前模块的数据，并调用下游模块的响应函数
+   */
+  next: (value: IModel) => void;
+  /**
+   * 如果当前模块配置有scope，可以合并当前scope的数据到全局
+   */
+  mergeScopeState2Global: () => void;
+}
+```
+
+### 简单示例:
+
+#### 总价 = 数量 \* 单价
+
+用户可以根据直觉写代码，单价模块， 数量模块，总价模块依赖单价和数量。
+
+<Story id='基本示例-简单用法--总价计算'></Story>
+
+```tsx
+const View = (context: DataContext<number, any, any>) => {
+  const { value, next } = context;
+  return <NumberPicker value={value} onChange={next} />;
+};
+const TotalView = (context: DataContext<number, any, any>) => {
+  const { depsValues } = context;
+  const [unit = 0, amount = 0] = depsValues;
+  return <span>{unit * amount}</span>;
+};
+export const 总价计算 = () => {
+  return (
+    <RdxContext>
+      <br />
+      <strong>单价:</strong>
+      <RdxView id={'单价'} component={View} defaultValue={10}></RdxView>
+      <strong>数量:</strong>
+      <RdxView id={'数量'} render={View} defaultValue={10}></RdxView>
+      <strong>总价:</strong>
+      <RdxView
+        id={'数量'}
+        deps={[{ id: '单价' }, { id: '数量' }]}
+        render={TotalView}
+      ></RdxView>
+    </RdxContext>
+  );
+};
+```
