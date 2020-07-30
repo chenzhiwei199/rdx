@@ -62,7 +62,4 @@
 
 ### 发布命令
 
-lerna version patch --message "feat: 当前运行状态信息透出" --force-publish  -y && tnpm run publish
-
-
-
+lerna version patch --message "feat: 当前运行状态信息透出" --force-publish -y && npm run publish

@@ -13,7 +13,7 @@
     "build": "tsc -p ./tsconfig.build.json",
     "watch": "tsc --watch -p ./tsconfig.build.json",
     "dev": "start-storybook -p 6008 ",
-    "pub": "tsc && tnpm run publish"
+    "pub": "tsc && npm run publish"
   },
   "author": "",
   "license": "ISC",

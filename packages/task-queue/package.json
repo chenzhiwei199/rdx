@@ -11,7 +11,7 @@
     "prettier": "prettier",
     "coverage": "jest --coverage",
     "build": "tsc -p ./tsconfig.build.json",
-    "pub": "tsc && tnpm run publish",
+    "pub": "tsc && npm run publish",
     "watch": "tsc --watch -p ./tsconfig.build.json"
   },
   "author": "",

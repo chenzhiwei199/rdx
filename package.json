@@ -5,10 +5,11 @@
     "bootstrap": "lerna bootstrap",
     "compile": "tsc -p tsconfig.build.json",
     "clean": " lerna exec -- rm -rf node_modules",
+    "doc": "lerna run doc",
     "watch": "lerna run --parallel watch",
     "build": "lerna run build",
-    "pub": "tnpm run build && lerna publish ",
-    "publish": "lerna exec -- tnpm publish . --parallel ",
+    "pub": "npm run build && lerna publish ",
+    "publish": "lerna exec -- npm publish . --parallel ",
     "dev": "cd pack"
   },
   "workspaces": [

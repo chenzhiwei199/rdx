@@ -1,62 +1,80 @@
-
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<!-- Begin Jekyll SEO tag v2.6.1 -->
-<title>issue | rdx22</title>
-<meta name="generator" content="Jekyll v3.8.7" />
-<meta property="og:title" content="issue" />
-<meta property="og:locale" content="en_US" />
-<link rel="canonical" href="https://chenzhiwei199.github.io/rdx/" />
-<meta property="og:url" content="https://chenzhiwei199.github.io/rdx/" />
-<meta property="og:site_name" content="rdx" />
-<script type="application/ld+json">
-{"headline":"issue","@type":"WebSite","url":"https://chenzhiwei199.github.io/rdx/","name":"rdx","@context":"https://schema.org"}</script>
-<!-- End Jekyll SEO tag -->
+    <!-- Begin Jekyll SEO tag v2.6.1 -->
+    <title>issue | rdx22</title>
+    <meta name="generator" content="Jekyll v3.8.7" />
+    <meta property="og:title" content="issue" />
+    <meta property="og:locale" content="en_US" />
+    <link rel="canonical" href="https://chenzhiwei199.github.io/rdx/" />
+    <meta property="og:url" content="https://chenzhiwei199.github.io/rdx/" />
+    <meta property="og:site_name" content="rdx" />
+    <script type="application/ld+json">
+      {
+        "headline": "issue",
+        "@type": "WebSite",
+        "url": "https://chenzhiwei199.github.io/rdx/",
+        "name": "rdx",
+        "@context": "https://schema.org"
+      }
+    </script>
+    <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/rdx/assets/css/style.css?v=083094682d4adee270ca12e60a586962556a4254">
+    <link
+      rel="stylesheet"
+      href="/rdx/assets/css/style.css?v=083094682d4adee270ca12e60a586962556a4254"
+    />
   </head>
   <body>
     <div class="container-lg px-3 my-5 markdown-body">
-      
       <h1><a href="https://chenzhiwei199.github.io/rdx/">rdx</a></h1>
-      
 
       <h3 id="issue">issue</h3>
 
-<ol>
-  <li>为什么根目录不装 jest，packages 里面 jest 会报红</li>
-</ol>
+      <ol>
+        <li>为什么根目录不装 jest，packages 里面 jest 会报红</li>
+      </ol>
 
-<h2 id="创建-monerepo-工程">创建 monerepo 工程</h2>
+      <h2 id="创建-monerepo-工程">创建 monerepo 工程</h2>
 
-<ol>
-  <li>npm install –global lerna</li>
-  <li>git init monorepo-example cd monorepo-example</li>
-  <li>lerna init</li>
-</ol>
+      <ol>
+        <li>npm install –global lerna</li>
+        <li>git init monorepo-example cd monorepo-example</li>
+        <li>lerna init</li>
+      </ol>
 
-<h2 id="ts-配置">ts 配置</h2>
+      <h2 id="ts-配置">ts 配置</h2>
 
-<ol>
-  <li>创建 tsconfig.json 文件</li>
-  <li>https://www.tslang.cn/docs/handbook/tsconfig-json.html 参照链接进行配置</li>
-</ol>
+      <ol>
+        <li>创建 tsconfig.json 文件</li>
+        <li>
+          https://www.tslang.cn/docs/handbook/tsconfig-json.html
+          参照链接进行配置
+        </li>
+      </ol>
 
-<h2 id="test-模块-jest">test 模块 jest</h2>
+      <h2 id="test-模块-jest">test 模块 jest</h2>
 
-<ol>
-  <li>jest –init</li>
-  <li>add babel
-<code class="language-plaintext highlighter-rouge">yarn add --dev babel-jest @babel/core @babel/preset-env</code></li>
-  <li>
-    <p>create babel.config.js</p>
+      <ol>
+        <li>jest –init</li>
+        <li>
+          add babel
+          <code class="language-plaintext highlighter-rouge"
+            >yarn add --dev babel-jest @babel/core @babel/preset-env</code
+          >
+        </li>
+        <li>
+          <p>create babel.config.js</p>
 
-    <div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1">// babel.config.js</span>
+          <div class="language-js highlighter-rouge">
+            <div class="highlight">
+              <pre
+                class="highlight"
+              ><code> <span class="c1">// babel.config.js</span>
  <span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
    <span class="na">presets</span><span class="p">:</span> <span class="p">[</span>
      <span class="p">[</span>
@@ -69,43 +87,60 @@
      <span class="p">],</span>
    <span class="p">],</span>
  <span class="p">};</span>
-</code></pre></div>    </div>
-  </li>
-  <li>支持 ts <code class="language-plaintext highlighter-rouge">yarn add --dev @babel/preset-typescript</code></li>
-  <li>yarn install –dev @types/jest</li>
-</ol>
+</code></pre>
+            </div>
+          </div>
+        </li>
+        <li>
+          支持 ts
+          <code class="language-plaintext highlighter-rouge"
+            >yarn add --dev @babel/preset-typescript</code
+          >
+        </li>
+        <li>yarn install –dev @types/jest</li>
+      </ol>
 
-<h2 id="prettier">prettier</h2>
+      <h2 id="prettier">prettier</h2>
 
-<ol>
-  <li>yarn global add tslint typescript</li>
-  <li>tslint –init</li>
-  <li>
-    <p>tslint file</p>
+      <ol>
+        <li>yarn global add tslint typescript</li>
+        <li>tslint –init</li>
+        <li>
+          <p>tslint file</p>
 
-    <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="w"> </span><span class="p">{</span><span class="w">
+          <div class="language-json highlighter-rouge">
+            <div class="highlight">
+              <pre
+                class="highlight"
+              ><code><span class="w"> </span><span class="p">{</span><span class="w">
    </span><span class="nl">"extends"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"tslint-plugin-prettier"</span><span class="p">,</span><span class="w"> </span><span class="s2">"tslint-config-prettier"</span><span class="p">],</span><span class="w">
    </span><span class="nl">"rules"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
      </span><span class="nl">"prettier"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
    </span><span class="p">}</span><span class="w">
  </span><span class="p">}</span><span class="w">
-</span></code></pre></div>    </div>
-  </li>
-  <li>vscode install Prettier - Code formatter</li>
-  <li>yarn global add prettier</li>
-  <li>yarn add –dev tslint-plugin-prettier prettier</li>
-</ol>
+</span></code></pre>
+            </div>
+          </div>
+        </li>
+        <li>vscode install Prettier - Code formatter</li>
+        <li>yarn global add prettier</li>
+        <li>yarn add –dev tslint-plugin-prettier prettier</li>
+      </ol>
 
-<h3 id="发布命令">发布命令</h3>
+      <h3 id="发布命令">发布命令</h3>
 
-<p>lerna version patch –message “feat: 当前运行状态信息透出” –force-publish  -y &amp;&amp; tnpm run publish</p>
-
-
-
-      
+      <p>
+        lerna version patch –message “feat: 当前运行状态信息透出” –force-publish
+        -y &amp;&amp; npm run publish
+      </p>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
-    <script>anchors.add();</script>
-    
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js"
+      integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg="
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      anchors.add();
+    </script>
   </body>
 </html>
