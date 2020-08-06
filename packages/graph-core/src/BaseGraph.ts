@@ -131,7 +131,7 @@ export default class BaseGraph {
       });
       stack.push(v);
 
-      this.successors(v).forEach(function (w) {
+      this.successors(v).forEach(function(w) {
         if (!isVisited(w)) {
           dfs(w);
           entry.lowlink = Math.min(entry.lowlink, visited[w].lowlink);
@@ -152,7 +152,7 @@ export default class BaseGraph {
       }
     };
 
-    this.nodes().forEach(function (v) {
+    this.nodes().forEach(function(v) {
       if (!isVisited(v)) {
         dfs(v);
       }
@@ -194,16 +194,16 @@ export default class BaseGraph {
   /**
    * 根据派发关系来找到所有经过的节点
    * 找到当前点关联的所有点(排除除触发点以外作用域外的点)
-   * @param triggerPoints
+   * @param newTriggerPoints
    * @param createDeliversMap
    */
   public getAllPointsByPoints(triggerPoints: TriggerPoint | TriggerPoint[]) {
     // 非数组，处理成数组
-    triggerPoints = normalizeSingle2Arr<TriggerPoint>(triggerPoints);
-
+    // @ts-ignore
+    const newTriggerPoints = normalizeSingle2Arr<TriggerPoint>(triggerPoints);
     // 去除无效点
     const validPoints: TriggerPoint[] = [];
-    triggerPoints.forEach((cursor, index) => {
+    newTriggerPoints.forEach((cursor, index) => {
       const newCursor = { ...cursor };
       const findIndex = validPoints.findIndex(
         (item) => item.key === cursor.key
@@ -238,7 +238,7 @@ export default class BaseGraph {
         )
       );
     });
-
+    // @ts-ignore
     allPoints = union<string>(allPoints, (p) => {
       return p;
     });

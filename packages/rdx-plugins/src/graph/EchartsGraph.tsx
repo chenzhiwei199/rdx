@@ -169,6 +169,7 @@ class ChartsRenderer<IModel, IRelyModel, IModuleConfig> extends Graph<
   }
   drawBuildDAG(info: ISnapShot) {
     const { currentAllPoints, edgeCutFlow } = info;
+    // @ts-ignore
     const edgeMap = arr2Map<IEdge>(
       edgeCutFlow.reduce((arr, item) => arr.concat(item.edges), []),
       (item) => `${item.source}---${item.target}`

@@ -19,7 +19,7 @@ import {
   LayoutContextInstance,
 } from '../../hooks/formLayoutHoooks';
 import { isError } from '../../utils/validator';
-import { ErrorContextInstance } from '../../hooks/formStatus';
+import { ErrorContextInstance, ErrorContextClass } from '../../hooks/formStatus';
 
 export enum DepsType {
   Relative = 'Relative',
@@ -39,6 +39,7 @@ export interface IFromItemBase<T> extends IFieldDefine {
   status?: Status;
   errorMsg?: string;
   formErrorMsg?: string[];
+  require?: boolean
   rules?: RuleDetail[];
 }
 export interface IModel {
@@ -100,7 +101,7 @@ export const RdxFormItem = <T extends Object>(props: IRdxFormItem<T>) => {
   } = props;
   const { paths } = useContext(PathContextInstance);
   const atomReaction = reaction && useCallback(reaction, []);
-  const errorStore = useContext(ErrorContextInstance);
+  const errorStore = useContext<ErrorContextClass>(ErrorContextInstance);
   const id = [...paths, name].join('.');
   const atomRender = useCallback(
     (context: DataContext<IModel, IModel[], IFromItemBase<T>>) => {
@@ -120,6 +121,7 @@ export const RdxFormItem = <T extends Object>(props: IRdxFormItem<T>) => {
       const {
         xProps: xModuleProps,
         rules = [],
+        require,
         ...restMoudleConfig
       } = moduleConfig;
       async function validator(value, context) {
@@ -154,6 +156,7 @@ export const RdxFormItem = <T extends Object>(props: IRdxFormItem<T>) => {
           rules={rules}
           xProps={newProps}
           status={status}
+          require={require}
           formErrorMsg={errorStore.getErrors(id)}
           errorMsg={errorMsg}
         >
@@ -210,7 +213,7 @@ function getDisplayType(props: LayoutContext) {
   }
   return style;
 }
-const FormStyleItemLabel = styled.div<{ layoutType: LayoutType }>`
+const FormStyleItemLabel = styled.div<{ layoutType: LayoutType, require: boolean; }>`
   line-height: 28px;
   vertical-align: top;
   color: #666666;
@@ -218,6 +221,12 @@ const FormStyleItemLabel = styled.div<{ layoutType: LayoutType }>`
   text-align: right;
   padding-right: 12px;
   line-height: 28px;
+  ::before {
+    display: ${props => props.require ? 'visible': 'none'};
+    content: '*';
+    color: #ff3000;
+    margin-right: 4px;
+  }
 `;
 const FormStyleItemContent = styled.div<{
   layoutType: LayoutType;
@@ -235,6 +244,7 @@ export const FromItem = <T extends Object>(props: IFromItem<T>) => {
     formErrorMsg,
     status,
     errorMsg,
+    require,
     xProps = {} as any,
   } = props;
   const {
@@ -247,6 +257,7 @@ export const FromItem = <T extends Object>(props: IFromItem<T>) => {
     xComponent,
     desc,
     rules,
+    
     ...rest
   } = xProps;
   const Cmp = getRegistry().fields[xComponent || type];
@@ -264,7 +275,7 @@ export const FromItem = <T extends Object>(props: IFromItem<T>) => {
   if (disabled) {
     transformProps.disabled = disabled;
   }
-  const layoutContext = useContext(LayoutContextInstance);
+  const layoutContext = useContext<LayoutContext>(LayoutContextInstance);
   const { labelCol, wrapCol, layoutType, labelTextAlign } = layoutContext;
   const isGrid = layoutType === LayoutType.Grid;
   const gridStyle = {
@@ -274,7 +285,6 @@ export const FromItem = <T extends Object>(props: IFromItem<T>) => {
     display: 'inline',
   };
 
-  console.log('visible: ', name, visible);
   return (
     <>
       {visible && (
@@ -287,10 +297,12 @@ export const FromItem = <T extends Object>(props: IFromItem<T>) => {
         >
           {title && (
             <FormStyleItemLabel
+
               style={{
                 flex: `0 0 ${getWidth(labelCol)}`,
                 textAlign: labelTextAlign,
               }}
+              require={require}
               layoutType={layoutType}
               className='rdx-form-item-label'
             >

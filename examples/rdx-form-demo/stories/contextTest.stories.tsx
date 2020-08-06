@@ -1,16 +1,16 @@
 import React from 'react';
-import { SchemaMarkupField, SchemaForm } from '@uform/next';
-import { Button } from '@alifd/next';
-import { useState } from 'react';
 import { useRef } from 'react';
-import { useForceUpdate } from '../../../packages/rdx/src';
+import { useForceUpdate } from '@czwcode/rdx-next-form';
 export default {
-  title: '基本示例|contextTest',
+  title: '基本示例/contextTest',
   parameters: {
     info: { inline: true },
   },
 };
 
+function xxx<T>(a: T):  T {
+  return a
+}
 const ShareContextInstance = React.createContext({ a: 1 });
 const Child = ({ v }) => {
   return (
@@ -45,6 +45,7 @@ class T {
 const Parent = ({ children }) => {
   const forceUpdate = useForceUpdate();
   const ref = useRef(new T(forceUpdate));
+  
   return (
     <ShareContextInstance.Provider value={ref.current}>
       <div> parent ----{JSON.stringify(ref.current)}</div>

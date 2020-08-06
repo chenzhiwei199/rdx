@@ -12,7 +12,8 @@ module.exports = {
   webpackFinal: async (config) => {
     config.devtool = false
     config.resolve.plugins = [new TsconfigPathsPlugin({
-      configFile: './tsconfig.json'
+      configFile: './tsconfig.json',
+      silent: true
     })];
     config.module.rules.push({
       test: /\.(ts|tsx)$/,

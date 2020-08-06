@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { RdxFormItem, RdxFormContext, FormLayout } from '@czwcode/rdx-next-form';
 import { Button } from '@alifd/next';
 export default {
-  title: '基本示例|FormItem',
+  title: '基本示例/FormItem',
   parameters: {
     info: { inline: true },
   },
@@ -280,6 +280,22 @@ export const 强依赖关系 = () => {
       </RdxFormItem>
 
       {/* <DevVisualGraphTool /> */}
+    </RdxFormContext>
+  );
+};
+
+
+export const 基础表单_校验 = () => {
+  return (
+    <RdxFormContext>
+      <RdxFormItem require  name='A' title='输入框2' type={'string'} />
+      <RdxFormItem
+        name='B'
+        title='下拉框'
+        type={'string'}
+        dataSource={[{ label: '测试1', value: '测试2' }]}
+        xComponent={'select'}
+      />
     </RdxFormContext>
   );
 };

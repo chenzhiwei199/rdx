@@ -30,12 +30,12 @@ export default class CommonQueue<T> extends DeliverByPreDefinedTask<T> {
   }
   /**
    *
-   * @param who 谁的下游节点
+   * @param newWho 谁的下游节点
    */
   notifyDownstream = (who: TriggerPoint | TriggerPoint[]) => {
-    who = normalizeSingle2Arr<TriggerPoint>(who);
-    if (who.every((w) => isString(w.key))) {
-      this.deliver(who);
+    const newWho = normalizeSingle2Arr<TriggerPoint>(who);
+    if (newWho.every((w) => isString(w.key))) {
+      this.deliver(newWho);
     } else {
       console.warn('触发节点的格式必须为{ key: string, scope?: string }');
     }

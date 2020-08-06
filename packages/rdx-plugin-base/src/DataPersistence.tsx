@@ -62,7 +62,7 @@ interface DataPersistenceHookState {
   temporarySnapShots: DataPersistSnapShot;
 }
 const DataPersistenceHook = () => {
-  const context = React.useContext(ShareContextInstance);
+  const context = React.useContext<ShareContextClass<any, any, any>>(ShareContextInstance);
   const [state, setState] = React.useState<{
     snapShots: DataPersistSnapShot[];
     temporarySnapShots: DataPersistSnapShot;

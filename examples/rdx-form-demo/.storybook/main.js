@@ -1,4 +1,3 @@
-const createCompiler = require('@storybook/addon-docs/mdx-compiler-plugin');
 
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 module.exports = {
@@ -11,7 +10,7 @@ module.exports = {
   ],
   webpackFinal: async (config) => {
     config.resolve.plugins = [new TsconfigPathsPlugin({
-      configFile: './tsconfig.json'
+      // configFile: './tsconfig.json'
     })];
     config.module.rules.push({
       test: /\.(ts|tsx)$/,

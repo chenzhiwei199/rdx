@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     // "declarationDir": "lib/types",
-    "declaration": true,
+    // "declaration": true,
     "strict": true,
     "allowJs": true,
     "preserveConstEnums": true,
@@ -13,6 +13,7 @@
     "resolveJsonModule": true,
     "noImplicitAny": false,
     "noImplicitThis": false,                
+    "noStrictGenericChecks": true,
     // leave JSX as it is
     "jsx": "react",
     // resolve modules as you would expect

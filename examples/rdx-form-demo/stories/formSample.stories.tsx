@@ -7,7 +7,7 @@ import {
 } from '@czwcode/rdx-next-form';
 import { Icon } from '@alifd/next';
 export default {
-  title: '基本示例|物料列表',
+  title: '基本示例/物料列表',
   parameters: {
     info: { inline: true },
   },

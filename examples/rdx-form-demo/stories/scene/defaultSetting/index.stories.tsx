@@ -4,7 +4,7 @@ import { setup } from '@czwcode/rdx-next-form';
 setup();
 import { ChooseValueType, LinkedDataType } from './types';
 export default {
-  title: '场景案例|默认值配置',
+  title: '场景案例/默认值配置',
   parameters: {
     info: { inline: true },
   },

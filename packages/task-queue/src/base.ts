@@ -8,7 +8,7 @@ import {
 } from '@czwcode/graph-core';
 import { Graph, BasePoint } from '@czwcode/graph-core';
 import { graphAdapter, cleanConfig } from './utils';
-import { PointWithWeight, Task } from './typings/global';
+import { PointWithWeight } from './typings/global';
 
 export default abstract class BaseQueue<T extends PointWithWeight> {
   config: T[] = [] as T[];
@@ -73,7 +73,9 @@ export default abstract class BaseQueue<T extends PointWithWeight> {
   }
 
   public getAllPointFired(points: TriggerPoint | TriggerPoint[]) {
+    // @ts-ignore
     const newPoints = normalizeSingle2Arr<BasePoint>(points);
+    // @ts-ignore
     let p = this.graph.getAllPointsByPoints(newPoints);
     return p;
   }
@@ -108,9 +110,10 @@ export default abstract class BaseQueue<T extends PointWithWeight> {
 
   beforeDeliver(executeTasks: TriggerPoint | TriggerPoint[]) {
     // 数据格式类型统一处理
+    // @ts-ignore
     const normalizeExecuteTasks = normalizeSingle2Arr<TriggerPoint>(
       executeTasks
-    ) as TriggerPoint[];
+    ) ;
 
     // 获取即将要执行的任务
     let pendingPoints = this.getPendingPoints(normalizeExecuteTasks);

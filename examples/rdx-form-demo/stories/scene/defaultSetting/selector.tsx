@@ -31,6 +31,7 @@ export const DefaultSelector = (props: IDefaultSelector) => {
     ) => {
       const { id, value, updateState, depsValues } = context;
       const [valueType] = depsValues;
+      console.log('valueType: ', valueType);
       updateState({
         ...value,
         visible: valueType ? valueType.value === id : false,

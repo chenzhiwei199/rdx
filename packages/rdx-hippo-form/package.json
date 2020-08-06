@@ -30,7 +30,7 @@
     "typescript": "^3.8.4"
   },
   "dependencies": {
-    "@alifd/next": "2.x",
+    "@alifd/next": "^1.20.14",
     "@czwcode/rdx-form": "^0.0.5",
     "@types/react-color": "^3.0.4",
     "@types/react-sortable-tree": "^0.3.11",

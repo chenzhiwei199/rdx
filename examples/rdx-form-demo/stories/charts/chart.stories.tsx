@@ -5,7 +5,7 @@ import { useState } from 'react';
 import SupplyChain, { INode } from './chart';
 import { Select } from '@alifd/next';
 export default {
-  title: '基本示例|Chart',
+  title: '基本示例/Chart',
   parameters: {
     info: { inline: true },
   },

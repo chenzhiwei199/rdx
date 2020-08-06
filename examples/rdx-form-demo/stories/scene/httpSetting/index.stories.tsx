@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { IHttpSettingValue } from './types';
 setup();
 export default {
-  title: '场景案例|http配置器',
+  title: '场景案例/http配置器',
   parameters: {
     info: { inline: true },
   },

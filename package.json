@@ -2,15 +2,14 @@
   "name": "root",
   "private": true,
   "scripts": {
+    "watch:form": "yarn workspace rdx-form-demo start",
+    "watch:rdx": "yarn workspace rdx-demo start",
     "bootstrap": "lerna bootstrap",
-    "compile": "tsc -p tsconfig.build.json",
     "clean": " lerna exec -- rm -rf node_modules",
     "doc": "lerna run doc",
-    "watch": "lerna run --parallel watch",
     "build": "lerna run build",
     "pub": "npm run build && lerna publish ",
-    "publish": "lerna exec -- npm publish . --parallel ",
-    "dev": "cd pack"
+    "publish": "lerna exec -- npm publish . --parallel "
   },
   "workspaces": [
     "packages/*",
@@ -24,7 +23,7 @@
     "jest": "^24.9.0",
     "react-docgen-typescript-loader": "^3.6.0",
     "@ali/lerna": "1.0.1",
-    "typescript": "^3.7.3"
+    "typescript": "3.9.3"
   },
   "dependencies": {
     "@czwcode/graph-core": "^1.0.0"

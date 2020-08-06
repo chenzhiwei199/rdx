@@ -10,7 +10,6 @@ import Base from './base';
 import {
   END,
   cleanConfig,
-  graphLibAdapter,
   point2WithWeightAdapter,
 } from './utils';
 import {
@@ -63,6 +62,7 @@ export default class DeliverByCallback<T> extends Base<Task<T>> {
   }
 
   getTaskByPoints(p: string | string[]) {
+    // @ts-ignore
     const ps = normalizeSingle2Arr<string>(p);
     const newPs = ps.map((currentP) => this.configMap.get(currentP)) as Task<
       T
@@ -221,9 +221,10 @@ export default class DeliverByCallback<T> extends Base<Task<T>> {
           );
           // 任务执行失败
           console.error(
-            `${currentKey}任务执行失败, depsKeys:${
-              curConfig && curConfig.deps
-            } errorMsg: ${error && error.stack && error.stack.toString()}`
+            `${currentKey}任务执行失败, depsKeys:${curConfig &&
+              curConfig.deps} errorMsg: ${error &&
+              error.stack &&
+              error.stack.toString()}`
           );
         }
       };
