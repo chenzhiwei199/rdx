@@ -80,8 +80,9 @@ const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
       store.current.batchTriggerSchedule(
         Array.from(queue).reverse().map((item) => ({ key: item, downStreamOnly: false }))
       );
+      queue.clear()
     }
-  }, []);``
+  }, []);
   return (
     <ShareContextProvider value={store.current}>
       <UiBatcher setNotifyBatcherOfChange={setUiNotifyBatcherOfChange} />

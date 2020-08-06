@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { ShareContextInstance } from './shareContext';
+import { ShareContextInstance, ShareContextClass } from './shareContext';
 import { StateUpdateType } from '../global';
 
 const Batcher = (props: { setNotifyBatcherOfChange: any }) => {
   const [state, dispatch] = React.useReducer(s => ({}) , {} );
-  const storeRef = useContext(ShareContextInstance);
+  const storeRef = useContext<ShareContextClass<any, any,any>>(ShareContextInstance)
   props.setNotifyBatcherOfChange(() => dispatch());
   useEffect(() => {
     if (storeRef.uiQueue.size > 0) {

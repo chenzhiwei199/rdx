@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { ShareContextInstance } from './shareContext';
+import { ShareContextInstance, ShareContextClass } from './shareContext';
 
 
 const ScheduleBatcher = (props: { setNotifyBatcherOfChange: any} ) => {
-  const storeRef = useContext(ShareContextInstance)
+  const storeRef = useContext<ShareContextClass<any, any,any>>(ShareContextInstance)
   const [_, setState] = useState([]);
   props.setNotifyBatcherOfChange(() => setState({} as any));
   useEffect(() => {

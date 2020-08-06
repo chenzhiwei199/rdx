@@ -20,7 +20,6 @@ export function checkIsChange<IModel, IRelyModel, IModuleConfig>(
   );
 }
 
-
 export interface CheckTaskInterface {
   task: any;
   relyTaskKeys?: string[];
@@ -72,16 +71,14 @@ export function checkIsModuleChange(
   return isModelConfigChange;
 }
 
-
-
 export function createBaseContext<IModel, IRelyModel, IModuleConfig>(
   id: string,
   context: ShareContextClass<IModel, IRelyModel, IModuleConfig>,
   defaultTaskMap?: BaseModuleProps<IModel, IRelyModel, IModuleConfig, any>
 ): BaseContext<IModel, IRelyModel, IModuleConfig> {
   let taskInfo = context.tasksMap.get(id);
-  taskInfo = taskInfo ? taskInfo: defaultTaskMap
-  const { moduleConfig, deps = [], scope } =  taskInfo;
+  taskInfo = taskInfo ? taskInfo : defaultTaskMap;
+  const { moduleConfig, deps = [], scope } = taskInfo;
   return {
     id,
     deps: deps,
@@ -103,9 +100,7 @@ export function createBaseContext<IModel, IRelyModel, IModuleConfig>(
       const tasksMap = context.tasksMap;
       if (tasksMap.get(dep.id)) {
         const scope = tasksMap.get(dep.id).scope;
-        return (
-          context.preTaskState && context.preTaskState.get(dep.id, scope)
-        );
+        return context.preTaskState && context.preTaskState.get(dep.id, scope);
       } else {
         return null;
       }
