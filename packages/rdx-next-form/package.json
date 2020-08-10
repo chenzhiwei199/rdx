@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/rdx-next-form",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "sideEffects": false,
   "main": "dist/index.js",
@@ -29,10 +29,6 @@
     "@types/shallowequal": "^1.1.1",
     "@types/uuid": "^3.4.6",
     "jest": "^24.9.0",
-    "ts-jest": "^24.1.0",
-    "ts-lint": "^4.5.1",
-    "tslint-config-prettier": "^1.18.0",
-    "typescript": "^3.8.4",
     "rollup": "^1.31.1",
     "rollup-plugin-analyzer": "^3.2.2",
     "rollup-plugin-commonjs": "^10.1.0",
@@ -46,11 +42,15 @@
     "rollup-plugin-ts-paths": "^1.0.5",
     "rollup-plugin-typescript": "^1.0.1",
     "rollup-plugin-typescript2": "0.25.3",
-    "rollup-plugin-visualizer": "^3.3.1"
+    "rollup-plugin-visualizer": "^3.3.1",
+    "ts-jest": "^24.1.0",
+    "ts-lint": "^4.5.1",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.8.4"
   },
   "dependencies": {
     "@alifd/next": "^1.20.14",
-    "@czwcode/rdx": "0.x",
+    "@czwcode/rdx": "^0.0.2",
     "@types/react-color": "^3.0.4",
     "@types/react-sortable-tree": "^0.3.11",
     "react": "^16.12.0",
