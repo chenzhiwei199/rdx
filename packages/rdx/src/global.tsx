@@ -6,8 +6,8 @@ import { ActionType, TargetType } from './RdxContext/interface';
 export * from '@czwcode/task-queue';
 export * from '@czwcode/graph-core';
 
-export interface ReactionContext<IModel, IRelyModel, IModuleConfig>
-  extends BaseContext<IModel, IRelyModel, IModuleConfig> {
+export interface ReactionContext<IModel, IRelyModel>
+  extends BaseContext<IModel, IRelyModel> {
   /**
    * 当事件冲突时触发时候的回调
    *
@@ -15,32 +15,20 @@ export interface ReactionContext<IModel, IRelyModel, IModuleConfig>
    */
   callbackMapWhenConflict: (callback: () => void) => void;
   /**
-   * 依赖的模块的值
-   */
-  depsValues: IRelyModel;
-  /**
    * 更新数据的方法
    */
   updateState: (v: IModel) => void;
-  /**
-   * 模块的其他配置
-   */
-  moduleConfig?: IModuleConfig;
-  /**
-   * 依赖的模块配置
-   */
-  depsModuleConfig?: IModuleConfig[];
 }
 
-export type ASYNC_TASK<IModel, IRelyModel, IModuleConfig> = (
-  taskInfo: ReactionContext<IModel, IRelyModel, IModuleConfig>
+export type ASYNC_TASK<IModel, IRelyModel> = (
+  taskInfo: ReactionContext<IModel, IRelyModel>
 ) => Promise<void>;
-export type SYNC_TASK<IModel, IRelyModel, IModuleConfig> = (
-  taskInfo: ReactionContext<IModel, IRelyModel, IModuleConfig>
+export type SYNC_TASK<IModel, IRelyModel> = (
+  taskInfo: ReactionContext<IModel, IRelyModel>
 ) => void;
-export type MixedTask<IModel, IRelyModel, IModuleConfig> =
-  | ASYNC_TASK<IModel, IRelyModel, IModuleConfig>
-  | SYNC_TASK<IModel, IRelyModel, IModuleConfig>;
+export type MixedTask<IModel, IRelyModel> =
+  | ASYNC_TASK<IModel, IRelyModel>
+  | SYNC_TASK<IModel, IRelyModel>;
 
 export enum STATUS_TYPE {
   BEFORE_TASK_EXECUTE = '1',
@@ -67,19 +55,11 @@ export type PartialExclude<T, K> = Retain<T, K> & PartialNotOmit<T, K>;
 // 选中的必选，其他的保留
 export type RequiredExclude<T, K> = Omit<T, K> & Required<Retain<T, K>>;
 
-export interface BaseContext<IModel, IRelyModel, IModuleConfig> {
+export interface BaseContext<IModel, IRelyModel> {
   /**
    * 模块唯一id
    */
   id: string;
-  /**
-   * 模块配置
-   */
-  moduleConfig?: IModuleConfig;
-  /**
-   * 依赖的模块配置
-   */
-  depsModuleConfig?: IModuleConfig[];
   /**
    * 全局状态
    */
@@ -101,9 +81,7 @@ export interface BaseContext<IModel, IRelyModel, IModuleConfig> {
    * 当前模块依赖的模块数据
    */
   depsValues: IRelyModel;
-}
-export interface DataContext<IModel, IRelyModel, IModuleConfig>
-  extends BaseContext<IModel, IRelyModel, IModuleConfig> {
+
   /**
    * 当模块的状态为Status.Running 或者 Status.Waiting的时候，loading为true
    */
@@ -116,6 +94,13 @@ export interface DataContext<IModel, IRelyModel, IModuleConfig>
    * 当前模块的错误信息
    */
   errorMsg?: string;
+}
+
+export interface DataContext<IModel, IRelyModel>
+  extends BaseContext<IModel, IRelyModel>,
+    IMutators<IModel> {}
+
+export interface IMutators<IModel> {
   /**
    * 刷新视图
    */
@@ -146,8 +131,8 @@ export interface DataContext<IModel, IRelyModel, IModuleConfig>
   nextById: (id: string, value: IModel, options?: DeliverOptions) => void;
 }
 
-export interface IBase<IModel, IRelyModel, IModuleConfig, IAction>
-  extends IRdxReactionProps<IModel, IRelyModel, IModuleConfig> {
+export interface IBase<IModel, IRelyModel, IAction>
+  extends IRdxReactionProps<IModel, IRelyModel> {
   /**
    * 模块的唯一id
    *
@@ -164,23 +149,6 @@ export interface IBase<IModel, IRelyModel, IModuleConfig, IAction>
    */
   scope?: string;
   /**
-   * 校验ModuleConfig是否发生变化，发生变化会重新进行任务调度
-   *
-   * @memberof IBase
-   */
-  areEqualForTask?: (
-    compareType: CompareType,
-    preConfig: IModuleConfig,
-    nextConfig: IModuleConfig
-  ) => boolean;
-  /**
-   * 模块配置信息
-   *
-   * @type {IModuleConfig}
-   * @memberof IBase
-   */
-  moduleConfig?: IModuleConfig;
-  /**
    * 默认的Model
    *
    * @type {IModel}
@@ -188,16 +156,17 @@ export interface IBase<IModel, IRelyModel, IModuleConfig, IAction>
    */
   defaultValue?: IModel;
   /**
-   * 视图渲染
+   * 视图渲染，如果render 和component同时传，则render优先
    *
    * @memberof IBase
    */
-  render?: (
-    context: DataContext<IModel, IRelyModel, IModuleConfig>
-  ) => React.ReactNode;
-  component?: React.ComponentType<
-    DataContext<IModel, IRelyModel, IModuleConfig>
-  >;
+  render?: (context: DataContext<IModel, IRelyModel>) => React.ReactNode;
+  /**
+   * 视图渲染的组件
+   *
+   * @memberof IBase
+   */
+  component?: React.ComponentType<DataContext<IModel, IRelyModel>>;
   /**
    *通用交互规则
    *
@@ -206,8 +175,17 @@ export interface IBase<IModel, IRelyModel, IModuleConfig, IAction>
   reducer?: (
     state: IModel,
     action: IAction,
-    context: ShareContextClass<IModel, any, any>
+    context: ShareContextClass<IModel, any>
   ) => IModel;
+  /**
+   * 校验ModuleConfig是否发生变化，发生变化会重新进行任务调度
+   *
+   * @memberof IBase
+   */
+  areEqualForTask?: (
+    preProps: IBase<IModel, IRelyModel, IAction>,
+    nextProps: IBase<IModel, IRelyModel, IAction>
+  ) => boolean;
 }
 
 export interface IRdxState<IModel, IAction> {
@@ -221,10 +199,10 @@ export interface IRdxState<IModel, IAction> {
   reducer?: (
     state: IModel,
     action: IAction,
-    context: ShareContextClass<IModel, any, any>
+    context: ShareContextClass<IModel, any>
   ) => IModel;
 }
-export interface IRdxReactionProps<IModel, IRelyModel, IModuleConfig> {
+export interface IRdxReactionProps<IModel, IRelyModel> {
   /**
    * 模块依赖的id列表
    *
@@ -233,7 +211,7 @@ export interface IRdxReactionProps<IModel, IRelyModel, IModuleConfig> {
    */
   deps?: IDeps[];
   recordStatus?:
-    | ((context: ReactionContext<IModel, IRelyModel, IModuleConfig>) => boolean)
+    | ((context: ReactionContext<IModel, IRelyModel>) => boolean)
     | boolean;
   reactionType?: ReactionType;
   /**
@@ -241,7 +219,7 @@ export interface IRdxReactionProps<IModel, IRelyModel, IModuleConfig> {
    *
    * @memberof IBase
    */
-  reaction?: MixedTask<IModel, IRelyModel, IModuleConfig>;
+  reaction?: MixedTask<IModel, IRelyModel>;
 }
 
 export enum StateUpdateType {

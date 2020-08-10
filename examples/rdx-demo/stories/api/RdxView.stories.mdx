@@ -1,7 +1,7 @@
 import { Meta, Story, Preview } from '@storybook/addon-docs/blocks';
 // import { RdxContext, RdxView } from '@czwcode/rdx'
 
-<Meta title='Api| RdxView' />
+<Meta title='Api/RdxView' />
 
 RdxView, 定义一个模块视图
 
@@ -9,7 +9,7 @@ RdxView, 定义一个模块视图
 
 ### RdxView Props
 
-- props<IModel, IRelyModel, IModuleConfig>
+- props<IModel, IRelyModel>
 
   - id: stirng
 
@@ -40,7 +40,7 @@ RdxView, 定义一个模块视图
 
     模块的默认状态，当模块状态为 undefined 时，会以该状态作为默认值。
 
-  - reaction?: MixedTask<IModel, IRelyModel, IModuleConfig>;
+  - reaction?: MixedTask<IModel, IRelyModel>;
 
     响应式函数
 
@@ -53,51 +53,50 @@ RdxView, 定义一个模块视图
     模块是否记录状态，开启会则模块将会增加 Waiting Loading，默认状态为开启
 
   - render?: (
-    context: DataContext<IModel, IRelyModel, IModuleConfig>
+    context: DataContext<IModel, IRelyModel>
     ) => React.ReactNode;
 
     模块的视图渲染。
 
   - component?: (
-    context: React.ComponentType<DataContext<IModel, IRelyModel, IModuleConfig>>;;
+    context: React.ComponentType<DataContext<IModel, IRelyModel>>;;
 
     模块的视图渲染。
 
   - reducer?: (
     state: IModel,
     action: IAction,
-    context: ShareContextClass<IModel, IRelyModel, IModuleConfig>
+    context: ShareContextClass<IModel, IRelyModel>
     ) => IModel;
 
     reducer 定义了当前模块接受到 action 的时候，状态如何改变。
 
-### MixedTask<IModel, IRelyModel, IModuleConfig>
+### MixedTask<IModel, IRelyModel>
 
 ```tsx
-type MixedTask<IModel, IRelyModel, IModuleConfig> =
-  | ASYNC_TASK<IModel, IRelyModel, IModuleConfig>
-  | SYNC_TASK<IModel, IRelyModel, IModuleConfig>;
+type MixedTask<IModel, IRelyModel> =
+  | ASYNC_TASK<IModel, IRelyModel>
+  | SYNC_TASK<IModel, IRelyModel>;
 ```
 
-### ASYNC_TASK<IModel, IRelyModel, IModuleConfig>
+### ASYNC_TASK<IModel, IRelyModel>
 
 ```tsx
-type ASYNC_TASK<IModel, IRelyModel, IModuleConfig> = (
-  taskInfo: ReactionContext<IModel, IRelyModel, IModuleConfig>
+type ASYNC_TASK<IModel, IRelyModel> = (
+  taskInfo: ReactionContext<IModel, IRelyModel>
 ) => Promise<void>;
 ```
 
-### SYNC_TASK<IModel, IRelyModel, IModuleConfig>
+### SYNC_TASK<IModel, IRelyModel>
 
 ```tsx
-type SYNC_TASK<IModel, IRelyModel, IModuleConfig> = (taskInfo: ReactionContext<IModel, IRelyModel, IModuleConfig>) => void>
+type SYNC_TASK<IModel, IRelyModel> = (taskInfo: ReactionContext<IModel, IRelyModel>) => void>
 ```
 
-### ReactionContext<IModel, IRelyModel, IModuleConfig>
+### ReactionContext<IModel, IRelyModel>
 
 ```tsx
-export interface ReactionContext<IModel, IRelyModel, IModuleConfig>
-  extends BaseTaskInfo {
+export interface ReactionContext<IModel, IRelyModel> extends BaseTaskInfo {
   /**
    * 模块唯一id
    */
@@ -128,10 +127,10 @@ export interface ReactionContext<IModel, IRelyModel, IModuleConfig>
 }
 ```
 
-### DataContext<IModel, IRelyModel, IModuleConfig>
+### DataContext<IModel, IRelyModel>
 
 ```tsx
-export interface DataContext<IModel, IRelyModel, IModuleConfig> {
+export interface DataContext<IModel, IRelyModel> {
   /**
    * 模块唯一id
    */

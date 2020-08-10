@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    // "declarationDir": "lib/types",
     "baseUrl": ".",
     "paths": {
       "@czwcode/*": ["packages/*/src"]

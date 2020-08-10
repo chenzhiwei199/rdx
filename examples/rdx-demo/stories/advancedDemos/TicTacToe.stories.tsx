@@ -3,7 +3,7 @@ import { RdxContext, Status, RdxView, DataContext } from '@czwcode/rdx';
 import { useState } from 'react';
 import ReactJson from 'react-json-view';
 export default {
-  title: '场景示例|点对点更新|棋盘',
+  title: '场景示例/点对点更新/棋盘',
   parameters: {
     info: { inline: true },
   },
@@ -23,7 +23,7 @@ const rowStyle = {
   flexDirection: 'row',
 };
 
-const Cell = (context: DataContext<any, any[], any>) => {
+const Cell = (context: DataContext<any, any[]>) => {
   const { value, next } = context;
   console.log('Cell render');
   return (
@@ -40,7 +40,7 @@ const Cell = (context: DataContext<any, any[], any>) => {
 };
 
 const storeModel = new Array(size).fill(new Array(size).fill(undefined));
-const ShowDataView = (context: DataContext<any, any, any>) => {
+const ShowDataView = (context: DataContext<any, any>) => {
   const { depsValues } = context;
   const depsIds = getDepsIds();
   let data = [];

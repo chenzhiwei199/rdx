@@ -9,7 +9,7 @@ import {
 import { useRef } from 'react';
 import { Button, Loading } from '@alifd/next';
 export default {
-  title: '场景示例|组件的状态',
+  title: '场景示例/组件的状态',
   parameters: {
     info: { inline: true },
   },
@@ -17,11 +17,10 @@ export default {
 
 const pause = (t: number) => new Promise((resolve) => setTimeout(resolve, t));
 
-const BaseView = (context: DataContext<any, any, any>) => {
-  const { status, id, deps = [], refresh, refreshView } = context;
+const BaseView = (context: DataContext<any, any>) => {
+  const { status, id, deps = [], refresh } = context;
   let text = '';
   let background = '';
-  console.log('status: ', status);
   if (status === Status.FirstRender) {
     text = '空白状态';
   } else if (status === Status.Waiting) {
@@ -70,7 +69,7 @@ const BaseView = (context: DataContext<any, any, any>) => {
 };
 export const RdxView状态展示 = () => {
   const rdxViewProps = useRef({
-    reaction: async (context: ReactionContext<any, any, any>) => {
+    reaction: async (context: ReactionContext<any, any>) => {
       await pause(2000);
       context.updateState(2);
     },
@@ -203,7 +202,6 @@ export const 自定义配置变更校验 = () => {
 
       <RdxView
         id={'a'}
-        moduleConfig={state}
         reaction={produceModel1}
         render={BaseView}
       />

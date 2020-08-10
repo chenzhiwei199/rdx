@@ -109,7 +109,7 @@ export default function HttpSetting(props: IHttpSetting) {
                 }
               },
             ]}
-            xProps={{ style: { width: 320 } }}
+            componentProps={{ style: { width: 320 } }}
           ></RdxFormItem>
           <RdxView
             id='data'
@@ -201,7 +201,6 @@ export default function HttpSetting(props: IHttpSetting) {
               }
             },
           ]}
-          firstRender={false}
           xComponent={XComponentType.JsonEditor}
           reaction={async (context) => {
             const { updateState, value, depsValues } = context;
@@ -278,17 +277,16 @@ export default function HttpSetting(props: IHttpSetting) {
                 updateState({
                   ...value,
                   visible: useFilterInstance === true,
-                  xProps: {
+                  componentProps: {
                     src: result,
                   },
                 });
               } catch (error) {}
             }}
-            xProps={{
+            componentProps={{
               isDialog: true,
               trigger: <Button type='primary'>打开过滤器编辑器</Button>,
             }}
-            firstRender={false}
             title='数据过滤器'
             type={BaseType.String}
             xComponent={'code'}

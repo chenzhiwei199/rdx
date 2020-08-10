@@ -34,8 +34,8 @@ export const stateLabel = {
   [DISPLAY_STATE.CANCEL]: '取消',
   [DISPLAY_STATE.CONFLICT]: '冲突',
 };
-export interface IGraph<IModel, IRelyModel, IModuleConfig> {
-  context: ShareContextClass<IModel, IRelyModel, IModuleConfig>;
+export interface IGraph<IModel, IRelyModel> {
+  context: ShareContextClass<IModel, IRelyModel>;
 }
 
 export enum GraphType {
@@ -57,14 +57,10 @@ export interface IGraphState {
 export default abstract class Graph<
   IModel,
   IRelyModel,
-  IModuleConfig
-> extends React.Component<
-  IGraph<IModel, IRelyModel, IModuleConfig>,
-  IGraphState
-> {
+> extends React.Component<IGraph<IModel, IRelyModel>, IGraphState> {
   snapShots: ISnapShot[] = [];
   temporarySnapShots: ISnapShot;
-  constructor(props: IGraph<IModel, IRelyModel, IModuleConfig>) {
+  constructor(props: IGraph<IModel, IRelyModel>) {
     super(props);
     this.state = {
       version: 0,

@@ -27,7 +27,7 @@ export const DefaultSelector = (props: IDefaultSelector) => {
     deps: [{ id: 'valueType' }],
     firstRender: false,
     reaction: (
-      context: ReactionContext<IModel, IModel[], IFromItemBase<any>>
+      context: ReactionContext<IModel<any>, IModel<any>[]>
     ) => {
       const { id, value, updateState, depsValues } = context;
       const [valueType] = depsValues;
@@ -102,20 +102,18 @@ export const DefaultSelector = (props: IDefaultSelector) => {
             <RdxFormItem
               name='valueType'
               title='类型'
-              firstRender={false}
               deps={[{ id: 'chooseType' }]}
               reaction={(context) => {
                 const {
                   value,
-                  moduleConfig,
                   updateState,
                   lastDepsValue,
                   depsValues,
                 } = context;
                 const [type] = depsValues;
                 const [preType] = lastDepsValue;
-                const newDataSource = moduleConfig.dataSource
-                  .filter((item) => {
+                const newDataSource = defaultValueTypes
+                  .filter((item: any) => {
                     // 如果没有数据源则过滤掉全选和默认选择第一个
                     const isBaseLinkedValueType = [
                       BaseLinkedDefaultValueTypeEnum.SelectFirst,
@@ -170,10 +168,8 @@ export const DefaultSelector = (props: IDefaultSelector) => {
                   type='object'
                   {...reactionInfo}
                   name={parentId}
-                  firstRender={false}
                 >
                   <RdxFormItem
-                    firstRender={false}
                     name={name}
                     type={type}
                     title={title}

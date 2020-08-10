@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '@alifd/next/dist/next.css';
 import { Select } from '@alifd/next';
 export default {
-  title: '场景示例|联动|普通版本',
+  title: '场景示例/联动/普通版本',
   parameters: {
     info: { inline: true },
   },

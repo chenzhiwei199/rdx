@@ -13,7 +13,7 @@ import axios from 'axios';
 import { useCallback } from 'react';
 import ReactJsonView from 'react-json-view';
 export default {
-  title: '场景示例|联动|Rdx版本',
+  title: '场景示例/联动/Rdx版本',
   parameters: {
     info: { inline: true },
   },
@@ -41,7 +41,7 @@ export const 同步联动 = () => {
     Area = 'area',
   }
   const provinceTask = useCallback(
-    async (context: ReactionContext<TaskValue, any, any>) => {
+    async (context: ReactionContext<TaskValue,any>) => {
       const { value, updateState: udpateState } = context;
       const res = await axios.get(
         'https://os.alipayobjects.com/rmsportal/ODDwqcDFTLAguOvWEolX.json'
@@ -54,7 +54,7 @@ export const 同步联动 = () => {
     []
   );
   const provinceView = useCallback(
-    (context: DataContext<TaskValue, any, any>) => {
+    (context: DataContext<TaskValue,any>) => {
       const { next, next: updateState, value, status } = context;
       if (status === Status.FirstRender) {
         return '空白状态';
@@ -88,7 +88,7 @@ export const 同步联动 = () => {
     []
   );
   const otherTask = useCallback(
-    async (context: ReactionContext<TaskValue, any, any>) => {
+    async (context: ReactionContext<TaskValue,any>) => {
       const { updateState: udpateState, value, depsValues } = context;
       const [preLevelValue = {}] = depsValues;
       const { dataSource = [], chooseValue } = preLevelValue;
@@ -111,7 +111,7 @@ export const 同步联动 = () => {
     },
   ];
 
-  const otherTaskView = (context: DataContext<TaskValue, any, any>) => {
+  const otherTaskView = (context: DataContext<TaskValue,any>) => {
     const { next: updateState, next, value, status } = context;
     if (status === Status.FirstRender) {
       return '空白状态';
@@ -148,7 +148,7 @@ export const 同步联动 = () => {
     <RdxContext onChange={() => {}}>
       <Row>
         <Col>
-          <RdxView<TaskValue, any, any, any>
+          <RdxView<TaskValue, any,any>
             id={AdministrativeRegions.Province}
             defaultValue={{ dataSource: [], chooseValue: '' }}
             reaction={provinceTask}
@@ -157,7 +157,7 @@ export const 同步联动 = () => {
         </Col>
         {otherDefines.map((item) => (
           <Col>
-            <RdxView<TaskValue, any, any, any>
+            <RdxView<TaskValue, any,any>
               id={item.key}
               deps={[{ id: item.relyTaskKey }]}
               defaultValue={{ dataSource: [], chooseValue: '' }}
@@ -186,7 +186,7 @@ const produceTask = (
   data: any[],
   filter: (v: any, depsValues: Model[]) => boolean,
   formatter: (data: any[]) => { label: string; value: string }[]
-) => async (context: ReactionContext<Model, any, any>) => {
+) => async (context: ReactionContext<Model,any>) => {
   const { value, depsValues, updateState: udpateState } = context;
   const newData = data.filter((value) => {
     const bool = filter(value, depsValues);
@@ -286,7 +286,7 @@ export const 异步联动 = () => {
         return (
           <span>
             <div>{item.label}</div>
-            <RdxView<Model, any, any, any>
+            <RdxView<Model, any,any>
               id={item.id}
               deps={depsIds.map((item) => ({ id: item }))}
               reaction={item.task}
@@ -309,7 +309,7 @@ export const 查询列表_作用域 = () => {
         return (
           <span>
             <div>{item.label}</div>
-            <RdxView<Model, any, any, any>
+            <RdxView<Model, any,any>
               id={item.id}
               scope={'filter'}
               deps={depsIds.map((item) => ({ id: item }))}
@@ -334,7 +334,7 @@ export const 查询列表_作用域 = () => {
     </RdxContext>
   );
 };
-const SearchView = (context: DataContext<any, any, any>) => {
+const SearchView = (context: DataContext<any,any>) => {
   const { status, value, next } = context;
   return (
     <Select
@@ -353,7 +353,7 @@ const SearchView = (context: DataContext<any, any, any>) => {
     ></Select>
   );
 };
-const SearchButtonView = (context: DataContext<any, any, any>) => {
+const SearchButtonView = (context: DataContext<any,any>) => {
   const { mergeScopeState2Global, next, depsValues } = context;
   return (
     <div>
@@ -371,7 +371,7 @@ const SearchButtonView = (context: DataContext<any, any, any>) => {
     </div>
   );
 };
-const OutScopeView = (context: DataContext<any, any, any>) => {
+const OutScopeView = (context: DataContext<any,any>) => {
   const { depsValues } = context;
   return (
     <>

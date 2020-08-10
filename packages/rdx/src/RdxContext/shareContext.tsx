@@ -34,20 +34,19 @@ export interface DeliverOptions {
   force?: boolean;
 }
 
-export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
-  implements ShareContext<IModel, IRelyModel, IModuleConfig> {
+export class ShareContextClass<IModel, IRelyModel>
+  implements ShareContext<IModel, IRelyModel> {
   name?: string;
   queue: Set<string> = new Set();
   uiQueue: Set<string> = new Set();
   triggerQueue: Set<TriggerPoint> = new Set();
   statusType: STATUS_TYPE;
-  store?: MapObject<IModuleConfig>;
   eventEmitter: EventEmitter;
   // 记录被修改了的字段
   dirtySets: Set<string> = new Set();
   taskScheduler: PreDefinedTaskQueue<IModel>;
   subject?: EventEmitter<TaskEventType, ProcessGraphContent>;
-  tasksMap: BaseMap<IBase<IModel, IRelyModel, IModuleConfig, any>>;
+  tasksMap: BaseMap<IBase<IModel, IRelyModel, any>>;
   taskState: Base<IModel>;
   preTaskState: Base<IModel>;
   taskStatus: BaseObject<TaskStatus>;
@@ -61,8 +60,7 @@ export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
     type: ActionType
   ) => void = () => {};
   parentMounted?: boolean;
-  constructor(config: ShareContext<IModel, IRelyModel, IModuleConfig>) {
-    (window as any).store = this;
+  constructor(config: ShareContext<IModel, IRelyModel>) {
     this.eventEmitter = new EventEmitter();
     this.name = config.name;
     this.subject = new EventEmitter<TaskEventType, ProcessGraphContent>();
@@ -151,6 +149,7 @@ export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
 
   triggerQueueAdd(point: TriggerPoint) {
     this.triggerQueue.add(point);
+    this.batchTriggerChange();
   }
   triggerSchedule(id: string, options: DeliverOptions = {} as DeliverOptions) {
     const { refresh = false, force } = options;
@@ -164,7 +163,6 @@ export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
       this.onPropsChange(this.taskState.getAll(), this.taskState);
     } else {
       this.triggerQueueAdd(point);
-      this.batchTriggerChange();
     }
   }
 
@@ -188,8 +186,7 @@ export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
       return recordStatus(
         this.getTaskInfo(key, task as any) as ReactionContext<
           IModel,
-          IRelyModel,
-          IModuleConfig
+          IRelyModel
         >
       );
     } else {
@@ -295,7 +292,6 @@ export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
     const newTasks = (tasks as IBase<
       IModel,
       IRelyModel,
-      IModuleConfig,
       any
     >[]).map((task) => {
       // 判断是否是初始化应该在事件初始化的时候，如果放在回调中，那么判断就滞后了，用了回调时的taskMap判断了
@@ -310,21 +306,13 @@ export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
           // 默认任务执行方式
           if (task.reactionType === ReactionType.Sync) {
             defaultTask = (
-              currentTaskInfo: ReactionContext<
-                IModel,
-                IRelyModel,
-                IModuleConfig
-              >
+              currentTaskInfo: ReactionContext<IModel, IRelyModel>
             ) => {
               currentTaskInfo.updateState(currentTaskInfo.value);
             };
           } else {
             defaultTask = (
-              currentTaskInfo: ReactionContext<
-                IModel,
-                IRelyModel,
-                IModuleConfig
-              >
+              currentTaskInfo: ReactionContext<IModel, IRelyModel>
             ) => {
               return new Promise((resolve) => {
                 resolve();
@@ -337,8 +325,7 @@ export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
           return defaultTask(
             this.getTaskInfo(key, taskInfo) as ReactionContext<
               IModel,
-              IRelyModel,
-              IModuleConfig
+              IRelyModel
             >
           ) as unknown;
         },
@@ -348,7 +335,7 @@ export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
   }
 
   getTaskInfo(key: string, taskInfo: TaskInfo) {
-    let reactionContext: ReactionContext<IModel, IRelyModel, IModuleConfig> = {
+    let reactionContext: ReactionContext<IModel, IRelyModel> = {
       ...createBaseContext(key, this),
       updateState: (value: IModel) => {
         this.udpateState(key, ActionType.Update, TargetType.TaskState, value);
@@ -420,7 +407,7 @@ export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
   }
   addOrUpdateTask(
     id: string,
-    taskInfo: IBase<any, any, any, any>,
+    taskInfo: IBase<any, any, any>,
     options: {
       notifyView?: boolean;
       notifyTask?: boolean;
@@ -486,16 +473,15 @@ export class ShareContextClass<IModel, IRelyModel, IModuleConfig>
   }
 }
 
-export interface ShareContext<IModel, IRelyModel, IModuleConfig> {
+export interface ShareContext<IModel, IRelyModel> {
   /**
    * 任务信息
    */
   name?: string;
-  tasksMap: BaseMap<IBase<IModel, IRelyModel, IModuleConfig, any>>;
+  tasksMap: BaseMap<IBase<IModel, IRelyModel, any>>;
   taskState: Base<IModel>;
   taskStatus: BaseObject<TaskStatus>;
   cancelMap: BaseMap<() => void>;
-  store?: MapObject<IModuleConfig>;
   subject?: EventEmitter<TaskEventType, ProcessGraphContent>;
   parentMounted?: boolean;
 }
@@ -513,7 +499,7 @@ export const initValue = () => ({
 });
 
 export const ShareContextInstance = React.createContext<
-  ShareContextClass<any, any, any>
+  ShareContextClass<any, any>
 >(initValue() as any);
 
 export const ShareContextProvider = ShareContextInstance.Provider;

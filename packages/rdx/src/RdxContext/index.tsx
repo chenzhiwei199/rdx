@@ -7,11 +7,10 @@ import UiBatcher from './UiBatcher';
 import ScheduleBatcher from './ScheduleBatcher';
 import ReactDOM from 'react-dom';
 import { TaskEventType } from '../global';
-export * from './core'
+export * from './core';
 const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
-  props: RdxContextProps<IModel, IRelyModel, IModuleConfig>
+  props: RdxContextProps<IModel, IRelyModel>
 ) => {
-  
   const {
     initializeState,
     onChange = () => {},
@@ -20,18 +19,20 @@ const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
     state,
     name,
     withRef,
-    createStore
+    createStore,
   } = props;
   const isUnderControl = state !== undefined;
-  const currentState = state || initializeState || {}
+  const currentState = state || initializeState || {};
   function createTaskState(value: any) {
-    return createStore ? createStore(currentState) : new ScopeObject(currentState) 
+    return createStore
+      ? createStore(currentState)
+      : new ScopeObject(currentState);
   }
   const store = React.useRef(
-    new ShareContextClass<IModel, IRelyModel, IModuleConfig>({
+    new ShareContextClass<IModel, IRelyModel>({
       ...initValue(),
       name,
-      taskState: createTaskState(currentState)
+      taskState: createTaskState(currentState),
     })
   );
   store.current.onPropsChange = onChange;
@@ -53,9 +54,9 @@ const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
   store.current.batchTriggerChange = () => {
     scheduleNotifyBatcherOfChange.current();
   };
-  
-  withRef && (withRef.current = store.current)
-  store.current.subject.emit(TaskEventType.RdxContextInit)
+
+  withRef && (withRef.current = store.current);
+  store.current.subject.emit(TaskEventType.RdxContextInit);
   React.useEffect(() => {
     if (isUnderControl) {
       const diffObjectKeys = Array.from(
@@ -75,12 +76,14 @@ const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
   }, [state]);
   React.useEffect(() => {
     const queue = store.current.queue;
-    store.current.parentMounted = true
+    store.current.parentMounted = true;
     if (queue.size > 0) {
       store.current.batchTriggerSchedule(
-        Array.from(queue).reverse().map((item) => ({ key: item, downStreamOnly: false }))
+        Array.from(queue)
+          .reverse()
+          .map((item) => ({ key: item, downStreamOnly: false }))
       );
-      queue.clear()
+      queue.clear();
     }
   }, []);
   return (

@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import { useState } from 'react';
 import { useCallback } from 'react';
 export default {
-  title: '场景示例|点对点更新|可编辑的表格',
+  title: '场景示例/点对点更新/可编辑的表格',
   parameters: {
     info: { inline: true },
   },
@@ -99,7 +99,7 @@ export const 可编辑表格_普通版本 = () => {
     </div>
   );
 };
-const view = (context: DataContext<any, any, any>) => {
+const view = (context: DataContext<any, any>) => {
   const { value, next } = context;
   return (
     <EditablePane

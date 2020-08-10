@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import { DevVisualGraphTool, DevVisualTableTool } from '@czwcode/rdx-plugins';
 import 'todomvc-app-css/index.css';
 export default {
-  title: '场景示例| Todo',
+  title: '场景示例/ Todo',
   parameters: {
     info: { inline: true },
   },
@@ -77,7 +77,7 @@ enum ListAction {
 }
 const Filter = () => {
   return (
-    <RdxView<VisibilityFilters, [IToDo[]], any, any>
+    <RdxView<VisibilityFilters, [IToDo[]], any>
       id={View.Filter}
       defaultValue={VisibilityFilters.SHOW_ALL}
       render={(context) => {
@@ -115,7 +115,7 @@ const Filter = () => {
 };
 const AddButton = () => {
   return (
-    <RdxView<IToDo[], any, any, any>
+    <RdxView<IToDo[], any, any>
       id={View.Add}
       defaultValue={[]}
       render={(context) => {
@@ -148,7 +148,7 @@ const AddButton = () => {
 };
 const List = () => {
   const listRef = React.useRef<
-    IBase<{ dataSource: IToDo[] }, [VisibilityFilters], any, any>
+    IBase<{ dataSource: IToDo[] }, [VisibilityFilters], any>
   >({
     id: View.List,
     defaultValue: {
@@ -266,7 +266,7 @@ const List = () => {
     },
   });
   return (
-    <RdxView<{ dataSource: IToDo[] }, [VisibilityFilters], any, any>
+    <RdxView<{ dataSource: IToDo[] }, [VisibilityFilters], any>
       {...listRef.current}
     />
   );

@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useImperativeHandle, useContext } from 'react';
 import {
   NodeStatus,
   RENDER_STATUS,
   IBase,
   DataContext,
   StateUpdateType,
+  IMutators,
 } from '../global';
-import {  useState } from 'react';
+import { useState } from 'react';
 import {
   ShareContextConsumer,
   ShareContextClass,
   DeliverOptions,
+  ShareContextInstance,
 } from '../RdxContext/shareContext';
 import { TargetType, ActionType } from '../RdxContext/interface';
 import {
@@ -21,27 +23,38 @@ import {
 } from '../hooks/useTaskHooks';
 import { createBaseContext } from '../utils';
 
-export type BaseModuleProps<IModel, IRelyModel, IModuleConfig, IAction> = IBase<
+export type BaseModuleProps<IModel, IRelyModel, IAction> = IBase<
   IModel,
   IRelyModel,
-  IModuleConfig,
   IAction
-> & { context: ShareContextClass<IModel, IRelyModel, IModuleConfig> };
+> & { context: ShareContextClass<IModel, IRelyModel> };
 
-export default <IModel, IRelyModel, IModuleConfig, IAction>(
-  props: IBase<IModel, IRelyModel, IModuleConfig, IAction>
+
+const _WithForwardView: any = React.forwardRef(<IModel, IRelyModel , IAction >(
+  props: IBase<IModel, IRelyModel, IAction>,
+  ref: React.Ref<IMutators<any>>
 ) => {
-  return (
-    <ShareContextConsumer>
-      {(context: ShareContextClass<IModel, IRelyModel, IModuleConfig>) => {
-        return <Module {...props} context={context} />;
-      }}
-    </ShareContextConsumer>
-  );
-};
+  const context = useContext<ShareContextClass<IModel, IRelyModel>>(ShareContextInstance)
+  useImperativeHandle(ref, () => (createMutators(props.id, context)));
+  return <Module {...props} context={context} />;
+});
 
-function Module<IModel, IRelyModel, IModuleConfig, IAction>(
-  props: BaseModuleProps<IModel, IRelyModel, IModuleConfig, IAction>
+// forward类型转换，增强易用性
+type WithForwardRefProps<IModel, IRelyModel , IAction> = {
+  // ref wouldn't be a valid prop name 
+  forwardedRef?: React.Ref<IMutators<IModel>>;
+} & IBase<IModel, IRelyModel , IAction>;
+
+export const WithForwardRef = <IModel, IRelyModel , IAction>({
+  forwardedRef,
+  ...rest
+}: WithForwardRefProps<IModel, IRelyModel , IAction>) => (
+  <_WithForwardView {...rest} ref={forwardedRef} />
+);
+
+export default WithForwardRef;
+function Module<IModel, IRelyModel, IAction>(
+  props: BaseModuleProps<IModel, IRelyModel, IAction>
 ) {
   const { id, scope, defaultValue } = props;
   // 设置默认值
@@ -61,35 +74,46 @@ function Module<IModel, IRelyModel, IModuleConfig, IAction>(
 
   useTaskInit(props);
   useTaskUpdate(props);
-  return (
-    <MomeAtomComponent<IModel, IRelyModel, IModuleConfig, IAction> {...props} />
-  );
+  return <MomeAtomComponent<IModel, IRelyModel, IAction> {...props} />;
 }
-
-const isLoading = <IModel, IRelyModel, IModuleConfig, IAction>(
-  props: BaseModuleProps<IModel, IRelyModel, IModuleConfig, IAction>
-) => {
-  return props.context.taskStatus.get(props.id)?.value === NodeStatus.Waiting;
-};
 
 /**
  *
  * @param props 原子组件，除非id改变，否则只能接受内部控制渲染
  */
-function AtomComponent<IModel, IRelyModel, IModuleConfig, IAction>(
-  props: BaseModuleProps<IModel, IRelyModel, IModuleConfig, IAction>
+function AtomComponent<IModel, IRelyModel, IAction>(
+  props: BaseModuleProps<IModel, IRelyModel, IAction>
 ): React.ReactElement {
   const { id, context } = props;
   const taskInfo = context.tasksMap.get(id);
-  const { render, moduleConfig, deps, component, scope } = taskInfo
-    ? taskInfo
-    : props;
+  const { render, component, scope } = taskInfo ? taskInfo : props;
   // 移入context中，这里只是发个消息，否则用来执行的不一定是最终状态
   useStateUpdate(id, context, StateUpdateType.State);
   useStateUpdate(id, context, StateUpdateType.ReactionStatus);
 
-  const data: DataContext<IModel, IRelyModel, IModuleConfig> = {
+  const data: DataContext<IModel, IRelyModel> = {
     ...createBaseContext(id, context, props),
+    ...createMutators(id, context),
+  };
+  const Component = component;
+  if (component) {
+    return <Component {...data} />;
+  }
+  return <>{render ? (render(data) as React.ReactNode) : null}</>;
+}
+
+const isLoading = <IModel, IRelyModel>(
+  context: ShareContextClass<IModel, IRelyModel>,
+  id: string
+) => {
+  return context.taskStatus.get(id)?.value === NodeStatus.Waiting;
+};
+
+function createMutators<IModel, IRelyModel>(
+  id: string,
+  context: ShareContextClass<IModel, IRelyModel>
+) {
+  return {
     next: (selfValue: IModel, options?: DeliverOptions) => {
       context.next(id, selfValue, options);
     },
@@ -105,36 +129,17 @@ function AtomComponent<IModel, IRelyModel, IModuleConfig, IAction>(
     nextById: (id, selfValue, options?: DeliverOptions) => {
       context.next(id, selfValue, options);
     },
-    loading: isLoading(props),
+    // ? 这里应该加上scope， 刷新只刷新作用域下面的
+    refresh: context.refresh.bind(null, id),
+    loading: isLoading(context, id),
     // TODO: 其他组件中的默认值， 怎么获取
     mergeScopeState2Global: () => {
       context.mergeScopeState2Global(id);
     },
-
-    value: context.taskState.get(id, scope),
-    status:
-      context.taskStatus.get(id) && context.taskStatus.get(id).value
-        ? context.taskStatus.get(id).value
-        : RENDER_STATUS.FirstRender,
-    errorMsg: (context.taskStatus.get(id) || {}).errorMsg,
-
-    // ? 这里应该加上scope， 刷新只刷新作用域下面的
-    refresh: context.refresh.bind(null, id),
   };
-  const Component = component;
-  if (component) {
-    return <Component {...data} />;
-  }
-  return <>{render ? (render(data) as React.ReactNode) : null}</>;
 }
-
-class MomeAtomComponent<
-  IModel,
-  IRelyModel,
-  IModuleConfig,
-  IAction
-> extends React.Component<
-  BaseModuleProps<IModel, IRelyModel, IModuleConfig, IAction>
+class MomeAtomComponent<IModel, IRelyModel, IAction> extends React.Component<
+  BaseModuleProps<IModel, IRelyModel, IAction>
 > {
   shouldComponentUpdate(nextProps) {
     return this.props.id !== nextProps.id;
@@ -142,7 +147,7 @@ class MomeAtomComponent<
   render() {
     const { context, ...rest } = this.props;
     return (
-      <AtomComponent<IModel, IRelyModel, IModuleConfig, IAction>
+      <AtomComponent<IModel, IRelyModel, IAction>
         context={context as any}
         {...rest}
       />

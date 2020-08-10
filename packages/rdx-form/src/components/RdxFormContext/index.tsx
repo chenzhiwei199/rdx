@@ -13,8 +13,8 @@ export interface IRdxFormContext {
   onChange?: (state: any) => void;
 }
 
-class FormStore implements Base<IModel> {
-  clone(): Base<IModel> {
+class FormStore<T> implements Base<IModel<T>> {
+  clone(): Base<IModel<T>> {
     return new FormStore({
       state: this.state,
       runningState: this.runningState,
@@ -26,7 +26,7 @@ class FormStore implements Base<IModel> {
   // 实际数据
   state: { [key: string]: any } = {};
   // 运行时逻辑
-  runningState: { [key: string]: IModel } = {};
+  runningState: { [key: string]: IModel<T> } = {};
   constructor(v: { state: any; runningState: any }) {
     this.state = v.state;
     this.runningState = v.runningState as any;
@@ -35,12 +35,12 @@ class FormStore implements Base<IModel> {
     set(this.state, key, undefined);
     delete this.runningState[key];
   }
-  update(key: string, value: IModel, scope?: string): void {
+  update(key: string, value: IModel<T>, scope?: string): void {
     const { value: currentV, ...rest } = value;
     set(this.state, key, currentV);
     this.runningState[key] = rest;
   }
-  get(key: string, scope?: string): IModel | null {
+  get(key: string, scope?: string): IModel<T> | null {
     const value = get(this.state, key);
     const others = this.runningState[key];
     return value === undefined && others === undefined
@@ -58,12 +58,12 @@ class FormStore implements Base<IModel> {
     };
   }
 }
-const RdxFormContext = (props: IRdxFormContext) => {
+const RdxFormContext = <T extends Object>(props: IRdxFormContext) => {
   const { state, children, initializeState, onChange } = props;
-  const innerStateRef = useRef<FormStore>(
+  const innerStateRef = useRef<FormStore<T>>(
     new FormStore({ state: {}, runningState: {} })
   );
-  const contextRef = useRef<ShareContextClass<IModel, unknown, Object>>(null);
+  const contextRef = useRef<ShareContextClass<IModel<T>, unknown>>(null);
   const errorContextRef = useRef<ErrorContextClass>(new ErrorContextClass());
   let isUnderControl = false;
   // 判断受控与非受控
@@ -82,7 +82,7 @@ const RdxFormContext = (props: IRdxFormContext) => {
           : undefined
       }
       initializeState={{ state: initializeState || {}, runningState: {} }}
-      shouldUpdate={(preValue: IModel, nextValue: IModel) => {
+      shouldUpdate={(preValue: IModel<T>, nextValue: IModel<T>) => {
         if (!preValue || !nextValue) {
           return true;
         }

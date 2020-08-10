@@ -58,9 +58,3 @@ export const 总价计算 = () => {
   );
 };
 
-// export default {
-//   title: '基本示例|hooks简单用法',
-//   parameters: {
-//     info: { inline: true },
-//   },
-// };

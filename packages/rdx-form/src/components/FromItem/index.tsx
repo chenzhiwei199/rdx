@@ -19,7 +19,10 @@ import {
   LayoutContextInstance,
 } from '../../hooks/formLayoutHoooks';
 import { isError } from '../../utils/validator';
-import { ErrorContextInstance, ErrorContextClass } from '../../hooks/formStatus';
+import {
+  ErrorContextInstance,
+  ErrorContextClass,
+} from '../../hooks/formStatus';
 
 export enum DepsType {
   Relative = 'Relative',
@@ -31,44 +34,112 @@ export interface IAtom {
 }
 
 export type RuleDetail = (value, context) => Promise<string | undefined>;
-export interface IFromItemBase<T> extends IFieldDefine {
-  xProps?: Partial<T>;
-  visible?: boolean;
+export enum State {
+  None = 1,
+  Loading = 2,
+  Error = 3,
+}
+
+export interface IFormBlock<T> {
+  base: IFormBlockInner;
+  formTypes: IFormTypes;
+  componentProps: IPenetrate<T>;
+}
+export interface IFormTypes {
+  // 组件类型
+  xComponent?: string;
+  // 数据类型
+  type?: string;
+}
+// 组件消费属性
+export interface IPenetrate<T> {
+  // 是否可用
   disabled?: boolean;
+  // 状态
+  state: State;
+  // 透传组件属性
+  xProps?: Partial<T>;
+  // 组件透传数据源
   dataSource?: any[];
+  // 组件值
+  value: any;
+  // 回调方法
+  onChange: (v: any) => void;
+}
+export interface IFormBlockInner extends IFormBlockBase {
+ // 响应函数中的错误信息
+ errorMsg?: string;
+ // 表单中的错误信息
+ formErrorMsg?: string[];
+}
+export interface IFormBlockBase {
+  // block标题
+  title?: string;
+  // block详情
+  desc?: string;
+  // 展示必填标记
+  require?: boolean;
+  // 是否可见
+  visible?: boolean;
+}
+export interface IFromItemBase<T> extends IFieldDefine {
+  // 外部透传属性
+  xProps?: Partial<T>;
+  // 是否可见
+  visible?: boolean;
+  // 是否disabled
+  disabled?: boolean;
+  // 数据源
+  dataSource?: any[];
+  // 状态
   status?: Status;
+  // 响应函数中的错误信息
   errorMsg?: string;
+  // 表单中的错误信息
   formErrorMsg?: string[];
-  require?: boolean
+  // 展示必填标记
+  require?: boolean;
+  // 校验规则
   rules?: RuleDetail[];
 }
-export interface IModel {
+/**
+ * 视图状态
+ */
+export interface IModel<T> {
   value?: any;
   dataSource?: any[];
   visible?: boolean;
   disabled?: boolean;
-  xProps?: {
-    // 其他属性
-    [key: string]: any;
-  };
+  componentProps?: Partial<T>
 }
-export type IFromItem<T> = IFromItemBase<T> & {
-  children?: ReactNode;
-};
+// export type IFromItem<T> = IFromItemBase<T> & {
+//   children?: ReactNode;
+// };
 
-export type IRdxFormItem<T> = IFromItemBase<T> & {
+export type IRdxFormItem<T> = {
+  // 子节点
   children?: ReactNode;
+  // 依赖关系
   deps?: { id: string; type?: DepsType }[];
-  firstRender?: boolean;
-  reaction?: MixedTask<IModel, IModel[], IFromItemBase<T>>;
+  // 响应式函数
+  reaction?: MixedTask<IModel<T>, IModel<T>[]>;
+  // 默认的可见状态
   defaultVisible?: boolean;
+  // 默认的不可用状态
   defaultDisabled?: boolean;
-  compute?: (
-    value: any,
-    context: DataContext<IModel, IModel[], IFromItemBase<T>>
-  ) => void;
+  // 计算值
+  compute?: (value: any, context: DataContext<IModel<T>, IModel<T>[]>) => void;
+  // 默认值
   default?: any;
-};
+  // 唯一id
+  name?: string;
+  // 校验规则
+  rules?: RuleDetail[];
+  // 数据源
+  dataSource?: any[];
+  // 组件透传属性
+  componentProps?: Partial<T>;
+} & IFormBlockBase & IFormTypes;
 
 function isFunc(a: any) {
   return typeof a === 'function';
@@ -76,11 +147,13 @@ function isFunc(a: any) {
 export function getDefaultValue(
   defaultValue: any,
   disabled: boolean = false,
+  defaultVisible: boolean = true,
   dataSource?: any[]
 ) {
   return {
     value: isFunc(defaultValue) ? defaultValue() : defaultValue,
     disabled: disabled,
+    visible: defaultVisible,
     dataSource,
   };
 }
@@ -92,38 +165,36 @@ export const RdxFormItem = <T extends Object>(props: IRdxFormItem<T>) => {
     dataSource,
     children,
     type,
+    xComponent,
     compute,
     defaultVisible,
-    firstRender = true,
-    disabled,
+    defaultDisabled,
     default: defaultV,
     ...rest
   } = props;
   const { paths } = useContext(PathContextInstance);
-  const atomReaction = reaction && useCallback(reaction, []);
   const errorStore = useContext<ErrorContextClass>(ErrorContextInstance);
   const id = [...paths, name].join('.');
+  const visible = defaultVisible === undefined ? true : false;
+  const formItemProps = {
+    name,
+    type,
+    dataSource,
+    ...rest,
+  };
+  const atomReaction =
+    reaction &&
+    useCallback(reaction, [...Object.values(formItemProps), reaction]);
   const atomRender = useCallback(
-    (context: DataContext<IModel, IModel[], IFromItemBase<T>>) => {
+    (context: DataContext<IModel<T>, IModel<T>[]>) => {
+      const { id, status, errorMsg, refreshView, value, next } = context;
       const {
-        id,
-        status,
-        errorMsg,
-        refreshView,
-        value,
-        next,
-        moduleConfig,
-      } = context;
-      if (status === Status.FirstRender && !firstRender) {
-        return <></>;
-      }
-      const { xProps, ...rest } = value;
-      const {
-        xProps: xModuleProps,
+        componentProps,
         rules = [],
         require,
-        ...restMoudleConfig
-      } = moduleConfig;
+        title,
+        desc,
+      } = formItemProps;
       async function validator(value, context) {
         let infos = [];
         for (let rule of rules) {
@@ -132,64 +203,64 @@ export const RdxFormItem = <T extends Object>(props: IRdxFormItem<T>) => {
         return infos;
       }
 
-      const newProps = {
-        ...restMoudleConfig,
-        ...rest,
-        ...xModuleProps,
-        ...xProps,
-        onChange: (v) => {
-          const newValue = { ...value, value: v };
-          compute ? compute(v, context) : next(newValue);
-          validator(v, context)
-            .then((errors) => {
-              errorStore.setErrors(id, errors);
-              refreshView();
-            })
-            .catch((error) => {
-              console.error('规则执行错误', error.toString());
-            });
-        },
-      } as any;
+      let state = State.None;
+      if (status === Status.Waiting || status === Status.Running) {
+        state = State.Loading;
+      } else if (Status.Error === status) {
+        state = State.Error;
+      }
 
+      const { visible, disabled, value: v, dataSource, componentProps: componentPropsFromValue } = value;
       return (
         <FromItem<T>
-          rules={rules}
-          xProps={newProps}
-          status={status}
-          require={require}
-          formErrorMsg={errorStore.getErrors(id)}
-          errorMsg={errorMsg}
+          base={{
+            title,
+            desc,
+            require,
+            visible,
+            formErrorMsg: errorStore.getErrors(id),
+            errorMsg: errorMsg,
+          }}
+          formTypes={{
+            type,
+            xComponent,
+          }}
+          componentProps={{
+            ...componentProps,
+            // 状态中的组件属性，优先级高于外部传进来的
+            ...componentPropsFromValue,
+            dataSource,
+            disabled,
+            value: v,
+            state,
+            onChange: (v) => {
+              const newValue = { ...value, value: v };
+              compute ? compute(v, context) : next(newValue);
+              validator(v, context)
+                .then((errors) => {
+                  errorStore.setErrors(id, errors);
+                  refreshView();
+                })
+                .catch((error) => {
+                  console.error('规则执行错误', error.toString());
+                });
+            },
+          }}
         >
           {children}
         </FromItem>
       );
     },
-    []
+    [...Object.values(formItemProps)]
   );
 
   return (
-    <RdxView<IModel, IModel[], IFromItemBase<T>, any>
+    <RdxView<IModel<T>, IModel<T>[], any>
       id={id}
       reactionType={
         isPromise(reaction) ? ReactionType.Async : ReactionType.Sync
       }
-      defaultValue={getDefaultValue(defaultV, disabled, dataSource)}
-      moduleConfig={{
-        name,
-        type,
-        dataSource,
-        ...rest,
-        visible: defaultVisible === undefined ? true : false,
-      }}
-      areEqualForTask={(type, preConfig, nextConfig) => {
-        if (type === CompareType.ExecuteTask) {
-          return true;
-        } else {
-          return Object.keys(nextConfig).every((key) => {
-            return shallowEqual(preConfig[key], nextConfig[key]);
-          });
-        }
-      }}
+      defaultValue={getDefaultValue(defaultV, defaultDisabled, defaultVisible, dataSource, )}
       reaction={atomReaction}
       deps={deps.map((item) => ({
         id:
@@ -213,7 +284,10 @@ function getDisplayType(props: LayoutContext) {
   }
   return style;
 }
-const FormStyleItemLabel = styled.div<{ layoutType: LayoutType, require: boolean; }>`
+const FormStyleItemLabel = styled.div<{
+  layoutType: LayoutType;
+  require: boolean;
+}>`
   line-height: 28px;
   vertical-align: top;
   color: #666666;
@@ -222,7 +296,7 @@ const FormStyleItemLabel = styled.div<{ layoutType: LayoutType, require: boolean
   padding-right: 12px;
   line-height: 28px;
   ::before {
-    display: ${props => props.require ? 'visible': 'none'};
+    display: ${(props) => (props.require ? 'visible' : 'none')};
     content: '*';
     color: #ff3000;
     margin-right: 4px;
@@ -238,43 +312,13 @@ const FormStyleItemContent = styled.div<{
 const FormItemWrapper = styled.div<{ isGrid?: boolean; col?: number }>`
   margin-bottom: 16px;
 `;
-export const FromItem = <T extends Object>(props: IFromItem<T>) => {
-  const {
-    children,
-    formErrorMsg,
-    status,
-    errorMsg,
-    require,
-    xProps = {} as any,
-  } = props;
-  const {
-    title,
-    dataSource,
-    disabled,
-    visible,
-    name,
-    type,
-    xComponent,
-    desc,
-    rules,
-    
-    ...rest
-  } = xProps;
+export const FromItem = <T extends Object>(
+  props: IFormBlock<T> & { children?: React.ReactNode }
+) => {
+  const { children, formTypes, base, componentProps } = props;
+  const { type, xComponent } = formTypes;
+  const { visible, title, desc, formErrorMsg, require } = base;
   const Cmp = getRegistry().fields[xComponent || type];
-  const transformProps = {
-    name,
-    status,
-    loading: status === Status.Waiting || status === Status.Running,
-    error: status === Status.Error,
-    ...rest,
-    children,
-  } as any;
-  if (dataSource) {
-    transformProps.dataSource = dataSource;
-  }
-  if (disabled) {
-    transformProps.disabled = disabled;
-  }
   const layoutContext = useContext<LayoutContext>(LayoutContextInstance);
   const { labelCol, wrapCol, layoutType, labelTextAlign } = layoutContext;
   const isGrid = layoutType === LayoutType.Grid;
@@ -297,7 +341,6 @@ export const FromItem = <T extends Object>(props: IFromItem<T>) => {
         >
           {title && (
             <FormStyleItemLabel
-
               style={{
                 flex: `0 0 ${getWidth(labelCol)}`,
                 textAlign: labelTextAlign,
@@ -317,7 +360,7 @@ export const FromItem = <T extends Object>(props: IFromItem<T>) => {
             layoutType={layoutType}
             className='rdx-form-item-content'
           >
-            {Cmp && <Cmp {...transformProps} />}
+            {Cmp && <Cmp {...filterVaild(componentProps)} children={children} />}
             <div style={{ color: '#999999' }}>{desc}</div>
             <div style={{ color: 'red' }}>
               {isError(formErrorMsg) && formErrorMsg}
@@ -330,6 +373,15 @@ export const FromItem = <T extends Object>(props: IFromItem<T>) => {
   );
 };
 
+function filterVaild(v: { [key: string]: any}) {
+  let newV = {} as any
+  Object.keys(v).forEach(key => {
+    if(v[key] !== undefined) {
+      newV[key] = v[key]
+    }
+  })
+  return newV
+}
 function getWidth(col: number) {
   const colspan = (col / 24) * 100;
   return `${colspan}%`;

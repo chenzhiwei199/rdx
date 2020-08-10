@@ -3,11 +3,11 @@ import { useRef, useEffect } from 'react';
 import shallowequal from 'shallowequal';
 import shallowEqual from 'shallowequal';
 import { BaseModuleProps } from '../RdxView/View';
-import { BaseContext, IGraphDeps } from '../global';
+import { BaseContext, IGraphDeps, RENDER_STATUS, Status } from '../global';
 
-export function checkIsChange<IModel, IRelyModel, IModuleConfig>(
-  context: ShareContextClass<IModel, IRelyModel, IModuleConfig>,
-  oldContext: ShareContextClass<IModel, IRelyModel, IModuleConfig>,
+export function checkIsChange<IModel, IRelyModel>(
+  context: ShareContextClass<IModel, IRelyModel>,
+  oldContext: ShareContextClass<IModel, IRelyModel>,
   taskKey: string
 ) {
   const scope = context.tasksMap.get(taskKey).scope;
@@ -33,26 +33,14 @@ export enum CompareType {
 export function checkTaskChange(
   preProps: any,
   nextProps: any,
-  type: CompareType
 ) {
   if (!nextProps || !preProps) {
     return true;
   }
   let change = false;
-  const notCareKeys = ['defaultValue', 'moduleConfig', 'areEqualForTask'];
   Object.keys(preProps).forEach((key) => {
-    if (key === 'deps') {
-      change = nextProps[key].some((item, index) => {
-        return !shallowEqual(item, preProps[key][index]);
-      });
-    } else if (notCareKeys.includes(key)) {
-      if (checkIsModuleChange(preProps, nextProps, type)) {
-        change = true;
-      }
-    } else {
-      if (!shallowequal(preProps[key], nextProps[key])) {
-        change = true;
-      }
+    if (!shallowequal(preProps[key], nextProps[key])) {
+      change = true;
     }
   });
   return change;
@@ -71,22 +59,17 @@ export function checkIsModuleChange(
   return isModelConfigChange;
 }
 
-export function createBaseContext<IModel, IRelyModel, IModuleConfig>(
+export function createBaseContext<IModel, IRelyModel>(
   id: string,
-  context: ShareContextClass<IModel, IRelyModel, IModuleConfig>,
-  defaultTaskMap?: BaseModuleProps<IModel, IRelyModel, IModuleConfig, any>
-): BaseContext<IModel, IRelyModel, IModuleConfig> {
+  context: ShareContextClass<IModel, IRelyModel>,
+  defaultTaskMap?: BaseModuleProps<IModel, IRelyModel, any>
+): BaseContext<IModel, IRelyModel> {
   let taskInfo = context.tasksMap.get(id);
   taskInfo = taskInfo ? taskInfo : defaultTaskMap;
-  const { moduleConfig, deps = [], scope } = taskInfo;
+  const { deps = [], scope } = taskInfo;
   return {
     id,
     deps: deps,
-    moduleConfig,
-    depsModuleConfig: deps.map((dep) => {
-      const taskMap = context.tasksMap;
-      return taskMap.get(dep.id) && taskMap.get(dep.id).moduleConfig;
-    }),
     depsValues: ((deps || (taskInfo && taskInfo.deps) || []).map((key) => {
       const currentDeptId = key.id;
       const scope =
@@ -96,6 +79,14 @@ export function createBaseContext<IModel, IRelyModel, IModuleConfig>(
     }) as unknown) as IRelyModel,
     state: context.taskState.getAll(),
     value: context.taskState.get(id, scope),
+    status:
+      context.taskStatus.get(id) && context.taskStatus.get(id).value
+        ? context.taskStatus.get(id).value
+        : RENDER_STATUS.FirstRender,
+    loading: [Status.Waiting, Status.Running].includes(
+      context.taskStatus.get(id)?.value
+    ),
+    errorMsg: (context.taskStatus.get(id) || {}).errorMsg,
     lastDepsValue: deps.map((dep: IGraphDeps) => {
       const tasksMap = context.tasksMap;
       if (tasksMap.get(dep.id)) {

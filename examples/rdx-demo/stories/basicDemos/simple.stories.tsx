@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   RdxContext,
   RdxView,
@@ -8,12 +8,13 @@ import {
 } from '@czwcode/rdx';
 import { Input, NumberPicker, Dialog, Notification, Button } from '@alifd/next';
 import { useRef } from 'react';
+import { SchemaForm, SchemaMarkupField } from '@uform/next';
 
-const View = (context: DataContext<number, any, any>) => {
+const View = (context: DataContext<number, any>) => {
   const { value, next } = context;
   return <NumberPicker value={value} onChange={next} />;
 };
-const TotalView = (context: DataContext<number, any, any>) => {
+const TotalView = (context: DataContext<number, any>) => {
   const { depsValues } = context;
   const [unit = 0, amount = 0] = depsValues;
   return <span>{unit * amount}</span>;
@@ -40,7 +41,7 @@ export const 总价计算 = () => {
   );
 };
 
-const TotalViewFromNet = (context: DataContext<number, any, any>) => {
+const TotalViewFromNet = (context: DataContext<number, any>) => {
   const { errorMsg, value, status, refresh } = context;
   let text = value as any;
   if (status === Status.Running || status === Status.Waiting) {
@@ -63,9 +64,7 @@ const TotalViewFromNet = (context: DataContext<number, any, any>) => {
   );
 };
 const pause = (t: number) => new Promise((resolve) => setTimeout(resolve, t));
-const reaction = async (
-  context: ReactionContext<any, [number, number], any>
-) => {
+const reaction = async (context: ReactionContext<any, [number, number]>) => {
   const { updateState, depsValues } = context;
   const [unit, amount] = depsValues;
   // 模拟网络请求
@@ -91,7 +90,7 @@ export const 总价计算_响应函数 = () => {
       <strong>数量:</strong>
       <RdxView id={'数量'} render={View}></RdxView>
       <strong>总价:</strong>
-      <RdxView<any, [number, number], any, any>
+      <RdxView<any, [number, number], any>
         id={'总价'}
         reaction={reaction}
         deps={[{ id: '单价' }, { id: '数量' }]}
@@ -103,7 +102,7 @@ export const 总价计算_响应函数 = () => {
 
 export const 总价计算_请求取消 = () => {
   const ref = useRef({
-    reaction: async (context: ReactionContext<any, [number, number], any>) => {
+    reaction: async (context: ReactionContext<any, [number, number]>) => {
       const { updateState, depsValues, callbackMapWhenConflict } = context;
       const [unit, amount] = depsValues;
       callbackMapWhenConflict(() => {
@@ -138,7 +137,7 @@ export const 总价计算_请求取消 = () => {
       <strong>数量:</strong>
       <RdxView id={'数量'} render={View}></RdxView>
       <strong>总价:</strong>
-      <RdxView<any, [number, number], any, any>
+      <RdxView<any, [number, number], any>
         id={'总价'}
         reaction={ref.current.reaction}
         deps={[{ id: '单价' }, { id: '数量' }]}
@@ -148,8 +147,34 @@ export const 总价计算_请求取消 = () => {
   );
 };
 
+export const UTest = () => {
+  const [v, setV] = useState(1);
+  const [d, setD] = useState([{ label: '1', value:'1'}]);
+  return (
+    <div>
+      <Button
+        onClick={() => {
+          setV(v + 1);
+        }}
+      >
+        2222
+      </Button>
+      <Button
+        onClick={() => {
+          setD(d.concat({ label: '2', value: '2'}))
+        }}
+      >
+        2222
+      </Button>
+      <SchemaForm>
+        <SchemaMarkupField name='222' title={v} type='string' enum={d}></SchemaMarkupField>
+        <SchemaMarkupField name='333' title={v} type='string'></SchemaMarkupField>
+      </SchemaForm>
+    </div>
+  );
+};
 export default {
-  title: '基本示例|简单用法',
+  title: '基本示例/简单用法',
   parameters: {
     info: { inline: true },
   },

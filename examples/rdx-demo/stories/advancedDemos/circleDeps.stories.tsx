@@ -10,7 +10,7 @@ import {
 import { DevVisualGraphTool } from '@czwcode/rdx-plugins';
 import { NumberPicker } from '@alifd/next';
 export default {
-  title: '场景示例|循环依赖',
+  title: '场景示例/循环依赖',
   parameters: {
     info: { inline: true },
   },
@@ -43,7 +43,7 @@ const data = [
       { id: View.Amount, weight: bigWeight },
       { id: View.Unit, weight: bigWeight },
     ],
-    reaction: (context: ReactionContext<number, [number, number], any>) => {
+    reaction: (context: ReactionContext<number, [number, number]>) => {
       const { updateState, value, depsValues } = context;
       const [amount, unit] = depsValues;
       if (!amount || !unit) {
@@ -59,7 +59,7 @@ const data = [
       { id: View.Total, weight: bigWeight },
       { id: View.Unit, weight: smallWeight },
     ],
-    reaction: (context: ReactionContext<number, [number, number], any>) => {
+    reaction: (context: ReactionContext<number, [number, number]>) => {
       const { updateState: udpateState, value, depsValues } = context;
       const [total, unit] = depsValues;
       if (!total || !unit) {
@@ -75,7 +75,7 @@ const data = [
       { id: View.Total, weight: smallWeight },
       { id: View.Amount, weight: smallWeight },
     ],
-    reaction: (context: ReactionContext<number, [number, number], any>) => {
+    reaction: (context: ReactionContext<number, [number, number]>) => {
       const { updateState, value, depsValues } = context;
       const [total, amount] = depsValues;
       if (!total || !amount) {
@@ -94,7 +94,7 @@ export const 环联动 = () => {
         return (
           <span>
             <div>{item.label}</div>
-            <RdxView<number, any, any, any>
+            <RdxView<number, any, any>
               id={item.id}
               reaction={item.reaction}
               deps={item.deps}
@@ -118,7 +118,7 @@ const data2 = [
       { id: View.Amount, weight: bigWeight },
       { id: View.Unit, weight: bigWeight },
     ],
-    view: (context: DataContext<any, any, any>) => {
+    view: (context: DataContext<any, any>) => {
       const { value, depsValues, nextById } = context;
       const [amount, unit] = depsValues;
       return (
@@ -130,7 +130,7 @@ const data2 = [
         ></NumberPicker>
       );
     },
-    reaction: (context: ReactionContext<number, [number, number], any>) => {
+    reaction: (context: ReactionContext<number, [number, number]>) => {
       const { updateState, value, depsValues } = context;
       const [amount, unit] = depsValues;
       if (!amount || !unit) {
@@ -157,7 +157,7 @@ const data2 = [
         ></NumberPicker>
       );
     },
-    reaction: (context: ReactionContext<number, [number, number], any>) => {
+    reaction: (context: ReactionContext<number, [number, number]>) => {
       const { updateState: udpateState, value, depsValues } = context;
       const [total, unit] = depsValues;
       if (!total || !unit) {
@@ -184,7 +184,7 @@ const data2 = [
         ></NumberPicker>
       );
     },
-    reaction: (context: ReactionContext<number, [number, number], any>) => {
+    reaction: (context: ReactionContext<number, [number, number]>) => {
       const { updateState, value, depsValues } = context;
       const [total, amount] = depsValues;
       if (!total || !amount) {

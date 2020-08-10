@@ -11,10 +11,10 @@ import {
   PointWithWeight,
   IEdge,
 } from '@czwcode/rdx';
-export default <IModel, IRelyModel, IModuleConfig>() => {
+export default <IModel, IRelyModel>() => {
   return (
     <ShareContextConsumer>
-      {(context: ShareContextClass<IModel, IRelyModel, IModuleConfig>) => {
+      {(context: ShareContextClass<IModel, IRelyModel>) => {
         return <ChartsRenderer context={context} />;
       }}
     </ShareContextConsumer>
@@ -55,10 +55,9 @@ function drawGraph(
     });
   }
 }
-class ChartsRenderer<IModel, IRelyModel, IModuleConfig> extends Graph<
+class ChartsRenderer<IModel, IRelyModel> extends Graph<
   IModel,
-  IRelyModel,
-  IModuleConfig
+  IRelyModel
 > {
   getRef(type: GraphType) {
     return this[type] as HTMLDivElement;

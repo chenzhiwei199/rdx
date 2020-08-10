@@ -4,26 +4,24 @@ import { useEffect, useRef } from 'react';
 import { BaseModuleProps, useForceUpdate } from '../RdxView/View';
 import { usePrevious } from './base';
 import { ShareContextClass } from '../RdxContext/shareContext';
-import { StateUpdateType } from '../global';
+import { StateUpdateType, IBase } from '../global';
 
-function getTaskInfo<IModel, IRelyModel, IModuleConfig, IAction>(
-  props: BaseModuleProps<IModel, IRelyModel, IModuleConfig, IAction>
-) {
+function getTaskInfo<IModel, IRelyModel, IAction>(
+  props: BaseModuleProps<IModel, IRelyModel, IAction>
+): IBase<IModel, IRelyModel, IAction> {
   const { context, ...rest } = props;
   return rest;
 }
-export function useTaskInit<IModel, IRelyModel, IModuleConfig, IAction>(
-  props: BaseModuleProps<IModel, IRelyModel, IModuleConfig, IAction>
+export function useTaskInit<IModel, IRelyModel, IAction>(
+  props: BaseModuleProps<IModel, IRelyModel, IAction>
 ) {
   const { context, id } = props;
-  const taskInfo = getTaskInfo<IModel, IRelyModel, IModuleConfig, IAction>(
-    props
-  );
+  const taskInfo = getTaskInfo<IModel, IRelyModel, IAction>(props);
   useEffect(() => {
     if (context.parentMounted) {
       context.addOrUpdateTask(id, taskInfo, {
         notifyTask: true,
-        notifyView: true
+        notifyView: true,
       });
     } else {
       context.udpateState(id, ActionType.Update, TargetType.TasksMap, taskInfo);
@@ -43,26 +41,17 @@ export function useMount() {
   return mount;
 }
 
-export function useTaskUpdate<IModel, IRelyModel, IModuleConfig, IAction>(
-  nextProps: BaseModuleProps<IModel, IRelyModel, IModuleConfig, IAction>
+export function useTaskUpdate<IModel, IRelyModel, IAction>(
+  nextProps: BaseModuleProps<IModel, IRelyModel, IAction>
 ) {
-  const {
-    context,
-    reaction: model,
-    moduleConfig: modelConfig,
-    scope,
-    deps: depsIds,
-    id,
-  } = nextProps;
-  
+  const { context, reaction: model, scope, deps: depsIds, id, areEqualForTask } = nextProps;
+
   const mount = useMount();
   useEffect(() => {
     if (mount.current) {
       // 如果task变化，则新增节点，并删除之前的节点
-      const taskInfo = getTaskInfo<IModel, IRelyModel, IModuleConfig, IAction>(
-        nextProps
-        );
-       
+      const taskInfo = getTaskInfo<IModel, IRelyModel, IAction>(nextProps);
+
       if (!context.tasksMap.get(id)) {
         context.removeTask(id);
         context.addOrUpdateTask(id, taskInfo, {
@@ -70,32 +59,23 @@ export function useTaskUpdate<IModel, IRelyModel, IModuleConfig, IAction>(
           notifyView: false,
         });
       } else {
-        const preTaskInfo = context.tasksMap.get(id)
+        const preTaskInfo = context.tasksMap.get(id);
         // 节点信息修改，task需要刷新
-        const isTaskChange = checkTaskChange(
-          preTaskInfo,
-          taskInfo,
-          CompareType.ExecuteTask
-        );
-        const isViewChange = checkTaskChange(
-          preTaskInfo,
-          taskInfo,
-          CompareType.ViewShouldUpdate
-        );
+        const isTaskChange = checkTaskChange(preTaskInfo, taskInfo);
         context.addOrUpdateTask(id, taskInfo, {
-          notifyTask: isTaskChange,
-          notifyView: isViewChange,
+          notifyTask:  areEqualForTask ? !areEqualForTask(taskInfo, nextProps)  : isTaskChange,
+          notifyView: isTaskChange,
         });
       }
     }
-  }, [mount.current, id, depsIds, model, scope, modelConfig]);
+  }, [mount.current, id, depsIds, model, scope]);
 }
 
 export const ForceRender = 'ForceRender';
 
-export function useStateUpdate<IModel, IRelyModel, IModuleConfig>(
+export function useStateUpdate<IModel, IRelyModel>(
   id: string,
-  context: ShareContextClass<IModel, IRelyModel, IModuleConfig>,
+  context: ShareContextClass<IModel, IRelyModel>,
   type: StateUpdateType
 ) {
   const forceUpdate = useForceUpdate();

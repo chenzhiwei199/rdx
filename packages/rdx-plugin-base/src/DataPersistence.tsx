@@ -34,8 +34,8 @@ export const stateLabel = {
   [DISPLAY_STATE.CANCEL]: '取消',
   [DISPLAY_STATE.CONFLICT]: '冲突',
 };
-export interface IGraph<IModel, IRelyModel, IModuleConfig> {
-  context: ShareContextClass<IModel, IRelyModel, IModuleConfig>;
+export interface IGraph<IModel, IRelyModel> {
+  context: ShareContextClass<IModel, IRelyModel>;
 }
 
 export enum GraphType {
@@ -62,7 +62,9 @@ interface DataPersistenceHookState {
   temporarySnapShots: DataPersistSnapShot;
 }
 const DataPersistenceHook = () => {
-  const context = React.useContext<ShareContextClass<any, any, any>>(ShareContextInstance);
+  const context = React.useContext<ShareContextClass<any, any>>(
+    ShareContextInstance
+  );
   const [state, setState] = React.useState<{
     snapShots: DataPersistSnapShot[];
     temporarySnapShots: DataPersistSnapShot;
