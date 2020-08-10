@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/rdx-next-form",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "sideEffects": false,
   "main": "dist/index.js",
@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@alifd/next": "^1.20.14",
-    "@czwcode/rdx": "^0.0.2",
+    "@czwcode/rdx": "^0.0.3",
     "@types/react-color": "^3.0.4",
     "@types/react-sortable-tree": "^0.3.11",
     "react": "^16.12.0",

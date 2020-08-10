@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/rdx-plugin-base",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "sideEffects": false,
   "main": "dist/index.js",
@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@alifd/next": "^1.20.14",
-    "@czwcode/rdx": "^0.0.2",
+    "@czwcode/rdx": "^0.0.3",
     "@types/rc-slider": "^8.6.5",
     "echarts": "^4.8.0",
     "eventemitter3": "^4.0.4",
