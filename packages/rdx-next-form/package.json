@@ -6,6 +6,10 @@
   "main": "dist/index.js",
   "module": "esm/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:czwcode/rdx.git"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -59,5 +63,5 @@
     "react-json-view": "^1.19.1",
     "react-sortable-tree": "^2.7.1"
   },
-  "gitHead": "24a52b01b8158b5dab0a1425738f8843231dcc76"
+  "gitHead": "64f081f755d0a62c14591745953018a50a8b8dbd"
 }

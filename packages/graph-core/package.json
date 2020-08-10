@@ -5,10 +5,6 @@
   "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:czwcode/rdx.git"
-  },
   "scripts": {
     "test": "jest",
     "test-watch": "jest --watch",
@@ -16,6 +12,10 @@
     "build": "tsc -p ./tsconfig.build.json",
     "pub": "tsc && npm run publish",
     "watch": "tsc --watch  -p ./tsconfig.build.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:czwcode/rdx.git"
   },
   "publishConfig": {
     "access": "public"
@@ -34,5 +34,5 @@
     "tslint-plugin-prettier": "^2.0.1",
     "typescript": "^3.8.3"
   },
-  "gitHead": "24a52b01b8158b5dab0a1425738f8843231dcc76"
+  "gitHead": "64f081f755d0a62c14591745953018a50a8b8dbd"
 }
