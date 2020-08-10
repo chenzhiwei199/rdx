@@ -1,10 +1,13 @@
 {
   "name": "@czwcode/task-queue",
-  "version": "1.0.56",
+  "version": "0.0.1",
   "description": "",
   "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "scripts": {
     "test": "jest",
     "test-watch": "jest --watch",
@@ -34,9 +37,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@czwcode/graph-core": "^1.0.61",
-    "eventemitter3": "^4.0.0",
-    "graphlib": "^2.1.8"
+    "@czwcode/graph-core": "^0.x"
   },
   "gitHead": "24a52b01b8158b5dab0a1425738f8843231dcc76"
 }

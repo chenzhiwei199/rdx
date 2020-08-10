@@ -6,6 +6,9 @@
   "main": "dist/index.js",
   "module": "esm/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "scripts": {
     "test": "jest",
     "test-build": "rollup -c",
@@ -16,9 +19,6 @@
     "watch": "tsc --watch -p ./tsconfig.build.json",
     "dev": "start-storybook -p 6008 ",
     "pub": "tsc && npm run publish"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "author": "",
   "license": "ISC",
@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "@alifd/next": "^1.20.14",
+    "@czwcode/rdx": "0.x",
     "@types/react-color": "^3.0.4",
     "@types/react-sortable-tree": "^0.3.11",
     "react": "^16.12.0",

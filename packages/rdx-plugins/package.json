@@ -1,10 +1,13 @@
 {
   "name": "@czwcode/rdx-plugins",
-  "version": "0.1.17",
+  "version": "0.0.1",
   "description": "",
   "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "scripts": {
     "test": "jest",
     "test-watch": "jest --watch",
@@ -31,8 +34,8 @@
   },
   "dependencies": {
     "@alifd/next": "^1.20.14",
-    "@czwcode/rdx": "^0.1.17",
-    "@czwcode/rdx-plugin-base": "^0.1.17",
+    "@czwcode/rdx": "^0.x",
+    "@czwcode/rdx-plugin-base": "^0.x",
     "@types/rc-slider": "^8.6.5",
     "echarts": "^4.8.0",
     "eventemitter3": "^4.0.4",

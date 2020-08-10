@@ -1,7 +1,7 @@
 import React from 'react';
 import AceEditor from '../AceEditor';
-import { SvgIcon } from '@alifd/next';
-const MyIcons = (SvgIcon as any).loadIconfont({
+import { Icon } from '@alifd/next';
+const MyIcons = Icon.createFromIconfontCN({
   scriptUrl: '//at.alicdn.com/t/font_1944124_h80quc5kqea.js',
 });
 export default (props) => {
