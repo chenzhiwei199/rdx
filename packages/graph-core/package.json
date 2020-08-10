@@ -1,12 +1,13 @@
 {
   "name": "@czwcode/graph-core",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:czwcode/rdx.git"
   },
   "scripts": {
     "test": "jest",
@@ -16,7 +17,10 @@
     "pub": "tsc && npm run publish",
     "watch": "tsc --watch  -p ./tsconfig.build.json"
   },
-  "author": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "czw",
   "license": "ISC",
   "devDependencies": {
     "@babel/core": "^7.7.2",

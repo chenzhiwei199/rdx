@@ -16,7 +16,7 @@
     "pub": "tsc && npm run publish"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
+    "access": "public"
   },
   "author": "czw",
   "license": "ISC",

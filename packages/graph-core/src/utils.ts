@@ -1,5 +1,4 @@
 import { Point } from './typings/global';
-import graphlib from 'graphlib'
 /**
  * 根据依赖，需要发送通知的下游节点
  * @param config

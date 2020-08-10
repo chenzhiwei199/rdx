@@ -25,6 +25,5 @@
     "typescript": "3.9.3"
   },
   "dependencies": {
-    "@czwcode/graph-core": "^1.0.0"
   }
 }
