@@ -1,5 +1,5 @@
 import React from 'react';
-import { RdxContext, Status, RdxView, IBase } from '@czwcode/rdx';
+import { RdxContext, Status, RdxView, IRdxView } from '@czwcode/rdx';
 import uuid from 'uuid/v1';
 import { produce } from 'immer';
 import { DevVisualGraphTool, DevVisualTableTool } from '@czwcode/rdx-plugins';
@@ -148,7 +148,7 @@ const AddButton = () => {
 };
 const List = () => {
   const listRef = React.useRef<
-    IBase<{ dataSource: IToDo[] }, [VisibilityFilters], any>
+    IRdxView<{ dataSource: IToDo[] }, [VisibilityFilters], any>
   >({
     id: View.List,
     defaultValue: {

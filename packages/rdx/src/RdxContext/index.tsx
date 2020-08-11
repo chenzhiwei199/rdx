@@ -21,13 +21,17 @@ const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
     withRef,
     createStore,
   } = props;
+  // 受控标记
   const isUnderControl = state !== undefined;
   const currentState = state || initializeState || {};
+  // 创建store
   function createTaskState(value: any) {
     return createStore
       ? createStore(currentState)
       : new ScopeObject(currentState);
   }
+
+  // context下保留不变的store
   const store = React.useRef(
     new ShareContextClass<IModel, IRelyModel>({
       ...initValue(),
@@ -35,6 +39,8 @@ const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
       taskState: createTaskState(currentState),
     })
   );
+
+  // 绑定批量更新方法
   store.current.onPropsChange = onChange;
   store.current.onPropsStateChange = onStateChange;
   const uiNotifyBatcherOfChange = React.useRef<any>(null);
@@ -56,7 +62,10 @@ const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
   };
 
   withRef && (withRef.current = store.current);
+  // 生命周期 context Init
   store.current.subject.emit(TaskEventType.RdxContextInit);
+
+  // 序列化状态更新
   React.useEffect(() => {
     if (isUnderControl) {
       const diffObjectKeys = Array.from(
@@ -74,6 +83,8 @@ const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
       });
     }
   }, [state]);
+
+  // 初始化组件绑定
   React.useEffect(() => {
     const queue = store.current.queue;
     store.current.parentMounted = true;

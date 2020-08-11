@@ -33,6 +33,7 @@ export default class CommonQueue<T> extends DeliverByPreDefinedTask<T> {
    * @param newWho 谁的下游节点
    */
   notifyDownstream = (who: TriggerPoint | TriggerPoint[]) => {
+    // @ts-ignore
     const newWho = normalizeSingle2Arr<TriggerPoint>(who);
     if (newWho.every((w) => isString(w.key))) {
       this.deliver(newWho);

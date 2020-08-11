@@ -91,3 +91,9 @@
 
 #### 思考
 1. 响应式函数、状态组件、管道
+
+### 依赖收集
+- 声明式收集
+- 自动化收集
+  https://github.com/nx-js/observer-util?spm=ata.13261165.0.0.367462b4wTnzlR
+  https://github.com/alloc/wana?spm=ata.13261165.0.0.367462b4wTnzlR

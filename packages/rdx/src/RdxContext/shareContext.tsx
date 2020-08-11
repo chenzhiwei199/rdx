@@ -1,7 +1,7 @@
 import React, { Consumer, Provider } from 'react';
 import {
   NodeStatus,
-  IBase,
+  IRdxView,
   ReactionContext,
   STATUS_TYPE,
   TriggerPoint,
@@ -46,7 +46,7 @@ export class ShareContextClass<IModel, IRelyModel>
   dirtySets: Set<string> = new Set();
   taskScheduler: PreDefinedTaskQueue<IModel>;
   subject?: EventEmitter<TaskEventType, ProcessGraphContent>;
-  tasksMap: BaseMap<IBase<IModel, IRelyModel, any>>;
+  tasksMap: BaseMap<IRdxView<IModel, IRelyModel, any>>;
   taskState: Base<IModel>;
   preTaskState: Base<IModel>;
   taskStatus: BaseObject<TaskStatus>;
@@ -133,9 +133,6 @@ export class ShareContextClass<IModel, IRelyModel>
         return this.tasksMap.get(key).scope === scope;
       }
     );
-    // .filter((key) => {
-    //   return this.taskState.get(key, scope) !== this.taskState.get(key);
-    // });
     this.mergeStateByScope(scope);
     ReactDOM.unstable_batchedUpdates(() => {
       scopeKeys.forEach((scopeKey) => {
@@ -289,48 +286,46 @@ export class ShareContextClass<IModel, IRelyModel>
   };
   getTask() {
     const tasks = [...this.tasksMap.getAll().values()];
-    const newTasks = (tasks as IBase<
-      IModel,
-      IRelyModel,
-      any
-    >[]).map((task) => {
-      // 判断是否是初始化应该在事件初始化的时候，如果放在回调中，那么判断就滞后了，用了回调时的taskMap判断了
-      return {
-        key: task.id,
-        deps: task.deps,
-        taskType: task.reactionType,
-        scope: task.scope,
-        task: (taskInfo: TaskInfo) => {
-          const { key } = taskInfo;
-          let defaultTask;
-          // 默认任务执行方式
-          if (task.reactionType === ReactionType.Sync) {
-            defaultTask = (
-              currentTaskInfo: ReactionContext<IModel, IRelyModel>
-            ) => {
-              currentTaskInfo.updateState(currentTaskInfo.value);
-            };
-          } else {
-            defaultTask = (
-              currentTaskInfo: ReactionContext<IModel, IRelyModel>
-            ) => {
-              return new Promise((resolve) => {
-                resolve();
-              });
-            };
-          }
-          if (!!task.reaction) {
-            defaultTask = task.reaction;
-          }
-          return defaultTask(
-            this.getTaskInfo(key, taskInfo) as ReactionContext<
-              IModel,
-              IRelyModel
-            >
-          ) as unknown;
-        },
-      };
-    }) as Task<IModel>[];
+    const newTasks = (tasks as IRdxView<IModel, IRelyModel, any>[]).map(
+      (task) => {
+        // 判断是否是初始化应该在事件初始化的时候，如果放在回调中，那么判断就滞后了，用了回调时的taskMap判断了
+        return {
+          key: task.id,
+          deps: task.deps,
+          taskType: task.reactionType,
+          scope: task.scope,
+          task: (taskInfo: TaskInfo) => {
+            const { key } = taskInfo;
+            let defaultTask;
+            // 默认任务执行方式
+            if (task.reactionType === ReactionType.Sync) {
+              defaultTask = (
+                currentTaskInfo: ReactionContext<IModel, IRelyModel>
+              ) => {
+                currentTaskInfo.updateState(currentTaskInfo.value);
+              };
+            } else {
+              defaultTask = (
+                currentTaskInfo: ReactionContext<IModel, IRelyModel>
+              ) => {
+                return new Promise((resolve) => {
+                  resolve();
+                });
+              };
+            }
+            if (!!task.reaction) {
+              defaultTask = task.reaction;
+            }
+            return defaultTask(
+              this.getTaskInfo(key, taskInfo) as ReactionContext<
+                IModel,
+                IRelyModel
+              >
+            ) as unknown;
+          },
+        };
+      }
+    ) as Task<IModel>[];
     return newTasks;
   }
 
@@ -407,7 +402,7 @@ export class ShareContextClass<IModel, IRelyModel>
   }
   addOrUpdateTask(
     id: string,
-    taskInfo: IBase<any, any, any>,
+    taskInfo: IRdxView<any, any, any>,
     options: {
       notifyView?: boolean;
       notifyTask?: boolean;
@@ -478,7 +473,7 @@ export interface ShareContext<IModel, IRelyModel> {
    * 任务信息
    */
   name?: string;
-  tasksMap: BaseMap<IBase<IModel, IRelyModel, any>>;
+  tasksMap: BaseMap<IRdxView<IModel, IRelyModel, any>>;
   taskState: Base<IModel>;
   taskStatus: BaseObject<TaskStatus>;
   cancelMap: BaseMap<() => void>;

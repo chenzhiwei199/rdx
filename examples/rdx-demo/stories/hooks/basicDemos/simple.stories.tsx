@@ -1,40 +1,48 @@
 import React from 'react';
 import {
   RdxContext,
-  RdxView,
-  useRdxReaction,
   useRdxState,
-  DataContext,
-  ReactionContext,
-  Status,
+  useRdxPreview
 } from '@czwcode/rdx';
 import { DevVisualGraphTool } from '@czwcode/rdx-plugins';
-import { Input, NumberPicker, Dialog, Notification, Button } from '@alifd/next';
-import { useRef } from 'react';
+import {  NumberPicker } from '@alifd/next';
 
-const View = (context: DataContext<number, any, any>) => {
-  const { value, next } = context;
-  return <NumberPicker value={value} onChange={next} />;
+
+export default {
+  title: '基本示例/hooks用法',
+  parameters: {
+    info: { inline: true },
+  },
 };
-const TotalView = (context: DataContext<number, any, any>) => {
-  const [_] = useRdxReaction({
+const TotalView = () => {
+  const dataContext = useRdxState<number, [number,number], any>({
+    recordStatus: false,
+    id: '总价',
     deps: [{ id: '单价' }, { id: '数量' }],
   });
-  const { depsValues } = context;
+  const dataContext2 = useRdxState<number, [number,number], any>({
+    recordStatus: false,
+    id: '总价',
+    deps: [{ id: '单价' }, { id: '数量' }],
+  });
+  const { depsValues } = dataContext;
   const [unit = 0, amount = 0] = depsValues;
-  console.log('----' + 'total render');
-  return <span>{unit * amount}</span>;
+  console.log('2222')
+  return <span>{unit * amount}----{dataContext2.value}</span>;
 };
 const BaseView = ({ id }) => {
-  const [state, setState] = useRdxState({
+  const { value, next } = useRdxState({
     id: id,
     defaultValue: 0,
   });
-  console.log(id + '----' + 'render');
-  return <NumberPicker value={state} onChange={setState} />;
+  return <NumberPicker value={value} onChange={(v) => {
+    console.log("v", v)
+    next(v)
+  }} />;
 };
 
 export const 总价计算 = () => {
+  console.log("111")
   return (
     <RdxContext>
       <strong style={{ fontSize: 16 }}>
@@ -47,13 +55,7 @@ export const 总价计算 = () => {
       <strong>数量:</strong>
       <BaseView id={'数量'} />
       <strong>总价:</strong>
-      <RdxView
-        recordStatus={false}
-        id={'总价'}
-        deps={[{ id: '单价' }, { id: '数量' }]}
-        render={TotalView}
-      ></RdxView>
-      <DevVisualGraphTool />
+      <TotalView />
     </RdxContext>
   );
 };

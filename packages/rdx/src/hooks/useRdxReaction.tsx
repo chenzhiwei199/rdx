@@ -1,85 +1,26 @@
-import { useContext, useRef, useEffect, useMemo, useCallback } from 'react';
-import { ShareContextInstance, TaskStatus } from '../RdxContext/shareContext';
-import { IRdxReactionProps, StateUpdateType, IRdxState } from '../global';
-import { useStateUpdate, useTaskInit, useTaskUpdate } from './useTaskHooks';
+import { useContext, useRef } from 'react';
+import { ShareContextInstance } from '../RdxContext/shareContext';
+import {  DataContext, IRdxViewBase } from '../global';
+import { useTaskBinding } from './useTaskHooks';
+import { createBaseContext, createMutators } from '../utils';
+ 
+export type IRdxStateHook<IModel, IRelyModel, IAction> = IRdxViewBase<IModel, IRelyModel, IAction> & { id: string}
+export type IRdxPreviewHook<IModel, IRelyModel, IAction> = IRdxViewBase<IModel, IRelyModel, IAction> 
 
-// let reactionId = 0;
-// export function useRdxReaction<IModel, IRelyModel>(
-//   props: IRdxReactionProps<IModel, IRelyModel>
-// ): [TaskStatus] {
-//   const uniqueId = useRef('reaction-' + reactionId++);
-//   const context = useContext(ShareContextInstance);
-//   const { deps: deps, reaction, recordStatus, reactionType } = props;
-//   useEffect(() => {
-//     context.addOrUpdateTask(
-//       uniqueId.current,
-//       {
-//         id: uniqueId.current,
-//         deps: deps,
-//         reaction,
-//         recordStatus,
-//         reactionType,
-//       },
-//       { notifyTask: false, notifyView: true }
-//     );
-//   });
+export function useRdxState<IModel, IRelyModel, IAction>(props: IRdxStateHook<IModel, IRelyModel, IAction>) {
+  const context =useContext(ShareContextInstance)
+  useTaskBinding<IModel, IRelyModel, IAction>({...props,context})
+  const data: DataContext<IModel, IRelyModel> = {
+    ...createBaseContext(props.id, context, props),
+    ...createMutators(props.id, context),
+  };
+  return data
+}
 
-//   // useStateUpdate(uniqueId.current, context, StateUpdateType.ReactionStatus);
-//   return [context.taskStatus.get(uniqueId.current)];
-// }
 
-// export  function  useRdxDepsState(props: IRdxReactionProps<IModel, IRelyModel>) {
-//   const uniqueId = useRef('reaction-' + reactionId++);
-//   const context = useContext(ShareContextInstance);
-//   const { deps: deps, reaction, recordStatus, reactionType } = props;
-// }
-// export type ISetState<IModel> = IModel | ((state: IModel) => IModel);
-// export function useRdxState<IModel, IAction>(
-//   props: IRdxState<IModel, IAction>
-// ): [IModel, (state: ISetState<IModel>) => void, (action: IAction) => void] {
-//   const context = useContext(ShareContextInstance);
-//   const { id, defaultValue, reducer } = props;
-//   useTaskInit({
-//     context,
-//     id,
-//     defaultValue,
-//     reducer,
-//   });
-//   useTaskUpdate({
-//     context,
-//     id,
-//     defaultValue,
-//     reducer,
-//   });
-//   useStateUpdate(id, context, StateUpdateType.State);
-//   return [
-//     context.taskState.get(id),
-//     (state: ISetState<IModel>) => {
-//       let newState = state;
-//       if (typeof state == 'function') {
-//         newState = (state as (state: IModel) => IModel)(
-//           context.getTaskState(id, undefined)
-//         );
-//       }
-//       context.next(id, newState);
-//     },
-//     (action: IAction) => {
-//       context.dispatchAction(id, action);
-//     },
-//   ];
-// }
+let reactionPreviewId = 0;
+export function useRdxPreview<IModel, IRelyModel, IAction>(props: Omit<IRdxPreviewHook<IModel, IRelyModel, IAction>, 'reaction'>   ) {
+  const uniqueId = useRef('reaction-' + reactionPreviewId++);
+  return useRdxState({...props, id: uniqueId.current})
+}
 
-// function setState<IModel>(id: string) {
-//   const context = useContext(ShareContextInstance);
-//   return useCallback(() => {
-//     (state: ISetState<IModel>) => {
-//       let newState = state;
-//       if (typeof state == 'function') {
-//         newState = (state as (state: IModel) => IModel)(
-//           context.getTaskState(id, undefined)
-//         );
-//       }
-//       context.next(id, newState);
-//     };
-//   }, []);
-// }

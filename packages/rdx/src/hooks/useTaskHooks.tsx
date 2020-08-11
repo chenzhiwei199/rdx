@@ -1,16 +1,33 @@
-import { CompareType, checkTaskChange } from '../utils';
+import { checkTaskChange } from '../utils';
 import { ActionType, TargetType } from '../RdxContext/interface';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useContext } from 'react';
 import { BaseModuleProps, useForceUpdate } from '../RdxView/View';
-import { usePrevious } from './base';
-import { ShareContextClass } from '../RdxContext/shareContext';
-import { StateUpdateType, IBase } from '../global';
+import {
+  ShareContextClass,
+  ShareContextInstance,
+} from '../RdxContext/shareContext';
+import { StateUpdateType, IRdxView } from '../global';
 
 function getTaskInfo<IModel, IRelyModel, IAction>(
   props: BaseModuleProps<IModel, IRelyModel, IAction>
-): IBase<IModel, IRelyModel, IAction> {
+): IRdxView<IModel, IRelyModel, IAction> {
   const { context, ...rest } = props;
   return rest;
+}
+/**
+ * 任务绑定
+ * @param props
+ */
+export function useTaskBinding<IModel, IRelyModel, IAction>(
+  props: BaseModuleProps<IModel, IRelyModel, IAction>
+) {
+  useTaskInit(props);
+  useTaskUpdate(props);
+  useStateUpdate(
+    props.id,
+    useContext(ShareContextInstance),
+    StateUpdateType.State
+  );
 }
 export function useTaskInit<IModel, IRelyModel, IAction>(
   props: BaseModuleProps<IModel, IRelyModel, IAction>
@@ -44,7 +61,14 @@ export function useMount() {
 export function useTaskUpdate<IModel, IRelyModel, IAction>(
   nextProps: BaseModuleProps<IModel, IRelyModel, IAction>
 ) {
-  const { context, reaction: model, scope, deps: depsIds, id, areEqualForTask } = nextProps;
+  const {
+    context,
+    reaction: model,
+    scope,
+    deps: depsIds,
+    id,
+    areEqualForTask,
+  } = nextProps;
 
   const mount = useMount();
   useEffect(() => {
@@ -63,7 +87,9 @@ export function useTaskUpdate<IModel, IRelyModel, IAction>(
         // 节点信息修改，task需要刷新
         const isTaskChange = checkTaskChange(preTaskInfo, taskInfo);
         context.addOrUpdateTask(id, taskInfo, {
-          notifyTask:  areEqualForTask ? !areEqualForTask(taskInfo, nextProps)  : isTaskChange,
+          notifyTask: areEqualForTask
+            ? !areEqualForTask(taskInfo, nextProps)
+            : isTaskChange,
           notifyView: isTaskChange,
         });
       }

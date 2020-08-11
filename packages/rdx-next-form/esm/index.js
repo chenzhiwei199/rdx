@@ -2918,7 +2918,6 @@ function useRdxReaction(props) {
       { notifyTask: false, notifyView: true }
     );
   });
-  // useStateUpdate(uniqueId.current, context, StateUpdateType.ReactionStatus);
   return [context.taskStatus.get(uniqueId.current)];
 }
 function useRdxState(props) {

@@ -10,7 +10,8 @@ module.exports = {
     '@storybook/addon-storysource'
   ],
   webpackFinal: async (config) => {
-    config.devtool = false
+    console.log(process.NODE_ENV)
+    // config.devtool = false
     config.resolve.plugins = [new TsconfigPathsPlugin({
       configFile: './tsconfig.json',
       silent: true

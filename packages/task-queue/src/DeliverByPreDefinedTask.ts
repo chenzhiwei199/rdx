@@ -139,8 +139,11 @@ export default class DeliverByCallback<T> extends Base<Task<T>> {
     if (!this.scheduledCore) {
       this.scheduledCore = new ScheduledCore(runningPointsWithEndPoint);
     }
+    // 停止任务
     this.scheduledCore.stop();
+    // 更新任务
     this.scheduledCore.update(runningPointsWithEndPoint);
+    // 启动任务
     this.scheduledCore.start(
       this.callbackFunction.bind(this, new Graph(newPendingPoints))
     );

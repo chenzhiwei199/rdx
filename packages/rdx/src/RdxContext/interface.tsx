@@ -1,17 +1,16 @@
 import {
-  TASK_INIT_TYPE,
   ReactionContext,
   STATUS_TYPE,
   Point,
   ISnapShotTrigger,
   IStatusInfo,
   TASK_PROCESS_TYPE,
-  IBase,
+  IRdxView,
   BasePoint,
   PreDefinedTaskQueue,
 } from '../global';
 import { TaskStatus, ShareContextClass } from './shareContext';
-import { BaseObject, ScopeObject, Base } from './core';
+import {  Base } from './core';
 
 export type MapObject<T> = { [key: string]: T | null };
 
@@ -19,8 +18,7 @@ export interface RdxContextProps<IModel, IRelyModel> {
   name?: string;
   children: React.ReactNode;
   withRef?: React.MutableRefObject<ShareContextClass<IModel, IRelyModel>>;
-  // 任务基础数据，更新数据可能会触发调度更新，会对数据进行shallow Equal
-  //  外部修改数据的方式，如果数据修改了，必须更新对象，否则将失效
+  // 全局状态数据，更新数据可能会触发调度更新，会对数据进行shallow Equal，更新必须是新对象
   state?: MapObject<IModel>;
   initializeState?: MapObject<IModel>;
   onStateChange?: (key: string, value: any, type: ActionType) => void;
@@ -64,7 +62,7 @@ export interface Action<IModel, IRelyModel> {
     | {
         key: string;
         value:
-          | IBase<IModel, IRelyModel, any>
+          | IRdxView<IModel, IRelyModel, any>
           | TaskStatus
           | IModel
           | (() => void)
