@@ -12,9 +12,9 @@ export type Callback = (
 ) => void;
 export type BaseCallback = (currentKey: string, next: () => void) => void;
 
-export type ASYNC_TASK<T> = (taskInfo: TaskInfo) => Promise<void>;
-export type SYNC_TASK<T> = (taskInfo: TaskInfo) => void;
-export type MixedTask<T> = ASYNC_TASK<T> | SYNC_TASK<T>;
+export type ASYNC_TASK = (taskInfo: TaskInfo) => Promise<void>;
+export type SYNC_TASK = (taskInfo: TaskInfo) => void;
+export type MixedTask = ASYNC_TASK | SYNC_TASK;
 export interface IDeps {
   id: string;
   weight?: number;
@@ -22,11 +22,7 @@ export interface IDeps {
 export interface PointWithWeight extends BasePoint {
   deps?: IDeps[];
 }
-export interface Task<T> extends PointWithWeight {
-  taskType?: ReactionType;
-  task: MixedTask<T>;
-  reusableDetection?: (taskInfo: Point) => boolean;
-}
+
 
 export interface TaskInfo extends Point {
   // 当前任务被取消的标记
@@ -38,6 +34,9 @@ export interface TaskInfo extends Point {
 export interface CallbackInfo {
   currentKey?: string | null;
   isEnd?: boolean;
+  onError?: (error: Error) => void,
+  onSuccess?: () => void,
+  isCancel?: () => boolean,
 }
 
 export enum ReactionType {

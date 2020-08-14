@@ -2,7 +2,8 @@ import React from 'react';
 import {
   RdxContext,
   useRdxState,
-  useRdxPreview
+  useRdxContextAutoId,
+  useRdxContext
 } from '@czwcode/rdx';
 import { DevVisualGraphTool } from '@czwcode/rdx-plugins';
 import {  NumberPicker } from '@alifd/next';
@@ -15,29 +16,23 @@ export default {
   },
 };
 const TotalView = () => {
-  const dataContext = useRdxState<number, [number,number], any>({
+  const dataContext = useRdxContextAutoId<number, [number,number], any>({
     recordStatus: false,
-    id: '总价',
-    deps: [{ id: '单价' }, { id: '数量' }],
-  });
-  const dataContext2 = useRdxState<number, [number,number], any>({
-    recordStatus: false,
-    id: '总价',
     deps: [{ id: '单价' }, { id: '数量' }],
   });
   const { depsValues } = dataContext;
   const [unit = 0, amount = 0] = depsValues;
   console.log('2222')
-  return <span>{unit * amount}----{dataContext2.value}</span>;
+  return <span>{unit * amount}</span>;
 };
 const BaseView = ({ id }) => {
-  const { value, next } = useRdxState({
+  const [state, setState] = useRdxState({
     id: id,
     defaultValue: 0,
   });
-  return <NumberPicker value={value} onChange={(v) => {
+  return <NumberPicker value={state} onChange={(v) => {
     console.log("v", v)
-    next(v)
+    setState(v)
   }} />;
 };
 

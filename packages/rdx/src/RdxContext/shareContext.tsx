@@ -7,6 +7,8 @@ import {
   TriggerPoint,
   StateUpdateType,
   IStateInfo,
+  ASYNC_TASK,
+  SYNC_TASK,
 } from '../global';
 import { BaseMap, BaseObject, ScopeObject, Base } from './core';
 import { MapObject, ProcessGraphContent, TargetType } from './interface';
@@ -15,14 +17,15 @@ import {
   TaskEventType,
   PreDefinedTaskQueue,
   ISnapShotTrigger,
-  TaskInfo,
-  ReactionType,
-  Task,
   CallbackInfo,
+  union,
 } from '@czwcode/task-queue';
 import { ActionType } from './interface';
 import ReactDOM from 'react-dom';
-import { createBaseContext } from '../utils';
+import { createBaseContext, isPromise, isAsyncFunction } from '../utils';
+import { IEventType } from '../../../task-queue/src/DeliverByPreDefinedTask';
+import logger from '../utils/log';
+import allAtoms, { RdxNode, IRdxAtomConfig } from '../rdxValues/rdxAtom';
 export interface TaskStatus {
   value: NodeStatus;
   quiet?: boolean;
@@ -46,9 +49,9 @@ export class ShareContextClass<IModel, IRelyModel>
   dirtySets: Set<string> = new Set();
   taskScheduler: PreDefinedTaskQueue<IModel>;
   subject?: EventEmitter<TaskEventType, ProcessGraphContent>;
+  preTaskState: Base<IModel>;
   tasksMap: BaseMap<IRdxView<IModel, IRelyModel, any>>;
   taskState: Base<IModel>;
-  preTaskState: Base<IModel>;
   taskStatus: BaseObject<TaskStatus>;
   batchUiChange: any;
   batchTriggerChange: any;
@@ -64,67 +67,42 @@ export class ShareContextClass<IModel, IRelyModel>
     this.eventEmitter = new EventEmitter();
     this.name = config.name;
     this.subject = new EventEmitter<TaskEventType, ProcessGraphContent>();
-    this.taskScheduler = new PreDefinedTaskQueue<IModel>(
-      [],
-      this.preChange.bind(this),
-      this.onChange,
-      this.onError.bind(this),
-      (type, content) => {
-        this.subject.emit(type, content);
-        // 构成新运行图的时候，设置状态
-        if (type === TaskEventType.ProcessRunningGraph) {
-          const {
-            currentRunningPoints,
-            triggerPoints,
-            conflictPoints,
-          } = content as ISnapShotTrigger;
+    this.taskScheduler = new PreDefinedTaskQueue<IModel>([]);
+    const ee = this.taskScheduler.getEE();
 
-          // 通知冲突的点
-          conflictPoints.forEach((id) => {
-            if (this.isRecordStatus(id)) {
-              this.udpateState(id, ActionType.Update, TargetType.TaskStatus, {
-                value: NodeStatus.IDeal,
-                errorMsg: undefined,
-              });
-              this.notifyModule(id);
-            }
-          });
-
-          currentRunningPoints.forEach((item) => {
-            const { key: id } = item;
-            if (this.isRecordStatus(id)) {
-              const status = this.getTaskStatus(id);
-              this.udpateState(id, ActionType.Update, TargetType.TaskStatus, {
-                value: NodeStatus.Waiting,
-                errorMsg: undefined,
-              });
-              if (!status || status.value !== NodeStatus.Waiting) {
-                this.notifyModule(id);
-              }
-            }
-          });
+    ee.on(IEventType.onStatusChange, (content) => {
+      this.subject.emit(TaskEventType.StatusChange, content);
+    });
+    ee.on(IEventType.onStart, (content) => {
+      this.subject.emit(TaskEventType.ProcessRunningGraph, content);
+    });
+    ee.on(IEventType.onBeforeCall, this.preChange);
+    ee.on(IEventType.onCall, this.onChange);
+    ee.on(IEventType.onSuccess, this.onSuccess);
+    ee.on(IEventType.onError, this.onError);
+    ee.on(IEventType.onStart, (content: ISnapShotTrigger) => {
+      const { currentRunningPoints, triggerPoints, conflictPoints } = content;
+      // 通知冲突的点
+      currentRunningPoints.forEach((item) => {
+        const { key: id } = item;
+        if (this.isRecordStatus(id)) {
+          const status = this.getTaskStatus(id);
+          if (!status || status.value !== NodeStatus.Waiting) {
+            this.udpateState(id, ActionType.Update, TargetType.TaskStatus, {
+              value: NodeStatus.Waiting,
+              errorMsg: undefined,
+            });
+            this.notifyModule(id);
+          }
         }
-      }
-    );
+      });
+    });
     this.tasksMap = config.tasksMap;
     this.taskState = config.taskState;
     this.taskStatus = config.taskStatus;
     this.cancelMap = config.cancelMap;
   }
 
-  initSchedule() {
-    this.taskScheduler.updateTasks(this.getTask());
-    const firstPoints = this.taskScheduler.getFirstAllPoints();
-    // 初始化事件
-    this.subject.emit(TaskEventType.Init);
-    if (firstPoints.length > 0) {
-      this.executeTask(
-        firstPoints.map(
-          (item) => ({ key: item, downStreamOnly: false } as TriggerPoint)
-        )
-      );
-    }
-  }
   mergeScopeState2Global(id: string) {
     const { scope } = this.tasksMap.get(id);
 
@@ -181,10 +159,7 @@ export class ShareContextClass<IModel, IRelyModel>
     const { recordStatus = true } = task;
     if (typeof recordStatus === 'function') {
       return recordStatus(
-        this.getTaskInfo(key, task as any) as ReactionContext<
-          IModel,
-          IRelyModel
-        >
+        this.getTaskInfo(key) as ReactionContext<IModel, IRelyModel>
       );
     } else {
       return recordStatus;
@@ -195,7 +170,8 @@ export class ShareContextClass<IModel, IRelyModel>
    * 单个任务执行前的hook
    * @memberof BaseFieldContext
    */
-  preChange(key: string | null) {
+  preChange = (config: { currentKey: string }) => {
+    const { currentKey: key } = config;
     // LOADING 的多种模式，1.仅在当前任务触发前开启 2. 批量任务开始时，全部置为为loading状态
     if (key) {
       if (this.isRecordStatus(key)) {
@@ -206,19 +182,18 @@ export class ShareContextClass<IModel, IRelyModel>
         this.notifyModule(key);
       }
     }
-  }
+  };
 
   /**
    * 任务流执行失败的回调
    *
    * @memberof BaseFieldContext
    */
-  onError(
+  onError = (
     currentKey: string,
     notFinishPoint: string[],
-    errorMsg: string,
-    callbackInfo: CallbackInfo
-  ) {
+    errorMsg: string
+  ) => {
     let keys = [currentKey];
     keys = keys.concat(notFinishPoint);
     keys.forEach((k) => {
@@ -230,7 +205,7 @@ export class ShareContextClass<IModel, IRelyModel>
       }
       this.notifyModule(k);
     });
-  }
+  };
 
   notifyModule(id: string, now: boolean = false) {
     if (now) {
@@ -240,15 +215,44 @@ export class ShareContextClass<IModel, IRelyModel>
       this.batchUiChange();
     }
   }
+
+  onSuccess = (callback: CallbackInfo) => {
+    const { currentKey: key } = callback;
+    this.udpateState(key, ActionType.Update, TargetType.TaskStatus, {
+      value: NodeStatus.IDeal,
+    });
+    this.preTaskState = this.taskState.clone();
+    const { deps = [] } = this.getTaskMap(key);
+    // 如果没有处理函数，则不更新模块
+    if (
+      this.dirtySets.has(key) ||
+      deps.some((dep) => this.dirtySets.has(dep.id))
+    ) {
+      // 组件有任务执行的时候需要刷新
+      this.notifyModule(key);
+    } else {
+      logger.warn(
+        `id为${key}的模块，在触发时未通过updateState执行任何数据变更`
+      );
+    }
+    // 去掉cancel依赖
+    this.cancelMap.remove(key);
+  };
   /**
    * 单个任务执行后的hook
    *
    * @memberof BaseFieldContext
    */
   onChange = (callbackInfo: CallbackInfo) => {
-    const { currentKey: key } = callbackInfo;
+    const {
+      currentKey: key,
+      onSuccess,
+      onError,
+      isCancel,
+      isEnd,
+    } = callbackInfo;
 
-    if (callbackInfo.isEnd) {
+    if (isEnd) {
       const all = this.taskState.getAll();
       this.cancelMap.removeAll();
       if (all) {
@@ -256,80 +260,91 @@ export class ShareContextClass<IModel, IRelyModel>
       }
       // 状态更新后清空
       this.dirtySets.clear();
-    }
-    this.udpateState(key, ActionType.Update, TargetType.TaskStatus, {
-      value: NodeStatus.IDeal,
-    });
-    if (key) {
-      this.preTaskState = this.taskState.clone();
-      const { deps = [] } = this.getTaskMap(key);
-      // 如果没有处理函数，则不更新模块
-      if (
-        this.dirtySets.has(key) ||
-        deps.some((dep) => this.dirtySets.has(dep.id))
-      ) {
-        // 组件有任务执行的时候需要刷新
-        this.notifyModule(key);
-      } else {
-        if (process.env.NODE_ENV === 'production') {
-          console.warn(
-            `id为${key}的模块，在触发时未通过updateState执行任何数据变更`
-          );
+    } else {
+      const currentTask = this.getTaskMap(key);
+      const reactionContext = this.getTaskInfo(key) as ReactionContext<
+        IModel,
+        IRelyModel
+      >;
+      currentTask.beforeReaction && currentTask.beforeReaction()
+        
+        function success() {
+          currentTask.afterReaction && currentTask.afterReaction()
+          onSuccess()
+          currentTask.onSingleTaskComplete && currentTask.onSingleTaskComplete(key, this)
         }
+        function fail(error) {
+          currentTask.onReactionError && currentTask.onReactionError(error)
+          onError(error)
+        }
+      if (currentTask.reaction) {
+        // reaction生命周期开始
+        const p = (currentTask.reaction as ASYNC_TASK<IModel, IRelyModel>)(
+          reactionContext
+        );
+        try {
+          if (p instanceof Promise) {
+            p.then(success).catch(fail);
+          } else {
+            success()
+          }
+        } catch (error) {
+          fail(error)
+        }
+      } else {
+        success();
       }
     }
-
-    // 去掉cancel依赖
-    if (key) {
-      this.cancelMap.remove(key);
-    }
   };
+  /**
+   * 重复点检查,在新增节点的时候check
+   * @param id
+   */
+  duplicateCheck(id: string) {
+    const isDuplicate = this.getTask().some((item) => item.key === id);
+    if (isDuplicate) {
+      logger.error(`id为${id}的节点被重复声明了`);
+    }
+    return isDuplicate;
+  }
+  /**
+   * 获取当前的任务列表
+   */
   getTask() {
     const tasks = [...this.tasksMap.getAll().values()];
+    const allDeps = union(
+      tasks.reduce((allDeps, task) => {
+        const { deps = [] } = task;
+        return allDeps.concat(deps);
+      }, []),
+      (item) => item.id
+    );
+
+    const validAtomTasks = allDeps
+      .reduce((validAtoms: RdxNode<IRdxAtomConfig<any>>[], deps) => {
+        if (allAtoms.has(deps.id)) {
+          return validAtoms.concat(allAtoms.get(deps.id));
+        } else {
+          return validAtoms;
+        }
+      }, [] as RdxNode<IRdxAtomConfig<any>>[])
+      .map((item) => ({
+        key: item.getId(),
+      }));
     const newTasks = (tasks as IRdxView<IModel, IRelyModel, any>[]).map(
       (task) => {
         // 判断是否是初始化应该在事件初始化的时候，如果放在回调中，那么判断就滞后了，用了回调时的taskMap判断了
         return {
           key: task.id,
           deps: task.deps,
-          taskType: task.reactionType,
           scope: task.scope,
-          task: (taskInfo: TaskInfo) => {
-            const { key } = taskInfo;
-            let defaultTask;
-            // 默认任务执行方式
-            if (task.reactionType === ReactionType.Sync) {
-              defaultTask = (
-                currentTaskInfo: ReactionContext<IModel, IRelyModel>
-              ) => {
-                currentTaskInfo.updateState(currentTaskInfo.value);
-              };
-            } else {
-              defaultTask = (
-                currentTaskInfo: ReactionContext<IModel, IRelyModel>
-              ) => {
-                return new Promise((resolve) => {
-                  resolve();
-                });
-              };
-            }
-            if (!!task.reaction) {
-              defaultTask = task.reaction;
-            }
-            return defaultTask(
-              this.getTaskInfo(key, taskInfo) as ReactionContext<
-                IModel,
-                IRelyModel
-              >
-            ) as unknown;
-          },
         };
       }
-    ) as Task<IModel>[];
-    return newTasks;
+    );
+    return validAtomTasks.concat(newTasks);
   }
 
-  getTaskInfo(key: string, taskInfo: TaskInfo) {
+  getTaskInfo(key: string) {
     let reactionContext: ReactionContext<IModel, IRelyModel> = {
       ...createBaseContext(key, this),
       updateState: (value: IModel) => {
@@ -352,8 +367,8 @@ export class ShareContextClass<IModel, IRelyModel>
     return reactionContext;
   }
 
-  getTaskMap(id: string) {
-    return this.tasksMap.get(id);
+  getTaskMap(id: string): IRdxView<IModel, IRelyModel, any> {
+    return this.tasksMap.get(id) || allAtoms.get(id).config;
   }
   getTaskState(id: string, scope: string) {
     return this.taskState.get(id, scope);
@@ -365,8 +380,16 @@ export class ShareContextClass<IModel, IRelyModel>
     const reducer = this.tasksMap.get(id).reducer;
     return reducer;
   }
+
   next(id: string, value: any, options?: DeliverOptions) {
-    this.udpateState(id, ActionType.Update, TargetType.TaskState, value);
+    const exist = this.tasksMap.get(id);
+    // 更新数据
+    if (exist) {
+      this.udpateState(id, ActionType.Update, TargetType.TaskState, value);
+    } else {
+      allAtoms.get(id).setValue(value);
+    }
+
     this.notifyModule(id, true);
     this.triggerSchedule(id, options);
   }

@@ -5,25 +5,12 @@ import { BasePoint } from '@czwcode/graph-core';
 export default class CommonQueue<T> extends DeliverByPreDefinedTask<T> {
   getTaskByPointWithScope(points: string[], scope: string | null) {
     return points.map((point) => {
-      const t = this.getTaskByPoints(point);
       return {
         key: point,
-        task: t[0].task,
         scope,
       };
     });
   }
-
-  getTaskByPoint = (points: BasePoint[]) => {
-    return points.map((point) => {
-      const t = this.getTaskByPoints(point.key);
-      return {
-        key: point.key,
-        task: t[0].task,
-        scope: point.scope,
-      };
-    });
-  };
   initExecute(scope: string | null) {
     const startPoints = this.getFirstPoints(scope);
     this.deliver(this.getTaskByPointWithScope(startPoints, scope));

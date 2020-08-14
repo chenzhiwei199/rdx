@@ -4,74 +4,56 @@ import {
   arr2Map,
   TriggerPoint,
   Graph,
-  Point,
 } from '@czwcode/graph-core';
 import Base from './base';
+import { END, cleanConfig, point2WithWeightAdapter } from './utils';
 import {
-  END,
-  cleanConfig,
-  point2WithWeightAdapter,
-} from './utils';
-import {
-  Task,
-  TaskInfo,
-  CallbackInfo,
-  ReactionType,
-  SYNC_TASK,
-  ASYNC_TASK,
-  TaskEventType,
+  CallbackInfo as ICallbackInfo,
   ISnapShotTrigger,
   IStatusInfo,
+  PointWithWeight,
 } from './typings/global';
 import ScheduledCore, { ScheduledTask } from './scheduledCore';
-
-export default class DeliverByCallback<T> extends Base<Task<T>> {
+import EE from 'eventemitter3';
+export interface IError {
+  currentKey: string;
+  notFinishPoint: string[];
+  errorMsg: string;
+}
+export type ISuccess = ICallbackInfo;
+export type IBeforeCall = ISnapShotTrigger;
+export type IEventValues = ISuccess | IError | IBeforeCall | IStatusChange;
+export type IStatusChange = IStatusInfo;
+export enum IEventType {
+  onCall = 'onCall',
+  onBeforeCall = 'onBeforeCall',
+  onError = 'onError',
+  onSuccess = 'onSuccess',
+  onStart = 'onStart',
+  onStatusChange = 'onStatusChange',
+}
+export default class DeliverByCallback<T> extends Base<PointWithWeight> {
   scheduledCore?: ScheduledCore;
-  callback: (callbackInfo: CallbackInfo) => void;
-  preCallback: (key: string | null) => void;
-  errorCallback: (
-    currentKey: string,
-    notFinishPoint: string[],
-    errorMsg: string,
-    callbackInfo: CallbackInfo
-  ) => void;
-  processChange: (
-    type: TaskEventType,
-    content: ISnapShotTrigger | IStatusInfo
-  ) => void;
-  constructor(
-    config: Task<T>[],
-    preCallback: (key: string | null) => void = () => {},
-    callback: (callbackInfo: CallbackInfo) => void = () => {},
-    errorCallback: (
-      currentKey: string,
-      notFinishPoint: string[],
-      errorMsg: string,
-      callbackInfo: CallbackInfo
-    ) => void = () => {},
-    processChange: (
-      type: TaskEventType,
-      content: ISnapShotTrigger | IStatusInfo
-    ) => void = () => {}
-  ) {
+  ee?: EE<IEventType, IEventValues>;
+  constructor(config: PointWithWeight[]) {
     super(config);
-    this.callback = callback;
-    this.preCallback = preCallback;
-    this.errorCallback = errorCallback;
-    this.processChange = processChange;
+    this.ee = new EE<IEventType, IEventValues>();
   }
 
+  getEE() {
+    return this.ee;
+  }
   getTaskByPoints(p: string | string[]) {
     // @ts-ignore
     const ps = normalizeSingle2Arr<string>(p);
-    const newPs = ps.map((currentP) => this.configMap.get(currentP)) as Task<
-      T
-    >[];
+    const newPs = ps.map((currentP) =>
+      this.configMap.get(currentP)
+    ) as PointWithWeight[];
 
     return this.cleanInVaildDeps(newPs);
   }
 
-  cleanInVaildDeps(config: Task<T>[]) {
+  cleanInVaildDeps(config: PointWithWeight[]) {
     const configMap = arr2Map(config, (a) => a && a.key);
     return config.map((item) => ({
       ...item,
@@ -85,6 +67,7 @@ export default class DeliverByCallback<T> extends Base<Task<T>> {
     if (executeTasks.length === 0) {
       return;
     }
+    // 获的未运行完成的点
     const notFinish = this.graph.getNotFinishPoints();
     const runningPointsMap = arr2Map(notFinish, (item) => item.key);
     let {
@@ -104,7 +87,7 @@ export default class DeliverByCallback<T> extends Base<Task<T>> {
     );
 
     // 传递新触发节点
-    this.processChange(TaskEventType.ProcessRunningGraph, {
+    this.ee.emit(IEventType.onStart, {
       graph: this.config,
       preRunningPoints: this.getTaskByPoints(
         notFinish.map((item) => item.key)
@@ -115,7 +98,7 @@ export default class DeliverByCallback<T> extends Base<Task<T>> {
       currentAllPoints: this.getTaskByPoints(pendingPoints),
       edgeCutFlow: edgeCuts,
       currentRunningPoints: point2WithWeightAdapter(newPendingPoints),
-    } as ISnapShotTrigger);
+    });
 
     // 构建任务处理器
     const endPoint = {
@@ -155,103 +138,80 @@ export default class DeliverByCallback<T> extends Base<Task<T>> {
     options: { next: () => void; scheduledTask: ScheduledTask }
   ) {
     if (currentKey === END) {
-      this.callback({ isEnd: true });
+      // 结束状态
+      this.ee.emit(IEventType.onCall, { isEnd: true });
     } else {
-      this.preCallback(currentKey);
-    }
-    const { next, scheduledTask } = options;
-    const curConfig = this.graph.configMap.get(currentKey);
-    const baseTaskInfo = {
-      key: currentKey,
-      deps: ((curConfig && curConfig.deps) || []).map((item) => ({
-        id: item.id,
-      })),
-    } as Point;
-
-    // 记录图的运行时状态
-    if (currentKey !== null) {
-      const curConfig: Task<T> | undefined = (this.graph.configMap.get(
-        currentKey
-      ) as unknown) as Task<T>;
-      const onSuccessProcess = () => {
-        if (!scheduledTask.isStop()) {
-          // 设置运行结束状态
-          this.graph.setFinish(currentKey);
-          // 传递状态
-          this.processChange(TaskEventType.StatusChange, {
-            id: currentKey,
-            status: NodeStatus.Finish,
-          } as IStatusInfo);
-          this.callback({
-            currentKey,
-            isEnd: false,
-          } as CallbackInfo);
-          // 执行下一次调度
-          next();
-        }
-      };
-      // 当前链路中出现错误了，
-      const onErrorProcess = (error: any) => {
-        if (!scheduledTask.isStop()) {
-          // 所有没完成的点
-          const relationPoints = runningGraph.getAllPointsByPoints({
-            key: currentKey,
-            downStreamOnly: false,
-          });
-          const runningPoints = this.getNotFinishPoints();
-          const runningPointsMap = arr2Map(runningPoints, (a) => a.key);
-          const notFinishPoint = relationPoints.filter((item) =>
-            runningPointsMap.has(item)
-          );
-          // 当前任务组下面所有的点
-          notFinishPoint.forEach((p) => {
-            this.graph.setFinish(p);
-          });
-          // 传递错误状态
-          this.processChange(TaskEventType.StatusChange, {
-            id: currentKey,
-            status: NodeStatus.Error,
-          } as IStatusInfo);
-
-          this.errorCallback(
-            currentKey,
-            notFinishPoint,
-            error ? error.toString() : '运行错误',
-            {
+      // onCall前的回调
+      this.ee.emit(IEventType.onBeforeCall, { currentKey: currentKey });
+      const { next, scheduledTask } = options;
+      // 记录图的运行时状态
+      if (currentKey !== null) {
+        const curConfig = this.graph.configMap.get(currentKey);
+        console.log('currentKey: ', currentKey, curConfig);
+        const onSuccessProcess = () => {
+          if (!scheduledTask.isStop()) {
+            // 设置运行结束状态
+            this.graph.setFinish(currentKey);
+            // 传递状态
+            this.ee.emit(IEventType.onStatusChange, {
+              id: currentKey,
+              status: NodeStatus.Finish,
+            } as IStatusInfo);
+            this.ee.emit(IEventType.onSuccess, {
               currentKey,
-              isEnd: true,
-            } as CallbackInfo
-          );
-          // 任务执行失败
-          console.error(
-            `${currentKey}任务执行失败, depsKeys:${curConfig &&
-              curConfig.deps} errorMsg: ${error &&
-              error.stack &&
-              error.stack.toString()}`
-          );
-        }
-      };
-      if (curConfig) {
-        if (curConfig.taskType === ReactionType.Sync) {
-          try {
-            (curConfig.task as SYNC_TASK<T>)({
-              ...baseTaskInfo,
-              isCancel: () => scheduledTask.isStop(),
-              next: next,
-            } as TaskInfo);
-            onSuccessProcess();
-          } catch (error) {
-            onErrorProcess(error);
+            });
+            // 执行下一次调度
+            next();
           }
-        } else {
-          (curConfig.task as ASYNC_TASK<T>)({
-            ...baseTaskInfo,
-            isCancel: () => scheduledTask.isStop(),
-            next: next,
-          } as TaskInfo)
-            .then(onSuccessProcess)
-            .catch(onErrorProcess);
-        }
+        };
+        // 当前链路中出现错误了，
+        const onErrorProcess = (error: Error) => {
+          if (!scheduledTask.isStop()) {
+            // 当前分支上未完成的点
+            const relationPoints = runningGraph.getAllPointsByPoints({
+              key: currentKey,
+              downStreamOnly: false,
+            });
+            const runningPoints = this.getNotFinishPoints();
+            const runningPointsMap = arr2Map(runningPoints, (a) => a.key);
+            const notFinishPoint = relationPoints.filter((item) =>
+              runningPointsMap.has(item)
+            );
+            // 当前分支上的点置位完成
+            notFinishPoint.forEach((p) => {
+              this.graph.setFinish(p);
+            });
+            // 当前分支上的点置位完成
+            const errorMsg = error
+              ? error.stack
+                ? error.stack.toString()
+                : error.toString()
+              : '运行错误';
+            // 传递错误状态
+            this.ee.emit(IEventType.onStatusChange, {
+              id: currentKey,
+              status: NodeStatus.Error,
+            } as IStatusInfo);
+
+            this.ee.emit(IEventType.onError, {
+              currentKey,
+              notFinishPoint,
+              errorMsg: errorMsg,
+            });
+            // 任务执行失败
+            console.error(
+              `${currentKey}任务执行失败, depsKeys:${curConfig &&
+                JSON.stringify(curConfig.deps)} errorMsg: ${errorMsg}`
+            );
+          }
+        };
+        this.ee.emit(IEventType.onCall, {
+          currentKey: currentKey,
+          onError: onErrorProcess,
+          onSuccess: onSuccessProcess,
+          isCancel: () => scheduledTask.isStop(),
+          isEnd: false,
+        });
       }
     }
   }

@@ -22,6 +22,7 @@ import { province, city, area } from 'province-city-china/data';
 import { useRef } from 'react';
 const { Row, Col } = Grid;
 
+
 export const 同步联动 = () => {
   interface TreeNode {
     label: string;
@@ -45,7 +46,8 @@ export const 同步联动 = () => {
       const { value, updateState: udpateState } = context;
       const res = await axios.get(
         'https://os.alipayobjects.com/rmsportal/ODDwqcDFTLAguOvWEolX.json'
-      );
+        );
+        console.log('provinceTask: ', res);
       udpateState({
         ...value,
         dataSource: res.data,
@@ -55,7 +57,8 @@ export const 同步联动 = () => {
   );
   const provinceView = useCallback(
     (context: DataContext<TaskValue,any>) => {
-      const { next, next: updateState, value, status } = context;
+      const { id, next, value, status } = context;
+      console.log("status",id, status, value)
       if (status === Status.FirstRender) {
         return '空白状态';
       }

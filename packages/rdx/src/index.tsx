@@ -1,6 +1,7 @@
 import ReactDOM from 'react-dom'
 export * from './RdxContext';
 export * from './global';
+export * from './rdxValues';
 export * from './RdxView/View';
 export { default as RdxView } from './RdxView/View';
 export * from './utils';

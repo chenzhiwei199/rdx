@@ -39,6 +39,7 @@ export function createBaseContext<IModel, IRelyModel>(
 ): BaseContext<IModel, IRelyModel> {
   let taskInfo = context.tasksMap.get(id);
   taskInfo = taskInfo ? taskInfo : defaultTaskMap;
+  console.log('taskInfo: ', id);
   const { deps = [], scope } = taskInfo;
   return {
     id,

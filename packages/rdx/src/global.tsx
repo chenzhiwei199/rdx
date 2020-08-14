@@ -1,6 +1,6 @@
 import { ReactionType, IDeps } from '@czwcode/task-queue';
 import { NodeStatus, BasePoint } from '@czwcode/graph-core';
-import { ShareContextClass, DeliverOptions } from './RdxContext/shareContext';
+import { ShareContextClass, DeliverOptions, ShareContext } from './RdxContext/shareContext';
 import { ActionType, TargetType } from './RdxContext/interface';
 export * from '@czwcode/task-queue';
 export * from '@czwcode/graph-core';
@@ -131,7 +131,7 @@ export interface IMutators<IModel> {
 }
 
 export interface IViewRender<IModel, IRelyModel> {
- /**
+  /**
    * 视图渲染，如果render 和component同时传，则render优先
    *
    * @memberof IBase
@@ -144,8 +144,9 @@ export interface IViewRender<IModel, IRelyModel> {
    */
   component?: React.ComponentType<DataContext<IModel, IRelyModel>>;
 }
-export interface IRdxViewBase<IModel, IRelyModel, IAction> extends IRdxReactionProps<IModel, IRelyModel> {
- /**
+export interface IRdxViewBase<IModel, IRelyModel, IAction>
+  extends IRdxReactionProps<IModel, IRelyModel> {
+  /**
    * 当前模块的作用域
    *
    * @type {string}
@@ -159,7 +160,7 @@ export interface IRdxViewBase<IModel, IRelyModel, IAction> extends IRdxReactionP
    * @memberof IBase
    */
   defaultValue?: IModel;
- 
+
   /**
    *通用交互规则
    *
@@ -181,7 +182,8 @@ export interface IRdxViewBase<IModel, IRelyModel, IAction> extends IRdxReactionP
   ) => boolean;
 }
 export interface IRdxView<IModel, IRelyModel, IAction>
-  extends IRdxViewBase<IModel, IRelyModel, IAction>, IViewRender<IModel, IRelyModel> {
+  extends IRdxViewBase<IModel, IRelyModel, IAction>,
+    IViewRender<IModel, IRelyModel> {
   /**
    * 模块的唯一id
    *
@@ -189,7 +191,6 @@ export interface IRdxView<IModel, IRelyModel, IAction>
    * @memberof IBase
    */
   id: string;
- 
 }
 
 export interface IRdxState<IModel, IAction> {
@@ -217,7 +218,10 @@ export interface IRdxReactionProps<IModel, IRelyModel> {
   recordStatus?:
     | ((context: ReactionContext<IModel, IRelyModel>) => boolean)
     | boolean;
-  reactionType?: ReactionType;
+  beforeReaction?: () => void
+  onSingleTaskComplete?: (id: string, context: ShareContextClass<IModel, IRelyModel>) => void
+  afterReaction?: () => void
+  onReactionError?: (msg: string) => void
   /**
    * 响应式函数
    *
