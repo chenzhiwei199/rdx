@@ -3,11 +3,10 @@ import {
   RdxContext,
   useRdxState,
   useRdxContextAutoId,
-  useRdxContext
+  useRdxContext,
 } from '@czwcode/rdx';
 import { DevVisualGraphTool } from '@czwcode/rdx-plugins';
-import {  NumberPicker } from '@alifd/next';
-
+import { NumberPicker } from '@alifd/next';
 
 export default {
   title: '基本示例/hooks用法',
@@ -16,13 +15,13 @@ export default {
   },
 };
 const TotalView = () => {
-  const dataContext = useRdxContextAutoId<number, [number,number], any>({
+  const dataContext = useRdxContextAutoId<number, [number, number], any>({
     recordStatus: false,
     deps: [{ id: '单价' }, { id: '数量' }],
   });
   const { depsValues } = dataContext;
   const [unit = 0, amount = 0] = depsValues;
-  console.log('2222')
+
   return <span>{unit * amount}</span>;
 };
 const BaseView = ({ id }) => {
@@ -30,14 +29,17 @@ const BaseView = ({ id }) => {
     id: id,
     defaultValue: 0,
   });
-  return <NumberPicker value={state} onChange={(v) => {
-    console.log("v", v)
-    setState(v)
-  }} />;
+  return (
+    <NumberPicker
+      value={state}
+      onChange={(v) => {
+        setState(v);
+      }}
+    />
+  );
 };
 
 export const 总价计算 = () => {
-  console.log("111")
   return (
     <RdxContext>
       <strong style={{ fontSize: 16 }}>
@@ -54,4 +56,3 @@ export const 总价计算 = () => {
     </RdxContext>
   );
 };
-

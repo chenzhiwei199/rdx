@@ -118,10 +118,10 @@ export interface IFetchOptions {
                 }
               )
                 .then(res => {
-                  console.log('res', res)
+                  
                 })
                 .catch(error => {
-                  console.log('err', error.toString())
+                  
                 })
  * @param {*} defautOptions
  * @param {*} realFetchOptions
@@ -207,10 +207,10 @@ export function fetchData(options: IFetchOptions) {
 }
 
 interface IParseResultOptions {
-  result: any,
-  useFilter: boolean,
-  filterBody: string,
-  dataField: string
+  result: any;
+  useFilter: boolean;
+  filterBody: string;
+  dataField: string;
 }
 export function parseResult(options: IParseResultOptions) {
   let {

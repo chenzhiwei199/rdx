@@ -18,7 +18,7 @@ export default () => {
       .map((item) => item.targetType)
       .map((item) => ({ label: item, value: item }))
   );
-  console.log('table');
+
   return (
     <div
       style={{

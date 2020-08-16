@@ -90,7 +90,7 @@ export const TestChart = () => {
     { id: 18 },
     { id: 19 },
   ]);
-  console.log('newNodes: ', newNodes);
+
   return (
     <SupplyChain
       nodeConfig={{
@@ -121,9 +121,11 @@ export const TestChart = () => {
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: 20,
-              background: 'rgb(184,184,184)'
+              background: 'rgb(184,184,184)',
             }}
-          >{id}</div>
+          >
+            {id}
+          </div>
         );
       }}
       nodeRender={(id) => {

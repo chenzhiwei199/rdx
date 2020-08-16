@@ -37,9 +37,8 @@ export function createBaseContext<IModel, IRelyModel>(
   context: ShareContextClass<IModel, IRelyModel>,
   defaultTaskMap?: IRdxView<IModel, IRelyModel, any>
 ): BaseContext<IModel, IRelyModel> {
-  let taskInfo = context.tasksMap.get(id);
+  let taskInfo = context.getTaskMap(id);
   taskInfo = taskInfo ? taskInfo : defaultTaskMap;
-  console.log('taskInfo: ', id);
   const { deps = [], scope } = taskInfo;
   return {
     id,

@@ -13,22 +13,20 @@ describe('deliver test', () => {
         deps: ['1'],
       },
     ];
-    const graphOld = new BaseGraphOld(config)
-    const graph = new BaseGraph(config)
-    console.log(graph.getAllPointsByPoints({ key: '1'}))
-    console.log(graphOld.getAllPointsByPoints({ key: '1'}))
+    const graphOld = new BaseGraphOld(config);
+    const graph = new BaseGraph(config);
+
     done();
   });
 
   it('简单关联，寻找下游点', (done) => {
     const config = [
-     
       {
         key: 'A',
       },
       {
         key: 'C',
-        deps: ['A']
+        deps: ['A'],
       },
       {
         key: 'D',
@@ -41,23 +39,21 @@ describe('deliver test', () => {
         key: 'E',
       },
     ];
-    const graphOld = new BaseGraphOld(config)
-    const graph = new BaseGraph(config)
-    console.log("old", graphOld.getAllPointsByPoints([{ key: 'B', downStreamOnly: false }, { key: 'A', downStreamOnly: true }]))
-    console.log("current", graph.getAllPointsByPoints([{ key: 'B', downStreamOnly: false }, { key: 'A', downStreamOnly: true }]))
+    const graphOld = new BaseGraphOld(config);
+    const graph = new BaseGraph(config);
+
     done();
   });
 
   it('简单关联，寻找下游点', (done) => {
     const config = [
-     
       {
         key: 'A',
-        deps: ['B']
+        deps: ['B'],
       },
       {
         key: 'C',
-        deps: ['A']
+        deps: ['A'],
       },
       {
         key: 'D',
@@ -70,11 +66,9 @@ describe('deliver test', () => {
         key: 'E',
       },
     ];
-    const graphOld = new BaseGraphOld(config)
-    const graph = new BaseGraph(config)
-    console.log("old", graphOld.getAllPointsByPoints([{ key: 'B', downStreamOnly: false }, { key: 'A', downStreamOnly: true }]))
-    console.log("current", graph.getAllPointsByPoints([{ key: 'B', downStreamOnly: false }, { key: 'A', downStreamOnly: true }]))
+    const graphOld = new BaseGraphOld(config);
+    const graph = new BaseGraph(config);
+
     done();
   });
- 
 });

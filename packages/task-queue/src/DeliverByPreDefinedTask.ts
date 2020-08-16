@@ -34,10 +34,12 @@ export enum IEventType {
 }
 export default class DeliverByCallback<T> extends Base<PointWithWeight> {
   scheduledCore?: ScheduledCore;
+  canReuse?: (id: string) => boolean;
   ee?: EE<IEventType, IEventValues>;
-  constructor(config: PointWithWeight[]) {
+  constructor(config: PointWithWeight[], canReuse?: (id: string) => boolean) {
     super(config);
     this.ee = new EE<IEventType, IEventValues>();
+    this.canReuse = canReuse;
   }
 
   getEE() {
@@ -122,10 +124,8 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
     if (!this.scheduledCore) {
       this.scheduledCore = new ScheduledCore(runningPointsWithEndPoint);
     }
-    // 停止任务
-    this.scheduledCore.stop();
     // 更新任务
-    this.scheduledCore.update(runningPointsWithEndPoint);
+    this.scheduledCore.update(runningPointsWithEndPoint, this.canReuse);
     // 启动任务
     this.scheduledCore.start(
       this.callbackFunction.bind(this, new Graph(newPendingPoints))
@@ -147,7 +147,6 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
       // 记录图的运行时状态
       if (currentKey !== null) {
         const curConfig = this.graph.configMap.get(currentKey);
-        console.log('currentKey: ', currentKey, curConfig);
         const onSuccessProcess = () => {
           if (!scheduledTask.isStop()) {
             // 设置运行结束状态
@@ -215,4 +214,14 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
       }
     }
   }
+}
+
+function persistPromise() {
+  let resolvePersist;
+  let rejectPersist;
+  const promise = new Promise((resolve, reject) => {
+    resolvePersist = resolve;
+    rejectPersist = reject;
+  });
+  return { promise, resolvePersist, rejectPersist };
 }

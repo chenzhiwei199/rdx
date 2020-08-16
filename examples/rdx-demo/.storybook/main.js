@@ -7,15 +7,16 @@ module.exports = {
     '@storybook/addon-actions',
     '@storybook/addon-links',
     '@storybook/addon-docs',
-    '@storybook/addon-storysource'
+    '@storybook/addon-storysource',
   ],
   webpackFinal: async (config) => {
-    console.log(process.NODE_ENV)
     // config.devtool = false
-    config.resolve.plugins = [new TsconfigPathsPlugin({
-      configFile: './tsconfig.json',
-      silent: true
-    })];
+    config.resolve.plugins = [
+      new TsconfigPathsPlugin({
+        configFile: './tsconfig.json',
+        silent: true,
+      }),
+    ];
     config.module.rules.push({
       test: /\.(ts|tsx)$/,
       use: [

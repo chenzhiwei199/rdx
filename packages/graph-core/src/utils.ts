@@ -17,9 +17,9 @@ export function createDeliversMap(config: Point[]) {
   }
   return deliversMap;
 }
-// console.log(createDeliversMap([{key: '1', deps: undefined }, { key: '2', deps: ['1']}, {key: '3', deps: ['2']}]));
+//
 
-export function createConfigMap<T extends { key: string}>(config: T[]) {
+export function createConfigMap<T extends { key: string }>(config: T[]) {
   return config.reduce((currentMap, item) => {
     currentMap.set(item.key, item);
     return currentMap;
@@ -34,24 +34,24 @@ export function normalizeSingle2Arr<T>(point: T | T[]) {
   }
 }
 export function arr2Map<T>(source: T[], getKey: (v: T) => string) {
-  const m  =new Map<string, T>()
+  const m = new Map<string, T>();
   source.forEach((item) => {
-    const key  = getKey(item)
-    m.set(key, item)
-  })
-  return m
+    const key = getKey(item);
+    m.set(key, item);
+  });
+  return m;
 }
-export function  union<T>(source: T[], byKey: (v: T) => string = (t: any) => t ) {
-  const arr = []
-  const m = new Map()
-  source.forEach(item => {
-    const key = byKey(item)
-    if(!m.has(key)) {
-      arr.push(item)
-      m.set(key, item)
+export function union<T>(source: T[], byKey: (v: T) => string = (t: any) => t) {
+  const arr = [];
+  const m = new Map();
+  source.forEach((item) => {
+    const key = byKey(item);
+    if (!m.has(key)) {
+      arr.push(item);
+      m.set(key, item);
     }
-  })
-  return arr
+  });
+  return arr;
 }
 
 export interface Data {
@@ -59,12 +59,8 @@ export interface Data {
   deps?: { id: string; weight?: number }[];
 }
 
-
 export default {
   normalizeSingle2Arr,
   createConfigMap,
   createDeliversMap,
 };
-
-
-

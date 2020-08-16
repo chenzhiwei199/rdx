@@ -8,7 +8,7 @@ const Counter = atom({
 
 const CounterView = () => {
   const [count, setCount] = useRdxAtom(Counter);
-  console.log("CounterView render")
+
   return (
     <div>
       <Button
@@ -35,12 +35,33 @@ const CounterView = () => {
 
 const DoubleCounterView = () => {
   const count = useRdxAtomValue(Counter);
-  console.log("DoubleCounterView render")
-  return <div style={{ lineHeight: '40px', background: 'white', border: '1px solid grey'}}>双倍数据： {count * 2}</div>;
+
+  return (
+    <div
+      style={{
+        lineHeight: '40px',
+        background: 'white',
+        border: '1px solid grey',
+      }}
+    >
+      双倍数据： {count * 2}
+    </div>
+  );
 };
 
 const OtherView = () => {
-  return <div style={{ lineHeight: '40px', background: 'white', border: '1px solid grey'}}> 不更新</div>;
+  return (
+    <div
+      style={{
+        lineHeight: '40px',
+        background: 'white',
+        border: '1px solid grey',
+      }}
+    >
+      {' '}
+      不更新
+    </div>
+  );
 };
 export const Atom基础用例 = () => {
   return (

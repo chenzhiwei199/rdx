@@ -23,8 +23,8 @@ export const FormItemSample = () => {
         点击切换数据源
       </Button>
       <SchemaForm onChange={(value) => {
-        console.log('value: ', value);
-      }}initialValues={{}} onSubmit={(v) => console.log(v)}>
+        
+      }}initialValues={{}} onSubmit={(v) => 
         <SchemaMarkupField
           title='数组'
           name='array'

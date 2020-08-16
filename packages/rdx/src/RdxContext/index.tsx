@@ -7,6 +7,8 @@ import UiBatcher from './UiBatcher';
 import ScheduleBatcher from './ScheduleBatcher';
 import ReactDOM from 'react-dom';
 import { TaskEventType } from '../global';
+import allAtoms from '../RdxValues/rdxAtom';
+import logger from '../utils/log';
 export * from './core';
 const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
   props: RdxContextProps<IModel, IRelyModel>
@@ -89,10 +91,12 @@ const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
     const queue = store.current.queue;
     store.current.parentMounted = true;
     if (queue.size > 0) {
+      const p = [...Array.from(queue)]
+      .reverse()
+      .map((item) => ({ key: item, downStreamOnly: false }))
+      logger.info(p)
       store.current.batchTriggerSchedule(
-        Array.from(queue)
-          .reverse()
-          .map((item) => ({ key: item, downStreamOnly: false }))
+        p
       );
       queue.clear();
     }

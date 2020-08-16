@@ -37,8 +37,9 @@ export function useRdxContext<IModel, IRelyModel, IAction>(
 
 let reactionPreviewId = 0;
 export function useRdxContextAutoId<IModel, IRelyModel, IAction>(
-  props: IRdxPreviewHook<IModel, IRelyModel, IAction>
+  props: IRdxPreviewHook<IModel, IRelyModel, IAction> & { displayName?: string}
 ) {
-  const uniqueId = useRef('reaction-' + reactionPreviewId++);
-  return useRdxContext({ ...props, id: uniqueId.current });
+  const {displayName, ...rest}  = props
+  const uniqueId = useRef(`${displayName}-preview` + reactionPreviewId++);
+  return useRdxContext({ ...rest, id: uniqueId.current });
 }

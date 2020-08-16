@@ -22,7 +22,6 @@ import { province, city, area } from 'province-city-china/data';
 import { useRef } from 'react';
 const { Row, Col } = Grid;
 
-
 export const 同步联动 = () => {
   interface TreeNode {
     label: string;
@@ -42,12 +41,12 @@ export const 同步联动 = () => {
     Area = 'area',
   }
   const provinceTask = useCallback(
-    async (context: ReactionContext<TaskValue,any>) => {
+    async (context: ReactionContext<TaskValue, any>) => {
       const { value, updateState: udpateState } = context;
       const res = await axios.get(
         'https://os.alipayobjects.com/rmsportal/ODDwqcDFTLAguOvWEolX.json'
-        );
-        console.log('provinceTask: ', res);
+      );
+
       udpateState({
         ...value,
         dataSource: res.data,
@@ -55,43 +54,40 @@ export const 同步联动 = () => {
     },
     []
   );
-  const provinceView = useCallback(
-    (context: DataContext<TaskValue,any>) => {
-      const { id, next, value, status } = context;
-      console.log("status",id, status, value)
-      if (status === Status.FirstRender) {
-        return '空白状态';
-      }
-      if (status === Status.Waiting) {
-        return '加载状态';
-      }
-      if (status === Status.Error) {
-        return '错误状态';
-      }
-      const { dataSource, chooseValue } = value;
+  const provinceView = useCallback((context: DataContext<TaskValue, any>) => {
+    const { id, next, value, status } = context;
 
-      return (
-        <Menu
-          onItemClick={(key) => {
-            next({
-              ...value,
-              chooseValue: key,
-            });
-          }}
-          selectMode={'single'}
-          selectedKeys={chooseValue}
-          style={{ width: 100 }}
-        >
-          {dataSource.map((item) => (
-            <Menu.Item key={item.value}>{item.label}</Menu.Item>
-          ))}
-        </Menu>
-      );
-    },
-    []
-  );
+    if (status === Status.FirstRender) {
+      return '空白状态';
+    }
+    if (status === Status.Waiting) {
+      return '加载状态';
+    }
+    if (status === Status.Error) {
+      return '错误状态';
+    }
+    const { dataSource, chooseValue } = value;
+
+    return (
+      <Menu
+        onItemClick={(key) => {
+          next({
+            ...value,
+            chooseValue: key,
+          });
+        }}
+        selectMode={'single'}
+        selectedKeys={chooseValue}
+        style={{ width: 100 }}
+      >
+        {dataSource.map((item) => (
+          <Menu.Item key={item.value}>{item.label}</Menu.Item>
+        ))}
+      </Menu>
+    );
+  }, []);
   const otherTask = useCallback(
-    async (context: ReactionContext<TaskValue,any>) => {
+    async (context: ReactionContext<TaskValue, any>) => {
       const { updateState: udpateState, value, depsValues } = context;
       const [preLevelValue = {}] = depsValues;
       const { dataSource = [], chooseValue } = preLevelValue;
@@ -114,7 +110,7 @@ export const 同步联动 = () => {
     },
   ];
 
-  const otherTaskView = (context: DataContext<TaskValue,any>) => {
+  const otherTaskView = (context: DataContext<TaskValue, any>) => {
     const { next: updateState, next, value, status } = context;
     if (status === Status.FirstRender) {
       return '空白状态';
@@ -151,7 +147,7 @@ export const 同步联动 = () => {
     <RdxContext onChange={() => {}}>
       <Row>
         <Col>
-          <RdxView<TaskValue, any,any>
+          <RdxView<TaskValue, any, any>
             id={AdministrativeRegions.Province}
             defaultValue={{ dataSource: [], chooseValue: '' }}
             reaction={provinceTask}
@@ -160,7 +156,7 @@ export const 同步联动 = () => {
         </Col>
         {otherDefines.map((item) => (
           <Col>
-            <RdxView<TaskValue, any,any>
+            <RdxView<TaskValue, any, any>
               id={item.key}
               deps={[{ id: item.relyTaskKey }]}
               defaultValue={{ dataSource: [], chooseValue: '' }}
@@ -189,7 +185,7 @@ const produceTask = (
   data: any[],
   filter: (v: any, depsValues: Model[]) => boolean,
   formatter: (data: any[]) => { label: string; value: string }[]
-) => async (context: ReactionContext<Model,any>) => {
+) => async (context: ReactionContext<Model, any>) => {
   const { value, depsValues, updateState: udpateState } = context;
   const newData = data.filter((value) => {
     const bool = filter(value, depsValues);
@@ -289,7 +285,7 @@ export const 异步联动 = () => {
         return (
           <span>
             <div>{item.label}</div>
-            <RdxView<Model, any,any>
+            <RdxView<Model, any, any>
               id={item.id}
               deps={depsIds.map((item) => ({ id: item }))}
               reaction={item.task}
@@ -312,7 +308,7 @@ export const 查询列表_作用域 = () => {
         return (
           <span>
             <div>{item.label}</div>
-            <RdxView<Model, any,any>
+            <RdxView<Model, any, any>
               id={item.id}
               scope={'filter'}
               deps={depsIds.map((item) => ({ id: item }))}
@@ -337,7 +333,7 @@ export const 查询列表_作用域 = () => {
     </RdxContext>
   );
 };
-const SearchView = (context: DataContext<any,any>) => {
+const SearchView = (context: DataContext<any, any>) => {
   const { status, value, next } = context;
   return (
     <Select
@@ -356,7 +352,7 @@ const SearchView = (context: DataContext<any,any>) => {
     ></Select>
   );
 };
-const SearchButtonView = (context: DataContext<any,any>) => {
+const SearchButtonView = (context: DataContext<any, any>) => {
   const { mergeScopeState2Global, next, depsValues } = context;
   return (
     <div>
@@ -374,7 +370,7 @@ const SearchButtonView = (context: DataContext<any,any>) => {
     </div>
   );
 };
-const OutScopeView = (context: DataContext<any,any>) => {
+const OutScopeView = (context: DataContext<any, any>) => {
   const { depsValues } = context;
   return (
     <>

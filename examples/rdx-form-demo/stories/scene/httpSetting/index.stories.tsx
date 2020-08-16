@@ -23,7 +23,6 @@ export const http配置器 = () => {
       <HttpSetting
         value={value}
         onChange={(v) => {
-          console.log('v: ', v);
           setValue(v);
         }}
       />

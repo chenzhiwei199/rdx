@@ -25,7 +25,7 @@ const rowStyle = {
 
 const Cell = (context: DataContext<any, any[]>) => {
   const { value, next } = context;
-  console.log('Cell render');
+
   return (
     <div
       style={cellStyle as any}

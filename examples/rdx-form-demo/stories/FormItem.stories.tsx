@@ -2,7 +2,11 @@ import React from 'react';
 import { DevVisualTableTool, DevVisualGraphTool } from '@czwcode/rdx-plugins';
 import '@alifd/next/dist/next.css';
 import { useState } from 'react';
-import { RdxFormItem, RdxFormContext, FormLayout } from '@czwcode/rdx-next-form';
+import {
+  RdxFormItem,
+  RdxFormContext,
+  FormLayout,
+} from '@czwcode/rdx-next-form';
 import { Button } from '@alifd/next';
 export default {
   title: '基本示例/FormItem',
@@ -58,7 +62,6 @@ export const 非受控例子 = () => {
     <RdxFormContext
       initializeState={state}
       onChange={(v) => {
-        console.log('v: ', v);
         setState(v);
       }}
     >
@@ -75,11 +78,7 @@ export const 非受控例子 = () => {
 
 export const 默认值配置 = () => {
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log('value: ', value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       <RdxFormItem name='a' title='111' type={'string'} default={'haha'} />
       <RdxFormItem name='b' title='111' type={'string'} default={'hehe'} />
       <DevVisualGraphTool />
@@ -93,7 +92,6 @@ export const 受控例子 = () => {
     <RdxFormContext
       state={state}
       onChange={(value) => {
-        console.log('state: ', value);
         setState(value);
       }}
     >
@@ -118,7 +116,6 @@ export const 联动例子 = () => {
     <RdxFormContext
       state={state}
       onChange={(value) => {
-        console.log('state: ', value);
         setState(value);
       }}
     >
@@ -181,11 +178,7 @@ export const 展示隐藏 = () => {
 
 export const 数组对象 = () => {
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log('state: ', value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       <RdxFormItem name='root' title='root' type={'object'}>
         <RdxFormItem name='arr' title='arr' type={'array'}>
           <RdxFormItem type={'object'}>
@@ -201,11 +194,7 @@ export const 数组对象 = () => {
 
 export const 字符串数组 = () => {
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log('state: ', value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       <RdxFormItem name='root' title='root' type={'object'}>
         <RdxFormItem name='arr' title='arr' type={'array'}>
           <RdxFormItem type='string'></RdxFormItem>
@@ -217,11 +206,7 @@ export const 字符串数组 = () => {
 
 export const 字符串多层嵌套数组 = () => {
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log('state: ', value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       <RdxFormItem name='root' title='root' type={'object'}>
         <RdxFormItem name='arr' title='arr' type={'array'}>
           <RdxFormItem name='arr' title='arr' type={'array'}>
@@ -235,11 +220,7 @@ export const 字符串多层嵌套数组 = () => {
 
 export const 强依赖关系 = () => {
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log('state: ', value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       {/* <DevVisualTableTool /> */}
       <RdxFormItem name='root' title='root' type={'object'}>
         <RdxFormItem
@@ -255,7 +236,7 @@ export const 强依赖关系 = () => {
           reaction={(context) => {
             const { updateState, value, depsValues } = context;
             const [unit, amount] = depsValues;
-            console.log('reaction', unit.value * amount.value);
+
             updateState({
               ...value,
               value: unit.value * amount.value,
@@ -284,11 +265,10 @@ export const 强依赖关系 = () => {
   );
 };
 
-
 export const 基础表单_校验 = () => {
   return (
     <RdxFormContext>
-      <RdxFormItem require  name='A' title='输入框2' type={'string'} />
+      <RdxFormItem require name='A' title='输入框2' type={'string'} />
       <RdxFormItem
         name='B'
         title='下拉框'

@@ -26,12 +26,10 @@ export const DefaultSelector = (props: IDefaultSelector) => {
   const reactionInfo = {
     deps: [{ id: 'valueType' }],
     firstRender: false,
-    reaction: (
-      context: ReactionContext<IModel<any>, IModel<any>[]>
-    ) => {
+    reaction: (context: ReactionContext<IModel<any>, IModel<any>[]>) => {
       const { id, value, updateState, depsValues } = context;
       const [valueType] = depsValues;
-      console.log('valueType: ', valueType);
+
       updateState({
         ...value,
         visible: valueType ? valueType.value === id : false,
@@ -81,11 +79,7 @@ export const DefaultSelector = (props: IDefaultSelector) => {
     },
   ];
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log('state: ', value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       <FormLayout labelTextAlign={'left'}>
         {showChooseType && (
           <RdxFormItem
@@ -164,11 +158,7 @@ export const DefaultSelector = (props: IDefaultSelector) => {
             {valueTypeReactionSource.map((item) => {
               const { parentId, type, name, title, dataSource } = item;
               return (
-                <RdxFormItem
-                  type='object'
-                  {...reactionInfo}
-                  name={parentId}
-                >
+                <RdxFormItem type='object' {...reactionInfo} name={parentId}>
                   <RdxFormItem
                     name={name}
                     type={type}

@@ -9,18 +9,13 @@ import allAtoms, {
   useRdxAtomValue,
   registNode,
   RdxNodeType,
+  IRdxSelectorConfig,
+  detectValueAndDeps,
+  isDifferent,
 } from './rdxAtom';
 import { ReactionType, IDeps } from '@czwcode/task-queue';
 import { isPromise } from '../utils';
-
-export interface IRdxSelectorOperate<IModel> {
-  get: (config: {
-    get: any;
-  }) => IModel | Promise<IModel> | RdxNode<IRdxSelectorConfig<IModel>>;
-  set?: (config: { get: any; set: any; reset: any }, newValue: IModel) => void;
-}
-export type IRdxSelectorConfig<IModel> = IRdxAtomConfig<IModel> &
-  IRdxSelectorOperate<IModel>;
+import { useRef, useMemo } from 'react';
 
 export function useRdxSelector<IModel>(
   selector: RdxNode<IRdxSelectorConfig<IModel>>
@@ -32,23 +27,6 @@ export function useRdxSelector<IModel>(
   // 原来的依赖关系
 
   // 执行一次才知道依赖关系
-  function detectValueAndDeps() {
-    const deps: IDeps[] = [];
-    const depsIdSets = new Set();
-    let value = selector.operator.get({
-      get: (atom: RdxNode<any>) => {
-        const id = atom.getId();
-        if (!depsIdSets.has(id)) {
-          deps.push({ id: id });
-          depsIdSets.add(id);
-        }
-
-        return atom.value;
-      },
-    });
-    // 返回记录的依赖关系
-    return { value, deps };
-  }
 
   // function checkDepsAllFinish(deps: IDeps[]){
   //   return deps.every((dep) => {
@@ -56,47 +34,35 @@ export function useRdxSelector<IModel>(
   //     return allAtoms.get(dep.id).isFinish()
   //   })
   // }
-  const { value, deps } = detectValueAndDeps();
-
-  function isDifferent(preDeps: IDeps[], nextDeps: IDeps[]) {
-    let change = false
-    for(let index = 0; index < preDeps.length; index++) {
-      if(preDeps[index].id !== nextDeps[index].id) {
-        change = true
-      }
-    }
-    return change
-  }
   // !更新完依赖内容后，需要重新执行调度，但是要保证原来已经在执行中，且依赖参数没有改变的执行继续下去，不能再次生成
+
   const context = useRdxContextAutoId({
-    deps: deps,
-    beforeReaction: () => {
-      selector.setLoading()
-    },
-    onSingleTaskComplete: (id, context) => {
-      // 动态依赖监测,获取每次依赖完成的时机，在这个时机需要去更新依赖内容
-      if(selector.getDeps().some(item => item.id)) {
-        const {deps} = detectValueAndDeps()
-        const isChange = isDifferent(selector.getDeps(), deps)
-        if(isChange) {
-          selector.setDeps(deps)
-          // 触发刷新
-          context.triggerSchedule(id)
-        }
-        // 检查deps变化
-      }
-    },
-    afterReaction: () => {
-      selector.setLoading()
-    },
+    displayName: selector.getId(),
+    deps: [...selector.getDeps(), { id: selector.getId() }],
+    // beforeReaction: () => {
+    //   selector.setLoading();
+    // },
+    // onSingleTaskComplete: (id, context) => {
+    //
+    //   // 动态依赖监测,获取每次依赖完成的时机，在这个时机需要去更新依赖内容
+    //   if (selector.getDeps().some((item) => item.id === id)) {
+    //     const all = detectValueAndDeps(selector);
+    //     // 缓存计算过后的值
+    //     const { deps } = all;
+    //     const isChange = isDifferent(selector.getDeps(), deps);
+    //     if (isChange) {
+    //       selector.setDeps(deps);
+    //       // 触发刷新
+    //       context.triggerSchedule(id);
+    //     }
+    //     // 检查deps变化
+    //   }
+    // },
+    // afterReaction: () => {
+    //   selector.setLoading();
+    // },
     reaction: async (context) => {
-      const { updateState } = context;
-      const value = detectValueAndDeps().value;
-      if (isPromise(value)) {
-        updateState(await (value as Promise<IModel>));
-      } else {
-        updateState(value);
-      }
+      context.updateState(selector.getValue());
     },
   });
   return [
@@ -109,7 +75,7 @@ export function useRdxSelector<IModel>(
 }
 export function selector<IModel>(config: IRdxSelectorConfig<IModel>) {
   const { id, get, set } = config;
-  const atom = new RdxNode({ id }, RdxNodeType.Selector ,{ get, set });
+  const atom = new RdxNode({ id }, RdxNodeType.Selector, { get, set });
   registNode(config.id, atom);
   return atom;
 }

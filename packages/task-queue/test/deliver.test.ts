@@ -122,9 +122,9 @@ describe('deliver test', () => {
 
     // 清理无用边
     removeCircleEdges(graph, graph, 'Unit');
-    graph.removeNode('Unit')
-    console.log('graphxxx: ', toConfig(graph));
-    // console.log('graph: ', graphlib.json.write(graph));
+    graph.removeNode('Unit');
+
+    //
     done();
   });
 });

@@ -15,11 +15,7 @@ export default {
 
 export const 字符串类型 = () => {
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log(value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       <RdxFormItem name='A' title='输入框' type={'string'} />
       <RdxFormItem
         name='B'
@@ -55,11 +51,7 @@ export const 字符串类型 = () => {
 
 export const 布尔类型 = () => {
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log(value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       <RdxFormItem name='A' title='开关' type={'boolean'} />
       <RdxFormItem
         name='B'
@@ -73,11 +65,7 @@ export const 布尔类型 = () => {
 
 export const 数组 = () => {
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log(value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       <RdxFormItem name='A' title='表格数组' type={'array'}>
         <RdxFormItem type={BaseType.Object}>
           <RdxFormItem
@@ -120,11 +108,7 @@ export const 数组 = () => {
 };
 export const JsonView = () => {
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log(value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       <RdxFormItem
         name='A'
         title='输入框'
@@ -138,11 +122,7 @@ export const JsonView = () => {
 
 export const 树形数据配置 = () => {
   return (
-    <RdxFormContext
-      onChange={(value) => {
-        console.log(value);
-      }}
-    >
+    <RdxFormContext onChange={(value) => {}}>
       <RdxFormItem
         name='A'
         title='输入框'

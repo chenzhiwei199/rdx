@@ -19,13 +19,19 @@ import {
   ISnapShotTrigger,
   CallbackInfo,
   union,
+  normalizeSingle2Arr,
+  IDeps,
 } from '@czwcode/task-queue';
 import { ActionType } from './interface';
 import ReactDOM from 'react-dom';
 import { createBaseContext, isPromise, isAsyncFunction } from '../utils';
 import { IEventType } from '../../../task-queue/src/DeliverByPreDefinedTask';
 import logger from '../utils/log';
-import allAtoms, { RdxNode, IRdxAtomConfig } from '../rdxValues/rdxAtom';
+import allAtoms, {
+  RdxNode,
+  IRdxAtomConfig,
+  RdxNodeType,
+} from '../RdxValues/rdxAtom';
 export interface TaskStatus {
   value: NodeStatus;
   quiet?: boolean;
@@ -45,8 +51,10 @@ export class ShareContextClass<IModel, IRelyModel>
   triggerQueue: Set<TriggerPoint> = new Set();
   statusType: STATUS_TYPE;
   eventEmitter: EventEmitter;
-  // 记录被修改了的字段
-  dirtySets: Set<string> = new Set();
+  // 当节点数据被修改了，标记为脏节点，脏节点将更新ui
+  uiDirtySets: Set<string> = new Set();
+  // 当节点数据被修改了，依赖节点的set中将添加脏节点
+  dataDirtySets: Set<string> = new Set();
   taskScheduler: PreDefinedTaskQueue<IModel>;
   subject?: EventEmitter<TaskEventType, ProcessGraphContent>;
   preTaskState: Base<IModel>;
@@ -67,7 +75,7 @@ export class ShareContextClass<IModel, IRelyModel>
     this.eventEmitter = new EventEmitter();
     this.name = config.name;
     this.subject = new EventEmitter<TaskEventType, ProcessGraphContent>();
-    this.taskScheduler = new PreDefinedTaskQueue<IModel>([]);
+    this.taskScheduler = new PreDefinedTaskQueue<IModel>([], this.canReuse);
     const ee = this.taskScheduler.getEE();
 
     ee.on(IEventType.onStatusChange, (content) => {
@@ -165,6 +173,15 @@ export class ShareContextClass<IModel, IRelyModel>
       return recordStatus;
     }
   }
+
+  /**
+   * 判断节点是否可以重用
+   *
+   * @memberof ShareContextClass
+   */
+  canReuse = (id) => {
+    return !this.dataDirtySets.has(id);
+  };
   /**
    *
    * 单个任务执行前的hook
@@ -222,12 +239,8 @@ export class ShareContextClass<IModel, IRelyModel>
       value: NodeStatus.IDeal,
     });
     this.preTaskState = this.taskState.clone();
-    const { deps = [] } = this.getTaskMap(key);
     // 如果没有处理函数，则不更新模块
-    if (
-      this.dirtySets.has(key) ||
-      deps.some((dep) => this.dirtySets.has(dep.id))
-    ) {
+    if (this.uiDirtySets.has(key)) {
       // 组件有任务执行的时候需要刷新
       this.notifyModule(key);
     } else {
@@ -238,20 +251,33 @@ export class ShareContextClass<IModel, IRelyModel>
     // 去掉cancel依赖
     this.cancelMap.remove(key);
   };
+  onSingleTaskComplete(key: string) {
+    Array.from(allAtoms.values()).forEach((atom) => {
+      if (
+        atom.type === RdxNodeType.Selector &&
+        atom.getDeps().some((dep) => dep.id === key)
+      ) {
+        allAtoms.get(atom.getId()).config.onSingleTaskComplete(key, this);
+      }
+    });
+  }
   /**
    * 单个任务执行后的hook
    *
    * @memberof BaseFieldContext
    */
   onChange = (callbackInfo: CallbackInfo) => {
+    // 1. 清理脏节点
+    // 2. 标记脏节点
     const {
       currentKey: key,
       onSuccess,
       onError,
       isCancel,
+
       isEnd,
     } = callbackInfo;
-
+    logger.info('onTaskExecuting', key);
     if (isEnd) {
       const all = this.taskState.getAll();
       this.cancelMap.removeAll();
@@ -259,43 +285,61 @@ export class ShareContextClass<IModel, IRelyModel>
         this.onPropsChange(all, this.taskState);
       }
       // 状态更新后清空
-      this.dirtySets.clear();
+      this.uiDirtySets.clear();
     } else {
+      // 脏节点
+      this.removeDataDirtyKey(key);
       const currentTask = this.getTaskMap(key);
       const reactionContext = this.getTaskInfo(key) as ReactionContext<
         IModel,
         IRelyModel
       >;
-      currentTask.beforeReaction && currentTask.beforeReaction()
-        
-        function success() {
-          currentTask.afterReaction && currentTask.afterReaction()
-          onSuccess()
-          currentTask.onSingleTaskComplete && currentTask.onSingleTaskComplete(key, this)
-        }
-        function fail(error) {
-          currentTask.onReactionError && currentTask.onReactionError(error)
-          onError(error)
-        }
+      currentTask.beforeReaction && currentTask.beforeReaction();
+
+      const success = () => {
+        currentTask.afterReaction && currentTask.afterReaction();
+        this.onSingleTaskComplete(key)
+        onSuccess();
+      }
+      function fail(error) {
+        currentTask.onReactionError && currentTask.onReactionError(error);
+        onError(error);
+      }
+      const endBlock = () => {
+        this.removeUiDirtyKey(key);
+      };
       if (currentTask.reaction) {
         // reaction生命周期开始
         const p = (currentTask.reaction as ASYNC_TASK<IModel, IRelyModel>)(
           reactionContext
         );
-        try {
-          if (p instanceof Promise) {
-            p.then(success).catch(fail);
-          } else {
-            success()
+        if (p instanceof Promise) {
+          p.then(success)
+            .catch(fail)
+            .finally(endBlock);
+        } else {
+          try {
+            success();
+          } catch (error) {
+            fail(error);
+          } finally {
+            endBlock();
           }
-        } catch (error) {
-          fail(error)
         }
       } else {
         success();
+        endBlock();
       }
     }
   };
+
+  removeUiDirtyKey(key) {
+    this.uiDirtySets.delete(key);
+  }
+
+  removeDataDirtyKey(key) {
+    this.dataDirtySets.delete(key);
+  }
   /**
    * 重复点检查,在新增节点的时候check
    * @param id
@@ -307,30 +351,16 @@ export class ShareContextClass<IModel, IRelyModel>
     }
     return isDuplicate;
   }
+ 
   /**
    * 获取当前的任务列表
    */
-  getTask() {
+  getTask(): {
+    key: string;
+    deps: IDeps[];
+    scope?: string;
+  }[] {
     const tasks = [...this.tasksMap.getAll().values()];
-    const allDeps = union(
-      tasks.reduce((allDeps, task) => {
-        const { deps = [] } = task;
-        return allDeps.concat(deps);
-      }, []),
-      (item) => item.id
-    );
-
-    const validAtomTasks = allDeps
-      .reduce((validAtoms: RdxNode<IRdxAtomConfig<any>>[], deps) => {
-        if (allAtoms.has(deps.id)) {
-          return validAtoms.concat(allAtoms.get(deps.id));
-        } else {
-          return validAtoms;
-        }
-      }, [] as RdxNode<IRdxAtomConfig<any>>[])
-      .map((item) => ({
-        key: item.getId(),
-      }));
     const newTasks = (tasks as IRdxView<IModel, IRelyModel, any>[]).map(
       (task) => {
         // 判断是否是初始化应该在事件初始化的时候，如果放在回调中，那么判断就滞后了，用了回调时的taskMap判断了
@@ -341,13 +371,16 @@ export class ShareContextClass<IModel, IRelyModel>
         };
       }
     );
-    return validAtomTasks.concat(newTasks);
+    return getGloalTask(Array.from(this.tasksMap.getAll().values())).concat(newTasks);
   }
 
   getTaskInfo(key: string) {
     let reactionContext: ReactionContext<IModel, IRelyModel> = {
       ...createBaseContext(key, this),
       updateState: (value: IModel) => {
+        // 记录脏节点
+
+        this.markDirtyNodes(key);
         this.udpateState(key, ActionType.Update, TargetType.TaskState, value);
       },
       callbackMapWhenConflict: (callback: () => void) => {
@@ -368,7 +401,9 @@ export class ShareContextClass<IModel, IRelyModel>
   }
 
   getTaskMap(id: string): IRdxView<IModel, IRelyModel, any> {
-    return this.tasksMap.get(id) || allAtoms.get(id).config;
+    return (
+      this.tasksMap.get(id) || (allAtoms.get(id) && allAtoms.get(id).config)
+    );
   }
   getTaskState(id: string, scope: string) {
     return this.taskState.get(id, scope);
@@ -381,16 +416,24 @@ export class ShareContextClass<IModel, IRelyModel>
     return reducer;
   }
 
-  next(id: string, value: any, options?: DeliverOptions) {
-    const exist = this.tasksMap.get(id);
-    // 更新数据
-    if (exist) {
-      this.udpateState(id, ActionType.Update, TargetType.TaskState, value);
-    } else {
-      allAtoms.get(id).setValue(value);
-    }
+  markDirtyNodes(id: string) {
+    const affectNodes = this.getTask().filter((item) =>
+      item.deps.some((dep) => dep.id === id)
+    );
 
+    affectNodes.forEach((item) => {
+      this.uiDirtySets.add(item.key);
+      this.dataDirtySets.add(item.key);
+    });
+  }
+  next(id: string, value: any, options: DeliverOptions = { refresh : false}) {
+    this.udpateState(id, ActionType.Update, TargetType.TaskState, value);
+    // 用户主动调用， 记录脏节点
+    this.markDirtyNodes(id);
     this.notifyModule(id, true);
+    if(!options.refresh) {
+      this.onSingleTaskComplete(id)
+    }
     this.triggerSchedule(id, options);
   }
   dispatchAction(id: string, customAction: any, options: DeliverOptions = {}) {
@@ -458,17 +501,27 @@ export class ShareContextClass<IModel, IRelyModel>
     if (targetType === TargetType.TaskState) {
       // 标记dirty
       this.onPropsStateChange(key, paylaod, type);
-      this.dirtySets.add(key);
     }
-    const scope = this.tasksMap.get(key) && this.tasksMap.get(key).scope;
-    if (type === ActionType.Remove) {
-      this[targetType][type](key, scope) as any;
-    } else if (type === ActionType.Update) {
-      this[targetType][type](key, paylaod, scope) as any;
-    } else if (type === ActionType.Merge) {
-      this[targetType][type](scope) as any;
+    const exist = this.tasksMap.get(key);
+    // 如何判断是内部的还是外部的
+    // 节点新增，减少，只会发生在组件内部， 状态和数据更新优先作用域的内部
+    if (exist || targetType === TargetType.TasksMap) {
+      const scope = this.tasksMap.get(key) && this.tasksMap.get(key).scope;
+      if (type === ActionType.Remove) {
+        this[targetType][type](key, scope) as any;
+      } else if (type === ActionType.Update) {
+        this[targetType][type](key, paylaod, scope) as any;
+      } else if (type === ActionType.Merge) {
+        this[targetType][type](scope) as any;
+      }
+      this[targetType] = this[targetType].clone();
+    } else {
+      if (targetType === TargetType.TaskStatus) {
+        allAtoms.get(key).setStatus(paylaod);
+      } else if (targetType === TargetType.TaskState) {
+        allAtoms.get(key).setValue(paylaod);
+      }
     }
-    this[targetType] = this[targetType].clone();
   }
   batchUpdateState(
     tasks: { key: string; type: ActionType; targetType: TargetType; payload }[]
@@ -480,17 +533,45 @@ export class ShareContextClass<IModel, IRelyModel>
   }
   executeTask(taskKeys: TriggerPoint | TriggerPoint[]) {
     this.taskScheduler.updateTasks(this.getTask());
-    this.taskScheduler.getAllPointFired(taskKeys).forEach((point) => {
+    logger.info('this.getTask(): ', this.getTask());
+    const currentTaskKeys = normalizeSingle2Arr(taskKeys)
+
+    this.taskScheduler.getAllPointFired(currentTaskKeys).forEach((point) => {
       const cancel = this.cancelMap.get(point);
       if (cancel) {
         cancel();
         this.cancelMap.remove(point);
       }
     });
-    this.taskScheduler.notifyDownstream(taskKeys);
+
+    this.taskScheduler.notifyDownstream(currentTaskKeys.concat(getGloalTask(currentTaskKeys.map(item => this.getTaskMap(item.key)))));
   }
 }
 
+function  getGloalTask(tasks:  IRdxView<any, any, any>[]) {
+  const allDeps = union(
+    tasks.reduce((allDeps, task) => {
+      const { deps = [] } = task;
+      return allDeps.concat(deps);
+    }, []),
+    (item) => item.id
+  );
+
+  const validAtomTasks = (allDeps.reduce(
+    (validAtoms: RdxNode<IRdxAtomConfig<any>>[], deps) => {
+      if (allAtoms.has(deps.id)) {
+        return validAtoms.concat(allAtoms.get(deps.id));
+      } else {
+        return validAtoms;
+      }
+    },
+    []
+  ) as RdxNode<IRdxAtomConfig<any>>[]).map((item) => ({
+    key: item.getId(),
+    deps: item.getDeps(),
+  }));
+  return validAtomTasks;
+}
 export interface ShareContext<IModel, IRelyModel> {
   /**
    * 任务信息
