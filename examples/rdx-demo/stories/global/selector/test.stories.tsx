@@ -4,16 +4,22 @@ const a = atom({
   key: '1',
   default: 1,
 });
-window.aaaaa = a;
 const b = selector({
   key: '2',
-  get: ({ get }) => {
+  set: () => {},
+  get: async ({ get }) => {
+    console.log("haha")
     return get(a) + 1;
   },
 });
+const D = () => {
+  const [state3] = useRecoilState(b);
+return <div>{state3}</div>
+}
 const C = () => {
   const [state, setState] = useRecoilState(a);
   const [state2, setState2] = useRecoilState(b);
+  
   return (
     <div>
       <div
@@ -33,10 +39,9 @@ export const Atom基础用例2 = () => {
   return (
     <div>
       <RecoilRoot>
-        <C />
-      </RecoilRoot>
-      <RecoilRoot>
-        <C />
+        <React.Suspense fallback={<div>111</div>}>
+          <C />
+        </React.Suspense>
       </RecoilRoot>
     </div>
   );

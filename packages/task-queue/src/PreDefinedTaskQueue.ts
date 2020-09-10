@@ -1,4 +1,4 @@
-import { normalizeSingle2Arr, TriggerPoint } from '@czwcode/graph-core';
+import { normalizeSingle2Arr, NotifyPoint } from '@czwcode/graph-core';
 import DeliverByPreDefinedTask from './DeliverByPreDefinedTask';
 import { BasePoint } from '@czwcode/graph-core';
 
@@ -19,9 +19,9 @@ export default class CommonQueue<T> extends DeliverByPreDefinedTask<T> {
    *
    * @param newWho 谁的下游节点
    */
-  notifyDownstream = (who: TriggerPoint | TriggerPoint[]) => {
+  notifyDownstream = (who: NotifyPoint | NotifyPoint[]) => {
     // @ts-ignore
-    const newWho = normalizeSingle2Arr<TriggerPoint>(who);
+    const newWho = normalizeSingle2Arr<NotifyPoint>(who);
     if (newWho.every((w) => isString(w.key))) {
       this.deliver(newWho);
     } else {

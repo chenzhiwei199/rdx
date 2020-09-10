@@ -1,2 +1,3 @@
-export * from './rdxAtom'
-export * from './rdxSelector'
+export * from './rdxAtom';
+export * from './rdxWatcher';
+export * from './base';

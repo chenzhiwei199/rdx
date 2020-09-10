@@ -3,7 +3,7 @@ import { SchemaMarkupField, SchemaForm } from '@uform/next';
 import { Button } from '@alifd/next';
 import { useState } from 'react';
 export default {
-  title: '基本示例/UFormTest',
+  title: '简单例子/UFormTest',
   parameters: {
     info: { inline: true },
   },

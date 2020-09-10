@@ -4,7 +4,7 @@ import {
   normalizeSingle2Arr,
   union,
 } from './utils';
-import { Point, TriggerPoint, IGraphDeps } from './typings/global';
+import { Point, NotifyPoint, IGraphDeps } from './typings/global';
 export const GLOBAL_DEPENDENCE_SCOPE = '*';
 
 export interface Edge {
@@ -197,12 +197,12 @@ export default class BaseGraph {
    * @param newTriggerPoints
    * @param createDeliversMap
    */
-  public getAllPointsByPoints(triggerPoints: TriggerPoint | TriggerPoint[]) {
+  public getAllPointsByPoints(triggerPoints: NotifyPoint | NotifyPoint[]) {
     // 非数组，处理成数组
     // @ts-ignore
-    const newTriggerPoints = normalizeSingle2Arr<TriggerPoint>(triggerPoints);
+    const newTriggerPoints = normalizeSingle2Arr<NotifyPoint>(triggerPoints);
     // 去除无效点
-    const validPoints: TriggerPoint[] = [];
+    const validPoints: NotifyPoint[] = [];
     newTriggerPoints.forEach((cursor, index) => {
       const newCursor = { ...cursor };
       const findIndex = validPoints.findIndex(
@@ -220,7 +220,7 @@ export default class BaseGraph {
     });
 
     // 字段分类
-    const classficationPointsByScope = new Map<string, TriggerPoint[]>();
+    const classficationPointsByScope = new Map<string, NotifyPoint[]>();
     validPoints.forEach((item) => {
       const getPointsByScope = classficationPointsByScope.get(item.scope);
       if (classficationPointsByScope.has(item.scope)) {
@@ -254,10 +254,10 @@ export default class BaseGraph {
   public getAllPointsByPointByScope = (scope) => {
     const vaildConfig = this.getConfigByScope(scope);
     const validConfigDevlierMap = createDeliversMap(vaildConfig);
-    return (triggerPoints: TriggerPoint[]) => {
+    return (triggerPoints: NotifyPoint[]) => {
       const recordSet = new Set<string>();
       const traverseDirtySet = new Set<string>();
-      function traverse(triggerPoints: TriggerPoint[]) {
+      function traverse(triggerPoints: NotifyPoint[]) {
         triggerPoints.forEach((triggerPoint) => {
           if (!triggerPoint.downStreamOnly) {
             if (!recordSet.has(triggerPoint.key)) {

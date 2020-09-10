@@ -2,11 +2,16 @@ import {
   normalizeSingle2Arr,
   NodeStatus,
   arr2Map,
-  TriggerPoint,
+  NotifyPoint,
   Graph,
 } from '@czwcode/graph-core';
 import Base from './base';
-import { END, cleanConfig, point2WithWeightAdapter } from './utils';
+import {
+  END,
+  cleanConfig,
+  point2WithWeightAdapter,
+  graphAdapter,
+} from './utils';
 import {
   CallbackInfo as ICallbackInfo,
   ISnapShotTrigger,
@@ -63,7 +68,7 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
     }));
   }
 
-  deliver(executeTasks: TriggerPoint[]) {
+  deliver(executeTasks: NotifyPoint[]) {
     // downstreamOnly: boolean = false
     // 异常情况兼容
     if (executeTasks.length === 0) {
@@ -77,17 +82,23 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
       pendingPoints,
       downStreamPoints,
     } = this.beforeDeliver(executeTasks);
-    const triggerPoint = executeTasks[executeTasks.length - 1];
-    // 补充触发节点
-    if (!pendingPoints.includes(triggerPoint.key)) {
-      pendingPoints.push(triggerPoint.key);
-    }
-    const { points: newPendingPoints, edgeCuts } = cleanConfig(
-      this.getTaskByPoints(pendingPoints),
-      triggerPoint.key,
-      triggerPoint.downStreamOnly
-    );
+    // const triggerPoint = executeTasks[executeTasks.length - 1];
+    // // 补充触发节点
+    // if (!pendingPoints.includes(triggerPoint.key)) {
+    //   pendingPoints.push(triggerPoint.key);
+    // }
+    // const { points: newPendingPoints, edgeCuts } = cleanConfig(
+    //   this.getTaskByPoints(pendingPoints),
+    //   triggerPoint.key,
+    //   triggerPoint.downStreamOnly
+    // );
 
+    const newPendingPoints = this.getTaskByPoints(pendingPoints);
+    const graph = new Graph(newPendingPoints);
+    const circles = graph.findCycles();
+    if (circles.length !== 0) {
+      throw new Error('detect circle deps' + JSON.stringify(circles) );
+    }
     // 传递新触发节点
     this.ee.emit(IEventType.onStart, {
       graph: this.config,
@@ -98,7 +109,6 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
       effectPoints: downStreamPoints,
       conflictPoints: intersectPoints,
       currentAllPoints: this.getTaskByPoints(pendingPoints),
-      edgeCutFlow: edgeCuts,
       currentRunningPoints: point2WithWeightAdapter(newPendingPoints),
     });
 
@@ -198,7 +208,7 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
               errorMsg: errorMsg,
             });
             // 任务执行失败
-            console.error(
+            console.warn(
               `${currentKey}任务执行失败, depsKeys:${curConfig &&
                 JSON.stringify(curConfig.deps)} errorMsg: ${errorMsg}`
             );

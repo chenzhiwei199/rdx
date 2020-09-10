@@ -1,7 +1,11 @@
-import { ReactionType, IDeps } from '@czwcode/task-queue';
 import { NodeStatus, BasePoint } from '@czwcode/graph-core';
-import { ShareContextClass, DeliverOptions, ShareContext } from './RdxContext/shareContext';
+import {
+  ShareContextClass,
+  DeliverOptions,
+  ShareContext,
+} from './RdxContext/shareContext';
 import { ActionType, TargetType } from './RdxContext/interface';
+import { RdxNode } from './RdxValues';
 export * from '@czwcode/task-queue';
 export * from '@czwcode/graph-core';
 
@@ -45,7 +49,8 @@ export enum RENDER_STATUS {
 
 export type Status = NodeStatus | RENDER_STATUS;
 export const Status = { ...NodeStatus, ...RENDER_STATUS };
-
+export type IRdxAnyDeps = IRdxDeps<any>;
+export type IRdxDeps<IModel> = string | RdxNode<IModel>;
 export type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 export type Retain<T, K> = Pick<T, Extract<keyof T, K>>;
 export type PartialNotOmit<T, K> = Partial<Omit<T, K>>;
@@ -54,7 +59,7 @@ export type PartialExclude<T, K> = Retain<T, K> & PartialNotOmit<T, K>;
 // 选中的必选，其他的保留
 export type RequiredExclude<T, K> = Omit<T, K> & Required<Retain<T, K>>;
 
-export interface BaseContext<IModel, IRelyModel> {
+export interface BaseContext<IModel, IRelyModel> extends IDataStatus {
   /**
    * 模块唯一id
    */
@@ -63,7 +68,6 @@ export interface BaseContext<IModel, IRelyModel> {
    * 全局状态
    */
   state: any;
-
   /**
    * 当前模块的数据
    */
@@ -75,12 +79,14 @@ export interface BaseContext<IModel, IRelyModel> {
   /**
    * 当前模块依赖的模块id
    */
-  deps?: IDeps[];
+  deps?: IRdxAnyDeps[];
   /**
    * 当前模块依赖的模块数据
    */
   depsValues: IRelyModel;
+}
 
+export interface IDataStatus {
   /**
    * 当模块的状态为Status.Running 或者 Status.Waiting的时候，loading为true
    */
@@ -94,7 +100,6 @@ export interface BaseContext<IModel, IRelyModel> {
    */
   errorMsg?: string;
 }
-
 export interface DataContext<IModel, IRelyModel>
   extends BaseContext<IModel, IRelyModel>,
     IMutators<IModel> {}
@@ -109,21 +114,12 @@ export interface IMutators<IModel> {
    */
   refresh: (value?: IModel) => void;
   /**
-   * 如果当前模块配置有scope，可以合并当前scope的数据到全局
-   */
-  mergeScopeState2Global: () => void;
-  /**
-   * 派发action后通过reducer进行状态更新
-   */
-  dispatch: (action: any, options?: DeliverOptions) => void;
-  /**
-   * 派发action后，触发其他模块的reducer进行状态更新
-   */
-  dispatchById: (id: string, action: any, options?: DeliverOptions) => void;
-  /**
    * 更新当前模块的数据，并调用下游模块的响应函数
    */
-  next: (value: IModel, options?: DeliverOptions) => void;
+  next: (
+    value: IModel | ((oldValue: IModel) => IModel),
+    options?: DeliverOptions
+  ) => void;
   /**
    * 更新当前模块的数据，并调用下游模块的响应函数
    */
@@ -144,15 +140,16 @@ export interface IViewRender<IModel, IRelyModel> {
    */
   component?: React.ComponentType<DataContext<IModel, IRelyModel>>;
 }
-export interface IRdxViewBase<IModel, IRelyModel, IAction>
+
+export interface IRdxViewBase<IModel, IRelyModel>
   extends IRdxReactionProps<IModel, IRelyModel> {
   /**
-   * 当前模块的作用域
+   * 模块依赖的id列表
    *
-   * @type {string}
+   * @type {string[]}
    * @memberof IBase
    */
-  scope?: string;
+  deps?: IRdxAnyDeps[];
   /**
    * 默认的Model
    *
@@ -160,29 +157,9 @@ export interface IRdxViewBase<IModel, IRelyModel, IAction>
    * @memberof IBase
    */
   defaultValue?: IModel;
-
-  /**
-   *通用交互规则
-   *
-   * @memberof IBase
-   */
-  reducer?: (
-    state: IModel,
-    action: IAction,
-    context: ShareContextClass<IModel, any>
-  ) => IModel;
-  /**
-   * 校验ModuleConfig是否发生变化，发生变化会重新进行任务调度
-   *
-   * @memberof IBase
-   */
-  areEqualForTask?: (
-    preProps: IRdxView<IModel, IRelyModel, IAction>,
-    nextProps: IRdxView<IModel, IRelyModel, IAction>
-  ) => boolean;
 }
-export interface IRdxView<IModel, IRelyModel, IAction>
-  extends IRdxViewBase<IModel, IRelyModel, IAction>,
+export interface IRdxView<IModel, IRelyModel>
+  extends IRdxViewBase<IModel, IRelyModel>,
     IViewRender<IModel, IRelyModel> {
   /**
    * 模块的唯一id
@@ -191,43 +168,37 @@ export interface IRdxView<IModel, IRelyModel, IAction>
    * @memberof IBase
    */
   id: string;
+  rerunWhenDepsChange?: boolean;
 }
 
-export interface IRdxState<IModel, IAction> {
+export interface IRdxState<IModel> {
   id: string;
   defaultValue: IModel;
-  /**
-   *通用交互规则
-   *
-   * @memberof IBase
-   */
-  reducer?: (
-    state: IModel,
-    action: IAction,
-    context: ShareContextClass<IModel, any>
-  ) => IModel;
 }
 export interface IRdxReactionProps<IModel, IRelyModel> {
   /**
-   * 模块依赖的id列表
+   * 依赖数据更新时的回调
    *
-   * @type {string[]}
-   * @memberof IBase
+   * @memberof IRdxReactionProps
    */
-  deps?: IDeps[];
-  recordStatus?:
-    | ((context: ReactionContext<IModel, IRelyModel>) => boolean)
-    | boolean;
-  beforeReaction?: () => void
-  onSingleTaskComplete?: (id: string, context: ShareContextClass<IModel, IRelyModel>) => void
-  afterReaction?: () => void
-  onReactionError?: (msg: string) => void
+  fireWhenDepsUpdate?: (depsId: string) => void;
   /**
    * 响应式函数
    *
    * @memberof IBase
    */
   reaction?: MixedTask<IModel, IRelyModel>;
+  /**
+   * 数据改变的处理函数
+   *
+   * @memberof IRdxReactionProps
+   */
+  next?: (
+    context: ShareContextClass<IModel, IRelyModel>,
+    id: string,
+    value: IModel,
+    options?: DeliverOptions
+  ) => void;
 }
 
 export enum StateUpdateType {

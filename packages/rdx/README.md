@@ -91,9 +91,39 @@
 
 #### 思考
 1. 响应式函数、状态组件、管道
+2. reset一个watcher， 用户需要感知到上层是在执行reset
+3. (局部状态怎么融合， 怎么合并)[https://img.alicdn.com/tfs/TB1TAoIh_M11u4jSZPxXXahcXXa-974-520.png]
+  - 可以通过定义新的rdxNode类型来达到目的
+4. 和reducer怎么融合
+  - 可以通过定义新的rdxNode类型来达到目的
+5. 检测到环的方式怎么处理
 
 ### 依赖收集
 - 声明式收集
 - 自动化收集
-  https://github.com/nx-js/observer-util?spm=ata.13261165.0.0.367462b4wTnzlR
-  https://github.com/alloc/wana?spm=ata.13261165.0.0.367462b4wTnzlR
+  - mobx
+  - vue
+  - recoil
+  - concent
+  - https://github.com/nx-js/observer-util?spm=ata.13261165.0.0.367462b4wTnzlR
+  - https://github.com/alloc/wana?spm=ata.13261165.0.0.367462b4wTnzlR
+
+
+
+### TODO
+- ~~useRdxReaction 支持id和rdxNode两种类型作为依赖条件~~
+- utils waitForNone（立即返回加载器）, waitForAll(等待所有依赖执行完成后返回), waitForAny(至少一个依赖更新了), noWait调研
+- selctorFamily, atomFamily 设计
+- scope and weight 如何接入？
+- 环检测后事件流逻辑是否有控制的必要，针对环情况的优化
+- 如何结合表单场景, 流的思路 和 常规代码思路结合
+
+### 冒烟逻辑测试
+1. atom， watcher， reaction 单独的用例
+2. reaction、watcher使用atom，的get 链路
+3. reaction、watcher使用atom，的set 链路 和reset链路
+
+### 理论依据
+1. 主观输入(用户主动触发的场景)
+2. 所有触发任务执行了一次(保证页面是最新的状态触发的)
+问题： 

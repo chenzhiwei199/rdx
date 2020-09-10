@@ -7,7 +7,7 @@ addParameters({
       // Can handle sorting up to one level deep
       // Any stories that aren't expliciply listed will appear at the end
       // Based off https://github.com/storybookjs/storybook/issues/6327#issuecomment-613122487
-   
+
       // The order in which we want stories to appear
       const config = [
         {
@@ -15,14 +15,14 @@ addParameters({
           order: ['基本信息', '动机', '核心概念'],
         },
         {
-          category: '基本示例',
+          category: '简单例子',
           order: ['Introduction'],
         },
         {
           category: '场景示例',
           order: ['组件的状态'],
         },
-        
+
         {
           category: 'ReactJS',
           order: ['Introduction', 'Quickstart', 'Examples'],

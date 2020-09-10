@@ -1,34 +1,30 @@
 import React from 'react';
 import {
   RdxContext,
-  useRdxState,
-  useRdxContextAutoId,
-  useRdxContext,
+  useRdxAtom,
+  useRdxValueByDependencies,
 } from '@czwcode/rdx';
-import { DevVisualGraphTool } from '@czwcode/rdx-plugins';
 import { NumberPicker } from '@alifd/next';
 
 export default {
-  title: '基本示例/hooks用法',
+  title: '简单例子/hooks用法',
   parameters: {
     info: { inline: true },
   },
 };
 const TotalView = () => {
-  const dataContext = useRdxContextAutoId<number, [number, number], any>({
-    recordStatus: false,
-    deps: [{ id: '单价' }, { id: '数量' }],
+  const [unit = 0, amount = 0] = useRdxValueByDependencies<[number, number]>({
+    deps: ['单价222', '数量222'],
   });
-  const { depsValues } = dataContext;
-  const [unit = 0, amount = 0] = depsValues;
 
   return <span>{unit * amount}</span>;
 };
 const BaseView = ({ id }) => {
-  const [state, setState] = useRdxState({
+  const [state, setState] = useRdxAtom({
     id: id,
     defaultValue: 0,
   });
+  console.log('state: ', id, state);
   return (
     <NumberPicker
       value={state}
@@ -48,9 +44,9 @@ export const 总价计算 = () => {
       </strong>
       <br />
       <strong>单价:</strong>
-      <BaseView id={'单价'} />
+      <BaseView id={'单价222'} />
       <strong>数量:</strong>
-      <BaseView id={'数量'} />
+      <BaseView id={'数量222'} />
       <strong>总价:</strong>
       <TotalView />
     </RdxContext>

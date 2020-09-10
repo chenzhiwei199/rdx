@@ -2,14 +2,14 @@ import React from 'react';
 import { useRef } from 'react';
 import { useForceUpdate } from '@czwcode/rdx-next-form';
 export default {
-  title: '基本示例/contextTest',
+  title: '简单例子/contextTest',
   parameters: {
     info: { inline: true },
   },
 };
 
-function xxx<T>(a: T):  T {
-  return a
+function xxx<T>(a: T): T {
+  return a;
 }
 const ShareContextInstance = React.createContext({ a: 1 });
 const Child = ({ v }) => {
@@ -36,7 +36,7 @@ class T {
     this.onChange = onChange;
   }
   a: 1;
-  b: 777
+  b: 777;
   setA(a) {
     this.a = a;
     this.onChange();
@@ -45,7 +45,7 @@ class T {
 const Parent = ({ children }) => {
   const forceUpdate = useForceUpdate();
   const ref = useRef(new T(forceUpdate));
-  
+
   return (
     <ShareContextInstance.Provider value={ref.current}>
       <div> parent ----{JSON.stringify(ref.current)}</div>

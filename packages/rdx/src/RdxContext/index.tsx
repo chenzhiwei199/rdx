@@ -7,8 +7,6 @@ import UiBatcher from './UiBatcher';
 import ScheduleBatcher from './ScheduleBatcher';
 import ReactDOM from 'react-dom';
 import { TaskEventType } from '../global';
-import allAtoms from '../RdxValues/rdxAtom';
-import logger from '../utils/log';
 export * from './core';
 const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
   props: RdxContextProps<IModel, IRelyModel>
@@ -85,30 +83,53 @@ const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
       });
     }
   }, [state]);
-
+  // const atomTaskRef = React.useRef(new Map());
+  // React.useMemo(() => {
+  //   getAllNodes().forEach((atom) => {
+  //     store.current.addOrUpdateTask(
+  //       atom.getId(),
+  //       atom.createNodeInfo(
+  //         store.current,
+  //         (v) => {
+  //           atomTaskRef.current.set(atom.getId(), v);
+  //         },
+  //         () => {
+  //           return atomTaskRef.current.get(atom.getId());
+  //         }
+  //       ),
+  //       atom.isNotifyTask(() => {
+  //         return atomTaskRef.current.get(atom.getId());
+  //       })
+  //     );
+  //   });
+  // }, []);
   // 初始化组件绑定
+  // React.useEffect(() => {
+  //   const queue = store.current.queue;
+  //   store.current.parentMounted = true;
+  //   // 获取所有的atoms
+
+  //   if (queue.size > 0) {
+  //     const p = [...Array.from(queue)]
+  //       // .reverse()
+  //       .map((item) => ({ key: item, downStreamOnly: false }));
+  //     logger.info('init', p);
+  //     store.current.batchTriggerSchedule(p);
+  //     queue.clear();
+  //   }
+  // }, []);
   React.useEffect(() => {
-    const queue = store.current.queue;
     store.current.parentMounted = true;
-    if (queue.size > 0) {
-      const p = [...Array.from(queue)]
-      .reverse()
-      .map((item) => ({ key: item, downStreamOnly: false }))
-      logger.info(p)
-      store.current.batchTriggerSchedule(
-        p
-      );
-      queue.clear();
-    }
   }, []);
   return (
     <ShareContextProvider value={store.current}>
+      {props.children}
       <UiBatcher setNotifyBatcherOfChange={setUiNotifyBatcherOfChange} />
       <ScheduleBatcher
         setNotifyBatcherOfChange={setScheduleNotifyBatcherOfChange}
       />
-      {props.children}
     </ShareContextProvider>
   );
 };
+
 export const RdxContext = Rdx;

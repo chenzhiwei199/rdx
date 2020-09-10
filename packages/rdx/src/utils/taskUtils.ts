@@ -1,57 +1,42 @@
 import { ShareContextClass, DeliverOptions } from '../RdxContext/shareContext';
-import shallowEqual from 'shallowequal';
 import {
   BaseContext,
   IGraphDeps,
   RENDER_STATUS,
   Status,
   IRdxView,
+  IRdxAnyDeps,
 } from '../global';
+import { RdxNode } from '../RdxValues';
 
-export function checkTaskChange(preProps: any, nextProps: any) {
-  if (!nextProps || !preProps) {
-    return true;
+export function getDepId(dep: IRdxAnyDeps) {
+  if(dep instanceof RdxNode) {
+    return dep.getId()
+  } else {
+    return dep
   }
-  let change = false;
-  Object.keys(preProps).forEach((key) => {
-    // 如果引用相等
-    if ((preProps[key], nextProps[key])) {
-      change = false;
-    } else {
-      // 数据比较
-      if (Array.isArray(nextProps[key])) {
-        change = nextProps[key].some((item, index) => {
-          return !shallowEqual(item, nextProps[key][index]);
-        });
-      } else if (!shallowEqual(preProps[key], nextProps[key])) {
-        // 其他的比较
-        change = true;
-      }
-    }
-  });
-  return change;
 }
 
+export function getDepIds(deps: IRdxAnyDeps[] = []) {
+  return deps.map(getDepId)
+}
 export function createBaseContext<IModel, IRelyModel>(
   id: string,
   context: ShareContextClass<IModel, IRelyModel>,
-  defaultTaskMap?: IRdxView<IModel, IRelyModel, any>
+  defaultTaskMap?: IRdxView<IModel, IRelyModel>
 ): BaseContext<IModel, IRelyModel> {
   let taskInfo = context.getTaskMap(id);
   taskInfo = taskInfo ? taskInfo : defaultTaskMap;
-  const { deps = [], scope } = taskInfo;
+  const { deps = [] } = taskInfo;
   return {
     id,
     deps: deps,
     depsValues: ((deps || (taskInfo && taskInfo.deps) || []).map((key) => {
-      const currentDeptId = key.id;
-      const scope =
-        context.tasksMap.get(currentDeptId) &&
-        context.tasksMap.get(currentDeptId).scope;
-      return context.taskState.get(currentDeptId, scope);
+      const currentDeptId = getDepId(key);
+      return context.taskState.get(currentDeptId);
     }) as unknown) as IRelyModel,
     state: context.taskState.getAll(),
-    value: context.taskState.get(id, scope),
+    value: context.taskState.get(id),
     status:
       context.taskStatus.get(id) && context.taskStatus.get(id).value
         ? context.taskStatus.get(id).value
@@ -60,11 +45,10 @@ export function createBaseContext<IModel, IRelyModel>(
       context.taskStatus.get(id)?.value
     ),
     errorMsg: (context.taskStatus.get(id) || {}).errorMsg,
-    lastDepsValue: deps.map((dep: IGraphDeps) => {
+    lastDepsValue: deps.map((dep) => {
       const tasksMap = context.tasksMap;
-      if (tasksMap.get(dep.id)) {
-        const scope = tasksMap.get(dep.id).scope;
-        return context.preTaskState && context.preTaskState.get(dep.id, scope);
+      if (tasksMap.get(getDepId(dep))) {
+        return context.preTaskState && context.preTaskState.get(getDepId(dep));
       } else {
         return null;
       }
@@ -80,12 +64,6 @@ export function createMutators<IModel, IRelyModel>(
     next: (selfValue: IModel, options?: DeliverOptions) => {
       context.next(id, selfValue, options);
     },
-    dispatchById: (id: string, action, options) => {
-      context.dispatchAction(id, action, options);
-    },
-    dispatch: (action, options) => {
-      context.dispatchAction(id, action, options);
-    },
     refreshView: () => {
       context.notifyModule(id);
     },
@@ -93,12 +71,14 @@ export function createMutators<IModel, IRelyModel>(
       context.next(id, selfValue, options);
     },
     // ? 这里应该加上scope， 刷新只刷新作用域下面的
-    refresh: context.refresh.bind(null, id),
+    refresh: () => {
+      context.next(id, (v) => v, { refresh: true});
+    },
     loading: isLoading(context, id),
     // TODO: 其他组件中的默认值， 怎么获取
-    mergeScopeState2Global: () => {
-      context.mergeScopeState2Global(id);
-    },
+    // mergeScopeState2Global: () => {
+    //   context.mergeScopeState2Global(id);
+    // },
   };
 }
 
@@ -111,4 +91,3 @@ const isLoading = <IModel, IRelyModel>(
     context.taskStatus.get(id)?.value === Status.Running
   );
 };
-

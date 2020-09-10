@@ -115,7 +115,7 @@ export default class ScheduledCore {
       // 任务执行完成，关闭任务
       this.taskQueue.delete(id);
       // 执行完成， 入度减1
-      const deliverIds = this.deliverMap.get(id);
+      const deliverIds = this.deliverMap.get(id) || [];
       deliverIds.forEach((deliverId) => {
         const currentInDegree = this.inDegree.get(deliverId);
         this.inDegree.set(deliverId, currentInDegree - 1);

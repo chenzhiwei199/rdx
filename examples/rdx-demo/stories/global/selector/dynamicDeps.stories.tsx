@@ -1,10 +1,9 @@
 import React from 'react';
 import {
   atom,
-  useRdxAtom,
   RdxContext,
-  selector,
-  useRdxSelector,
+  watcher,
+  useRdxState,
 } from '@czwcode/rdx';
 import { DevVisualGraphTool } from '@czwcode/rdx-plugins';
 import { Button, Input, Checkbox } from '@alifd/next';
@@ -23,8 +22,8 @@ const CounterB = atom({
   defaultValue: 2,
 });
 
-const CounterSelector = selector({
-  id: 'selector3',
+const Counterwatcher = watcher({
+  id: 'watcher3',
   get: ({ get }) => {
     if (get(toggleAtom)) {
       return get(CounterA);
@@ -35,7 +34,7 @@ const CounterSelector = selector({
 });
 
 const ToggleView = () => {
-  const [value, onChange] = useRdxAtom(toggleAtom);
+  const [value, onChange] = useRdxState(toggleAtom);
   return (
     <div>
       <strong>开关控制按钮，动态切换依赖关系</strong>
@@ -44,7 +43,7 @@ const ToggleView = () => {
   );
 };
 const BaseCounterView = ({ title, atom }) => {
-  const [value, onChange] = useRdxAtom(atom);
+  const [value, onChange] = useRdxState(atom);
   return (
     <div>
       <strong>{title}</strong>
@@ -69,13 +68,13 @@ const BaseCounterView = ({ title, atom }) => {
     </div>
   );
 };
-const SelectorPreview = () => {
-  const [countFromSelector, setCountBySelector] = useRdxSelector(
-    CounterSelector
+const WatcherPreview = () => {
+  const [countFromwatcher, setCountBywatcher] = useRdxState(
+    Counterwatcher
   );
   return (
     <div>
-      <div style={{ fontSize: 20 }}>Preview selector: {countFromSelector}</div>
+      <div style={{ fontSize: 20 }}>Preview watcher: {countFromwatcher}</div>
       <div>
         tips:
         当开关开启的时候，展示累加器A的值，当开关关闭的时候，展示累加器B的值
@@ -89,7 +88,7 @@ const CounterView = () => {
       <ToggleView />
       <BaseCounterView title={'累加器A'} atom={CounterA}></BaseCounterView>
       <BaseCounterView title={'累加器B'} atom={CounterB}></BaseCounterView>
-      <SelectorPreview />
+      <WatcherPreview />
     </div>
   );
 };

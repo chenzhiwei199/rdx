@@ -1,5 +1,5 @@
 import React from 'react';
-import { atom, useRdxAtom, RdxContext, useRdxAtomValue } from '@czwcode/rdx';
+import { atom, RdxContext, useRdxState, useRdxValue } from '@czwcode/rdx';
 import { Button, Input } from '@alifd/next';
 const Counter = atom({
   id: 'test',
@@ -7,7 +7,7 @@ const Counter = atom({
 });
 
 const CounterView = () => {
-  const [count, setCount] = useRdxAtom(Counter);
+  const [count, setCount] = useRdxState(Counter);
 
   return (
     <div>
@@ -34,7 +34,7 @@ const CounterView = () => {
 };
 
 const DoubleCounterView = () => {
-  const count = useRdxAtomValue(Counter);
+  const count = useRdxValue(Counter);
 
   return (
     <div

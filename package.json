@@ -4,6 +4,7 @@
   "scripts": {
     "watch:form": "yarn workspace rdx-form-demo start",
     "watch:rdx": "yarn workspace rdx-demo start",
+    "watch:portal": "yarn workspace portal-layout-demo start",
     "bootstrap": "lerna bootstrap",
     "clean": " lerna exec -- rm -rf node_modules",
     "doc": "lerna run doc",
@@ -20,10 +21,9 @@
     "@types/jest": "^24.0.23",
     "awesome-typescript-loader": "^5.2.1",
     "jest": "^24.9.0",
-    "react-docgen-typescript-loader": "^3.6.0",
     "lerna": "1.0.1",
+    "react-docgen-typescript-loader": "^3.6.0",
     "typescript": "3.9.3"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }

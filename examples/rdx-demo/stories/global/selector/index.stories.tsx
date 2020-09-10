@@ -1,14 +1,13 @@
 import React from 'react';
 import {
   atom,
-  useRdxAtom,
   RdxContext,
-  useRdxAtomValue,
-  selector,
-  useRdxSelector,
+  watcher,
+  useRdxState,
 } from '@czwcode/rdx';
 import { DevVisualGraphTool } from '@czwcode/rdx-plugins';
 import { Button, Input } from '@alifd/next';
+import { RdxNode } from '../../../../../packages/rdx/src/RdxValues/base';
 const CounterA = atom({
   id: 'count111A',
   defaultValue: 0,
@@ -24,14 +23,14 @@ const CounterC = atom({
   defaultValue: 0,
 });
 
-const CounterSelector = selector({
-  id: 'selector',
+const CounterSelector = watcher({
+  id: 'selectorxxx',
   get: ({ get }) => {
     return get(CounterA) + get(CounterB);
   },
 });
 const BaseCounterView = ({ atom }) => {
-  const [value, onChange] = useRdxAtom(atom);
+  const [value, onChange] = useRdxState(atom);
   return (
     <div>
       <Button
@@ -56,7 +55,7 @@ const BaseCounterView = ({ atom }) => {
   );
 };
 const SelectorPreview = () => {
-  const [countFromSelector, setCountBySelector] = useRdxSelector(
+  const [countFromSelector, setCountBySelector] = useRdxState(
     CounterSelector
   );
   return (

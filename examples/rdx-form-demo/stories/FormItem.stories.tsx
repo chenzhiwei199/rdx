@@ -9,7 +9,7 @@ import {
 } from '@czwcode/rdx-next-form';
 import { Button } from '@alifd/next';
 export default {
-  title: '基本示例/FormItem',
+  title: '简单例子/FormItem',
   parameters: {
     info: { inline: true },
   },

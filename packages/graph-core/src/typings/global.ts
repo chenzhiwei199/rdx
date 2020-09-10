@@ -16,7 +16,7 @@ export interface IGraphDeps {
   value?: any;
 }
 
-export interface TriggerPoint extends BasePoint {
+export interface NotifyPoint extends BasePoint {
   downStreamOnly?: boolean;
 }
 

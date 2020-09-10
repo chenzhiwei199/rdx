@@ -4,7 +4,7 @@ import {
   createConfigMap,
   GLOBAL_DEPENDENCE_SCOPE,
   Scope,
-  TriggerPoint,
+  NotifyPoint,
 } from '@czwcode/graph-core';
 import { Graph, BasePoint } from '@czwcode/graph-core';
 import { graphAdapter, cleanConfig } from './utils';
@@ -72,7 +72,7 @@ export default abstract class BaseQueue<T extends PointWithWeight> {
     return startPoints;
   }
 
-  public getAllPointFired(points: TriggerPoint | TriggerPoint[]) {
+  public getAllPointFired(points: NotifyPoint | NotifyPoint[]) {
     // @ts-ignore
     const newPoints = normalizeSingle2Arr<BasePoint>(points);
     // @ts-ignore
@@ -100,7 +100,7 @@ export default abstract class BaseQueue<T extends PointWithWeight> {
    * @param executeTasks
    * @param downstreamOnly
    */
-  getPendingPoints(executeTasks: TriggerPoint[]) {
+  getPendingPoints(executeTasks: NotifyPoint[]) {
     if (!this.graph.isRunning()) {
       return this.graph.getAllPointsByPoints(executeTasks);
     } else {
@@ -108,12 +108,12 @@ export default abstract class BaseQueue<T extends PointWithWeight> {
     }
   }
 
-  beforeDeliver(executeTasks: TriggerPoint | TriggerPoint[]) {
+  beforeDeliver(executeTasks: NotifyPoint | NotifyPoint[]) {
     // 数据格式类型统一处理
     // @ts-ignore
-    const normalizeExecuteTasks = normalizeSingle2Arr<TriggerPoint>(
+    const normalizeExecuteTasks = normalizeSingle2Arr<NotifyPoint>(
       executeTasks
-    ) ;
+    );
 
     // 获取即将要执行的任务
     let pendingPoints = this.getPendingPoints(normalizeExecuteTasks);

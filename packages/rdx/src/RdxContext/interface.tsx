@@ -10,7 +10,7 @@ import {
   PreDefinedTaskQueue,
 } from '../global';
 import { TaskStatus, ShareContextClass } from './shareContext';
-import {  Base } from './core';
+import { Base } from './core';
 
 export type MapObject<T> = { [key: string]: T | null };
 
@@ -62,7 +62,7 @@ export interface Action<IModel, IRelyModel> {
     | {
         key: string;
         value:
-          | IRdxView<IModel, IRelyModel, any>
+          | IRdxView<IModel, IRelyModel>
           | TaskStatus
           | IModel
           | (() => void)

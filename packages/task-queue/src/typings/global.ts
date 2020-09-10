@@ -39,10 +39,6 @@ export interface CallbackInfo {
   isCancel?: () => boolean,
 }
 
-export enum ReactionType {
-  Sync = 1,
-  Async = 2,
-}
 
 export interface STATUS_CHANGE_INFO {
   // 当前触发节点
