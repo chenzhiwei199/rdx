@@ -2,15 +2,14 @@ import { NodeStatus, BasePoint } from '@czwcode/graph-core';
 import {
   ShareContextClass,
   DeliverOptions,
-  ShareContext,
 } from './RdxContext/shareContext';
 import { ActionType, TargetType } from './RdxContext/interface';
-import { RdxNode } from './RdxValues';
+import { RdxNode, RdxNodeType } from './RdxValues';
+import { ISnapShotTrigger } from '../../task-queue/src';
 export * from '@czwcode/task-queue';
 export * from '@czwcode/graph-core';
 
-export interface ReactionContext<IModel, IRelyModel>
-  extends BaseContext<IModel, IRelyModel> {
+export interface ReactionContext<GModel> extends BaseContext<GModel> {
   /**
    * 当事件冲突时触发时候的回调
    *
@@ -20,18 +19,14 @@ export interface ReactionContext<IModel, IRelyModel>
   /**
    * 更新数据的方法
    */
-  updateState: (v: IModel) => void;
+  updateState: (v: GModel) => void;
 }
 
-export type ASYNC_TASK<IModel, IRelyModel> = (
-  taskInfo: ReactionContext<IModel, IRelyModel>
+export type ASYNC_TASK<GModel> = (
+  taskInfo: ReactionContext<GModel>
 ) => Promise<void>;
-export type SYNC_TASK<IModel, IRelyModel> = (
-  taskInfo: ReactionContext<IModel, IRelyModel>
-) => void;
-export type MixedTask<IModel, IRelyModel> =
-  | ASYNC_TASK<IModel, IRelyModel>
-  | SYNC_TASK<IModel, IRelyModel>;
+export type SYNC_TASK<GModel> = (taskInfo: ReactionContext<GModel>) => void;
+export type MixedTask<GModel> = ASYNC_TASK<GModel> | SYNC_TASK<GModel>;
 
 export enum STATUS_TYPE {
   BEFORE_TASK_EXECUTE = '1',
@@ -50,7 +45,7 @@ export enum RENDER_STATUS {
 export type Status = NodeStatus | RENDER_STATUS;
 export const Status = { ...NodeStatus, ...RENDER_STATUS };
 export type IRdxAnyDeps = IRdxDeps<any>;
-export type IRdxDeps<IModel> = string | RdxNode<IModel>;
+export type IRdxDeps<GModel> = string | RdxNode<GModel>;
 export type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 export type Retain<T, K> = Pick<T, Extract<keyof T, K>>;
 export type PartialNotOmit<T, K> = Partial<Omit<T, K>>;
@@ -59,7 +54,7 @@ export type PartialExclude<T, K> = Retain<T, K> & PartialNotOmit<T, K>;
 // 选中的必选，其他的保留
 export type RequiredExclude<T, K> = Omit<T, K> & Required<Retain<T, K>>;
 
-export interface BaseContext<IModel, IRelyModel> extends IDataStatus {
+export interface BaseContext<GModel> extends IDataStatus {
   /**
    * 模块唯一id
    */
@@ -71,19 +66,19 @@ export interface BaseContext<IModel, IRelyModel> extends IDataStatus {
   /**
    * 当前模块的数据
    */
-  value: IModel;
+  value: GModel;
   /**
    * 依赖的模块上次的值
    */
-  lastDepsValue: IRelyModel;
-  /**
-   * 当前模块依赖的模块id
-   */
-  deps?: IRdxAnyDeps[];
-  /**
-   * 当前模块依赖的模块数据
-   */
-  depsValues: IRelyModel;
+  // lastDepsValue: IRelyModel;
+  // /**
+  //  * 当前模块依赖的模块id
+  //  */
+  // deps?: IRdxAnyDeps[];
+  // /**
+  //  * 当前模块依赖的模块数据
+  //  */
+  // depsValues: IRelyModel;
 }
 
 export interface IDataStatus {
@@ -100,11 +95,14 @@ export interface IDataStatus {
    */
   errorMsg?: string;
 }
-export interface DataContext<IModel, IRelyModel>
-  extends BaseContext<IModel, IRelyModel>,
-    IMutators<IModel> {}
-
-export interface IMutators<IModel> {
+export interface DataContext<GModel>
+  extends BaseContext<GModel>,
+    IMutators<GModel> {}
+export type TNext<GModel> = (
+  value: GModel | ((oldValue: GModel) => GModel),
+  options?: DeliverOptions
+) => void;
+export interface IMutators<GModel> {
   /**
    * 刷新视图
    */
@@ -112,37 +110,33 @@ export interface IMutators<IModel> {
   /**
    * 更新当前模块的数据，并调用当前模块以及下游模块的响应函数
    */
-  refresh: (value?: IModel) => void;
+  refresh: (value?: GModel) => void;
   /**
    * 更新当前模块的数据，并调用下游模块的响应函数
    */
-  next: (
-    value: IModel | ((oldValue: IModel) => IModel),
-    options?: DeliverOptions
-  ) => void;
+  next: TNext<GModel>;
   /**
    * 更新当前模块的数据，并调用下游模块的响应函数
    */
-  nextById: (id: string, value: IModel, options?: DeliverOptions) => void;
+  nextById: (id: string, value: GModel, options?: DeliverOptions) => void;
 }
 
-export interface IViewRender<IModel, IRelyModel> {
+export interface IViewRender<GModel> {
   /**
    * 视图渲染，如果render 和component同时传，则render优先
    *
    * @memberof IBase
    */
-  render?: (context: DataContext<IModel, IRelyModel>) => React.ReactNode;
+  render?: (context: DataContext<GModel>) => React.ReactNode;
   /**
    * 视图渲染的组件
    *
    * @memberof IBase
    */
-  component?: React.ComponentType<DataContext<IModel, IRelyModel>>;
+  component?: React.ComponentType<DataContext<GModel>>;
 }
 
-export interface IRdxViewBase<IModel, IRelyModel>
-  extends IRdxReactionProps<IModel, IRelyModel> {
+export interface IRdxViewBase<GModel> extends IRdxReactionProps<GModel> {
   /**
    * 模块依赖的id列表
    *
@@ -153,14 +147,14 @@ export interface IRdxViewBase<IModel, IRelyModel>
   /**
    * 默认的Model
    *
-   * @type {IModel}
+   * @type {GModel}
    * @memberof IBase
    */
-  defaultValue?: IModel;
+  defaultValue?: GModel;
 }
-export interface IRdxView<IModel, IRelyModel>
-  extends IRdxViewBase<IModel, IRelyModel>,
-    IViewRender<IModel, IRelyModel> {
+export interface IRdxView<GModel>
+  extends IRdxViewBase<GModel>,
+    IViewRender<GModel> {
   /**
    * 模块的唯一id
    *
@@ -168,14 +162,23 @@ export interface IRdxView<IModel, IRelyModel>
    * @memberof IBase
    */
   id: string;
+  /**
+   *
+   */
+  type: RdxNodeType;
+  /**
+   * getValue
+   */
+  getValue?: (id: string) => GModel;
+  setValue?: (id: string, value: GModel) => void;
   rerunWhenDepsChange?: boolean;
 }
 
-export interface IRdxState<IModel> {
+export interface IRdxState<GModel> {
   id: string;
-  defaultValue: IModel;
+  defaultValue: GModel;
 }
-export interface IRdxReactionProps<IModel, IRelyModel> {
+export interface IRdxReactionProps<GModel> {
   /**
    * 依赖数据更新时的回调
    *
@@ -187,22 +190,23 @@ export interface IRdxReactionProps<IModel, IRelyModel> {
    *
    * @memberof IBase
    */
-  reaction?: MixedTask<IModel, IRelyModel>;
+  reaction?: MixedTask<GModel>;
   /**
    * 数据改变的处理函数
    *
    * @memberof IRdxReactionProps
    */
   next?: (
-    context: ShareContextClass<IModel, IRelyModel>,
+    context: ShareContextClass,
     id: string,
-    value: IModel,
+    value: GModel,
     options?: DeliverOptions
   ) => void;
 }
 
 export enum StateUpdateType {
   ReactionStatus = 'ReactionStatus',
+  GlobalState = 'GlobalState',
   State = 'State',
 }
 export interface IStateInfo {
@@ -210,6 +214,11 @@ export interface IStateInfo {
   targetType: TargetType;
   value: any;
   key: string;
+}
+
+export interface IRdxSnapShotTrigger extends ISnapShotTrigger {
+  // 当前的所有task信息
+  tasks?: IRdxView<any>[]
 }
 // 当前节点的state
 // states: IStateInfo[];

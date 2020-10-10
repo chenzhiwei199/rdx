@@ -1,135 +1,91 @@
 import * as React from 'react';
 import { initValue, ShareContextClass } from './shareContext';
+import { TaskEventTriggerType, TaskEventType } from '@czwcode/task-queue';
 import { RdxContextProps } from './interface';
-import { ShareContextProvider } from './shareContext';
 import { ScopeObject } from './core';
 import UiBatcher from './UiBatcher';
-import ScheduleBatcher from './ScheduleBatcher';
-import ReactDOM from 'react-dom';
-import { TaskEventType } from '../global';
+import { StateUpdateType } from '../global';
+import { DefaultContext } from '..';
 export * from './core';
-const Rdx = <IModel extends Object, IRelyModel, IModuleConfig extends Object>(
-  props: RdxContextProps<IModel, IRelyModel>
-) => {
+const Rdx = (props: RdxContextProps<any>) => {
   const {
-    initializeState,
+    initializeState = {},
     onChange = () => {},
-    onStateChange = () => {},
-    shouldUpdate,
-    state,
     name,
     withRef,
+    context = DefaultContext,
     createStore,
+    visualStatePlugins,
   } = props;
-  // 受控标记
-  const isUnderControl = state !== undefined;
-  const currentState = state || initializeState || {};
+  // 如果initializeState为undefined, 则需要替换状态， 否则不需要
   // 创建store
   function createTaskState(value: any) {
     return createStore
-      ? createStore(currentState)
-      : new ScopeObject(currentState);
+      ? createStore(initializeState)
+      : new ScopeObject(initializeState);
   }
 
   // context下保留不变的store
   const store = React.useRef(
-    new ShareContextClass<IModel, IRelyModel>({
+    new ShareContextClass({
       ...initValue(),
       name,
-      taskState: createTaskState(currentState),
+      virtualTaskState: createTaskState(initializeState),
+      taskState: createTaskState(initializeState),
     })
   );
 
   // 绑定批量更新方法
-  store.current.onPropsChange = onChange;
-  store.current.onPropsStateChange = onStateChange;
+  store.current.setChangeCallback((v) => {
+    store.current.getEventEmitter().emit(StateUpdateType.GlobalState);
+    onChange(v);
+  });
   const uiNotifyBatcherOfChange = React.useRef<any>(null);
   const setUiNotifyBatcherOfChange = (x: any) => {
     uiNotifyBatcherOfChange.current = x;
-  };
-
-  const scheduleNotifyBatcherOfChange = React.useRef<any>(null);
-  const setScheduleNotifyBatcherOfChange = (x: any) => {
-    scheduleNotifyBatcherOfChange.current = x;
   };
 
   store.current.batchUiChange = () => {
     uiNotifyBatcherOfChange.current();
   };
 
-  store.current.batchTriggerChange = () => {
-    scheduleNotifyBatcherOfChange.current();
-  };
-
   withRef && (withRef.current = store.current);
-  // 生命周期 context Init
-  store.current.subject.emit(TaskEventType.RdxContextInit);
-
-  // 序列化状态更新
-  React.useEffect(() => {
-    if (isUnderControl) {
-      const diffObjectKeys = Array.from(
-        store.current.tasksMap.getAll().keys()
-      ).filter((key: any) => {
-        return shouldUpdate
-          ? shouldUpdate(store.current.taskState.get(key), state[key])
-          : state[key] !== store.current.taskState.get(key);
-      });
-      store.current.taskState = createTaskState(state);
-      ReactDOM.unstable_batchedUpdates(() => {
-        diffObjectKeys.forEach((key) => {
-          store.current.notifyModule(key);
-        });
-      });
-    }
-  }, [state]);
-  // const atomTaskRef = React.useRef(new Map());
-  // React.useMemo(() => {
-  //   getAllNodes().forEach((atom) => {
-  //     store.current.addOrUpdateTask(
-  //       atom.getId(),
-  //       atom.createNodeInfo(
-  //         store.current,
-  //         (v) => {
-  //           atomTaskRef.current.set(atom.getId(), v);
-  //         },
-  //         () => {
-  //           return atomTaskRef.current.get(atom.getId());
-  //         }
-  //       ),
-  //       atom.isNotifyTask(() => {
-  //         return atomTaskRef.current.get(atom.getId());
-  //       })
-  //     );
-  //   });
-  // }, []);
-  // 初始化组件绑定
-  // React.useEffect(() => {
-  //   const queue = store.current.queue;
-  //   store.current.parentMounted = true;
-  //   // 获取所有的atoms
-
-  //   if (queue.size > 0) {
-  //     const p = [...Array.from(queue)]
-  //       // .reverse()
-  //       .map((item) => ({ key: item, downStreamOnly: false }));
-  //     logger.info('init', p);
-  //     store.current.batchTriggerSchedule(p);
-  //     queue.clear();
-  //   }
-  // }, []);
+  let copyState = store.current.getAllTaskState();
   React.useEffect(() => {
     store.current.parentMounted = true;
+    // 执行初始化任务
+    store.current.executeTask(Array.from(store.current.getNotifyQueue()), TaskEventTriggerType.BatchReactionOnMount);
+    store.current.getNotifyQueue().clear();
+
+    // 初始化状态和后续状态不一样，则触发onChange
+    if (copyState !== store.current.getAllTaskState()) {
+      onChange(store.current.getAllTaskState());
+    }
   }, []);
   return (
-    <ShareContextProvider value={store.current}>
+    <context.Provider value={store.current}>
+      {visualStatePlugins}
+      <FirstCycleCompnent store={store.current} />
       {props.children}
-      <UiBatcher setNotifyBatcherOfChange={setUiNotifyBatcherOfChange} />
-      <ScheduleBatcher
-        setNotifyBatcherOfChange={setScheduleNotifyBatcherOfChange}
+      <UiBatcher
+        context={context}
+        setNotifyBatcherOfChange={setUiNotifyBatcherOfChange}
       />
-    </ShareContextProvider>
+      {/* <ScheduleBatcher
+        context={context}
+        setNotifyBatcherOfChange={setScheduleNotifyBatcherOfChange}
+      /> */}
+    </context.Provider>
   );
+};
+const FirstCycleCompnent = (props: { store: ShareContextClass }) => {
+  React.useMemo(() => {
+    props.store.emitBase(TaskEventType.Init);
+  }, []);
+  React.useEffect(() => {
+    props.store.emitBase(TaskEventType.Initializing);
+  }, []);
+  return <></>;
 };
 
 export const RdxContext = Rdx;

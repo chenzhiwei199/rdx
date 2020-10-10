@@ -1,21 +1,19 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { ShareContextInstance, ShareContextClass } from './shareContext';
-import { StateUpdateType } from '../global';
+import React, { useEffect } from 'react';
 import logger from '../utils/log';
+import { useRdxStateContext, ShareContextClass } from '..';
 
-const Batcher = (props: { setNotifyBatcherOfChange: any }) => {
-  const [state, dispatch] = React.useReducer(s => ({}) , {} );
-  const storeRef = useContext<ShareContextClass<any, any>>(ShareContextInstance)
+const Batcher = (props: { setNotifyBatcherOfChange: any, context: React.Context<ShareContextClass> }) => {
+  const [state, dispatch] = React.useReducer((s) => ({}), {});
+  const storeRef = useRdxStateContext(props.context);
   props.setNotifyBatcherOfChange(() => dispatch());
   useEffect(() => {
-    if (storeRef.uiQueue.size > 0) {
-      logger.info("UI Batcher", Array.from(storeRef.uiQueue))
-      Array.from(storeRef.uiQueue).forEach((id) => {
-        storeRef.eventEmitter.emit(id);
+    if (storeRef.getUiQueue().size > 0) {
+      logger.info('UI Batcher', Array.from(storeRef.getUiQueue()));
+      Array.from(storeRef.getUiQueue()).forEach((id) => {
+        storeRef.getEventEmitter().emit(id);
       });
-      storeRef.uiQueue.clear();
+      storeRef.getUiQueue().clear();
     }
-    
   });
   return null;
 };

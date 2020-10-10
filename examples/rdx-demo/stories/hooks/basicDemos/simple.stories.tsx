@@ -24,7 +24,6 @@ const BaseView = ({ id }) => {
     id: id,
     defaultValue: 0,
   });
-  console.log('state: ', id, state);
   return (
     <NumberPicker
       value={state}

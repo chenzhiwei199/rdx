@@ -28,7 +28,7 @@
 // // forward类型转换，增强易用性
 // type WithForwardRefProps<IModel, IRelyModel> = {
 //   // ref wouldn't be a valid prop name
-//   forwardedRef?: React.Ref<IMutators<IModel>>;
+//   forwardedRef?: React.Ref<IMutators<GModel>>;
 // } & IRdxView<IModel, IRelyModel>;
 
 // export const WithForwardRef = <IModel, IRelyModel>({
@@ -58,4 +58,3 @@
 //   }
 //   return <>{render ? (render(data) as React.ReactNode) : null}</>;
 // }
-

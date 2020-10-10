@@ -1,37 +1,24 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { ShareContextInstance, ShareContextClass } from './shareContext';
-import { RdxNode } from '../RdxValues';
+import { useEffect, useState } from 'react';
 import logger from '../utils/log';
+import { ShareContextClass, useRdxStateContext, TaskEventType, ISnapShotTrigger } from '..';
 
-const ScheduleBatcher = (props: { setNotifyBatcherOfChange: any }) => {
-  const storeRef = useContext<ShareContextClass<any, any>>(
-    ShareContextInstance
-  );
+const ScheduleBatcher = (props: {
+  setNotifyBatcherOfChange: any;
+  context: React.Context<ShareContextClass>;
+}) => {
+  const storeRef = useRdxStateContext(props.context);
   const [_, setState] = useState([]);
   props.setNotifyBatcherOfChange(() => setState({} as any));
   useEffect(() => {
-    if (storeRef.willNotifyQueue.size > 0) {
-      // const depsRdxNodes = new Set<RdxNode<any>>();
-      // // 收集相关节点依赖
-      // for (let point of storeRef.willNotifyQueue.values()) {
-      //   const deps = storeRef.getDeps(point.key);
-      //   for (let dep of deps) {
-      //     if (dep instanceof RdxNode) {
-      //       depsRdxNodes.add(dep);
-      //     }
-      //   }
-      // }
-      // // 添加相关节点依赖
-      // for (let atom of depsRdxNodes) {
-      //   // 不存在才添加
-      //   if (!storeRef.getTaskMap(atom.getId())) {
-      //     storeRef.addOrUpdateTask(atom.getId(), atom.load(storeRef), false);
-      //   }
-      // }
-      logger.info('Schedule Batcher', Array.from(storeRef.willNotifyQueue));
-      storeRef.batchTriggerSchedule(Array.from(storeRef.willNotifyQueue));
+    if (storeRef.getNotifyQueue().size > 0 && storeRef.getAllPointFired(Array.from(storeRef.getNotifyQueue())).length > 0) {
+      logger.info('Schedule Batcher', Array.from(storeRef.getNotifyQueue()));
+      storeRef.emit(TaskEventType.BatchEventTrigger, Array.from(storeRef.getNotifyQueue()))
+      storeRef.executeTask(Array.from(storeRef.getNotifyQueue()));
+    } else {
+      storeRef.onPropsChange(storeRef.getAllTaskState(), storeRef.getTaskState())
     }
-    storeRef.willNotifyQueue.clear();
+    
+    storeRef.getNotifyQueue().clear();
   });
 
   return null;

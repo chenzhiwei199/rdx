@@ -1,13 +1,6 @@
 import React from 'react';
-import {
-  atom,
-  RdxContext,
-  watcher,
-  useRdxState,
-} from '@czwcode/rdx';
-import { DevVisualGraphTool } from '@czwcode/rdx-plugins';
+import { atom, RdxContext, watcher, useRdxState } from '@czwcode/rdx';
 import { Button, Input } from '@alifd/next';
-import { RdxNode } from '../../../../../packages/rdx/src/RdxValues/base';
 const CounterA = atom({
   id: 'count111A',
   defaultValue: 0,
@@ -30,7 +23,7 @@ const CounterSelector = watcher({
   },
 });
 const BaseCounterView = ({ atom }) => {
-  const [value, onChange] = useRdxState(atom);
+  const [value, onChange] = useRdxState(atom) as [number, (v: number) => void];
   return (
     <div>
       <Button
@@ -55,9 +48,7 @@ const BaseCounterView = ({ atom }) => {
   );
 };
 const SelectorPreview = () => {
-  const [countFromSelector, setCountBySelector] = useRdxState(
-    CounterSelector
-  );
+  const [countFromSelector, setCountBySelector] = useRdxState(CounterSelector);
   return (
     <div style={{ fontSize: 20 }}>Preview selector: {countFromSelector}</div>
   );
@@ -73,19 +64,16 @@ const CounterView = () => {
   );
 };
 
-export const Atom基础用例 = () => {
+export const Selector用法 = () => {
   return (
     <RdxContext>
       <CounterView />
-      {/* <DoubleCounterView />
-      <OtherView /> */}
-      <DevVisualGraphTool />
     </RdxContext>
   );
 };
 
 export default {
-  title: 'Usage/Selector',
+  title: 'Usage',
   parameters: {
     info: { inline: true },
   },

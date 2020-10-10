@@ -1,38 +1,29 @@
-import { IFieldDefine } from '../global';
+import { IFieldDefine, BaseType } from '../global';
 import React from 'react';
 import { isFunction } from './base';
 
-export function isPromise(obj) {
-  return (
-    !!obj &&
-    (typeof obj === 'object' || typeof obj === 'function') &&
-    typeof obj.then === 'function'
-  );
-}
-
-export function getEmptyValue(fieldDefine: IFieldDefine) {
-  const { type, default: defaultValue } = fieldDefine;
-  if(defaultValue !== undefined) {
-    return isFunction(defaultValue) ? defaultValue() : defaultValue
+export function getEmptyValue(props) {
+  const { type, default: defaultValue } = props;
+  if (defaultValue !== undefined) {
+    return isFunction(defaultValue) ? defaultValue() : defaultValue;
   }
-  if (type === 'string') {
-    return '';
-  }
-  if (type === 'array') {
+  if (type === BaseType.Array) {
     return [];
-  }
-  if (type === 'object') {
+  } else if (type === 'object') {
     return {};
-  }
-  if (type === 'number') {
-    return 0;
+  } else if (type === 'string') {
+    return '';
+  } else if(type=== 'number') {
+    return 0
+  }else {
+    return undefined;
   }
 }
 
 export function getChlidFieldInfos(children: React.ReactNode) {
   let itemRefs: IFieldDefineWithChild[] = [];
   React.Children.forEach(children, (child: any, index) => {
-    const {name,  title, type, xComponent } = child.props;
+    const { name, title, type, xComponent } = child.props;
     itemRefs.push({
       title,
       type,
@@ -43,27 +34,38 @@ export function getChlidFieldInfos(children: React.ReactNode) {
   });
   return itemRefs;
 }
-export interface IFieldDefineWithChild extends IFieldDefine{
-  child: any
+export interface IFieldDefineWithChild extends IFieldDefine {
+  child: any;
 }
-export function getChlidFieldInfo(
-  children: React.ReactNode
-): IFieldDefine & { children?: IFieldDefineWithChild[] } {
-  let itemRef: IFieldDefine & { children?: IFieldDefineWithChild[] } = {};
+export interface IFieldInfo extends IFieldDefine {
+  childrenReactNode?: React.ReactNode;
+  children?: IFieldDefineWithChild[];
+}
+
+export function getChlidFieldInfo(children: React.ReactNode): IFieldInfo {
+  let fieldInfo: IFieldInfo = {};
   React.Children.forEach(children, (child: any, index) => {
-    const { title, name, type, xComponent, children, default: defaultValue } = child.props;
+    const {
+      title,
+      name,
+      type,
+      xComponent,
+      children,
+      default: defaultValue,
+    } = child.props;
     if (index === 0) {
       if (type === 'object') {
-        itemRef = {
+        fieldInfo = {
           title,
           type,
           default: defaultValue,
           name,
           xComponent,
+          childrenReactNode: children,
           children: getChlidFieldInfos(children),
         };
       } else {
-        itemRef = {
+        fieldInfo = {
           title,
           type,
           default: defaultValue,
@@ -73,47 +75,47 @@ export function getChlidFieldInfo(
       }
     }
   });
-  return itemRef;
+  return fieldInfo;
 }
 
-
-export const toArr = (val: any): any[] => (Array.isArray(val) ? val : val ? [val] : [])
+export const toArr = (val: any): any[] =>
+  Array.isArray(val) ? val : val ? [val] : [];
 
 export const normalizeCol = (
   col: { span: number; offset?: number } | number,
   defaultValue?: { span: number }
 ): { span: number; offset?: number } => {
   if (!col) {
-    return defaultValue
+    return defaultValue;
   } else {
-    return typeof col === 'object' ? col : { span: Number(col) }
+    return typeof col === 'object' ? col : { span: Number(col) };
   }
-}
+};
 
 /**
-*
-* @param fn {Function}   实际要执行的函数
-* @param delay {Number}  延迟时间，也就是阈值，单位是毫秒（ms）
-*
-* @return {Function}     返回一个“去弹跳”了的函数
-*/
+ *
+ * @param fn {Function}   实际要执行的函数
+ * @param delay {Number}  延迟时间，也就是阈值，单位是毫秒（ms）
+ *
+ * @return {Function}     返回一个“去弹跳”了的函数
+ */
 export function debounce(fn, delay) {
   // 定时器，用来 setTimeout
-  let timer
+  let timer;
   // 返回一个函数，这个函数会在一个时间区间结束后的 delay 毫秒时执行 fn 函数
   return function() {
     // 保存函数调用时的上下文和参数，传递给 fn
     // tslint:disable-next-statement
     let context = this;
-    let args = arguments
+    let args = arguments;
     // 每次这个返回的函数被调用，就清除定时器，以保证不执行 fn
-    clearTimeout(timer)
+    clearTimeout(timer);
     // 当返回的函数被最后一次调用后（也就是用户停止了某个连续的操作），
     // 再过 delay 毫秒就执行 fn
-    timer = setTimeout( () => {
-      fn.apply(context, args)
-    }, delay)
-  }
+    timer = setTimeout(() => {
+      fn.apply(context, args);
+    }, delay);
+  };
 }
 
 export function get(o, path, defaultValue?: any) {
@@ -135,7 +137,7 @@ export function get(o, path, defaultValue?: any) {
     return o;
   }
 }
-export function set(target = {}, path, value) {
+export function set(target = {} as any, path, value) {
   const paths = `${path}`.split('.');
   if (paths && paths.length > 0) {
     let temp = target;

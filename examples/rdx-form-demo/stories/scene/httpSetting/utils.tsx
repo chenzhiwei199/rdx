@@ -63,7 +63,7 @@ export function toFields(data, formatter) {
   }
   return res;
 }
-export function mockResult(res, formatter, requestType, url, body) {
+export function mockResult(res: any, formatter: string, requestType: RequestType, url: string, body: string) {
   let fields = toFields(res, formatter) || [];
   fields = Object.keys(fields[0] || {});
   const params = parseParams(requestType, url, body);

@@ -19,13 +19,9 @@ export const http配置器 = () => {
     },
   } as any);
   return (
-    <div style={{ width: 500 }}>
-      <HttpSetting
-        value={value}
-        onChange={(v) => {
-          setValue(v);
-        }}
-      />
+    <div style={{ width: 600 }}>
+      <HttpSetting value={value} />
     </div>
   );
 };
+

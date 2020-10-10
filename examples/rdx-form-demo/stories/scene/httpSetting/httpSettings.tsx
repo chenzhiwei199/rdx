@@ -1,23 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { RequestType, REQUEST_TYPE, IHttpSettingValue } from './types';
 import {
   RdxFormContext,
-  RdxFormItem,
+  RdxFormItem as UnDefinedRdxFormItem,
   FormLayout,
-  DepsType,
-  IEditorWithInAndOut,
-  RdxView,
   XComponentType,
   BaseType,
+  IRdxFormItem,
+  IRdxFormWatcherGet,
 } from '@czwcode/rdx-next-form';
-import { Input } from '@alifd/next';
-import { Button } from '@alifd/next';
-import { parseGetParams, mockResult, jsonParse } from './utils';
+import { RdxContext } from '@czwcode/rdx';
+import { Input, Button, Notification } from '@alifd/next';
+import { parseGetParams, mockResult, jsonParse, parseParams } from './utils';
 import { fetchData, parseResult } from './dataUtils';
+import {
+  useRdxFormGlboalState,
+  useRdxFormAtomLoader,
+} from '../../../../../packages/rdx-form/src/hooks/rdxStateFormHooks';
 
+const RdxFormItem = <GBaseType extends BaseType>(props: IRdxFormItem<HttpSettingState & { data: unknown }, GBaseType>) => {
+  return <UnDefinedRdxFormItem {...props}/>
+}
 export interface IHttpSetting {
   value: IHttpSettingValue;
-  onChange: (value: IHttpSettingValue) => void;
+  onChange?: (value: IHttpSettingValue) => void;
 }
 
 export enum UrlParmasType {
@@ -58,47 +64,111 @@ export function updateUrl(
 
   return createNewUrl(url, params);
 }
-export default function HttpSetting(props: IHttpSetting) {
-  const { value, onChange } = props;
-  const compute = (value, context) => {
-    const { id, nextById, depsValues } = context;
+function FetchComponent() {
+  const globalState = useRdxFormGlboalState();
+  const [state, setState] = useRdxFormAtomLoader({
+    id: 'data',
+    defaultValue: { value: null, visible: true, disabled: false },
+  });
+  return (
+    <Button
+      onClick={() => {
+        async function getData() {
+          const res = await fetchData({
+            defaultOptions: globalState.state,
+            isFormatter: false,
+          });
+          setState({
+            value: res,
+            visible: true,
+            disabled: false,
+          });
+        }
+        getData();
+      }}
+    >
+      查询数据
+    </Button>
+  );
+}
+
+const InfoWrapper = ({ title = '标题', children }) => {
+  return (
+    <div
+      style={{
+        marginBottom: 12,
+        border: '1px dashed lightgrey',
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          background: 'white',
+          left: 20,
+          top: -10,
+          padding: 4,
+        }}
+      >
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+};
+const RequestInfo = () => {
+  const compute = ({ get, set, id }, newValue) => {
     const ids = id.split('.');
     const currentIndex = ids[ids.length - 2];
     const currentKey = ids[ids.length - 1];
-    const [urlObj] = depsValues;
+    const urlInstance = get('requestInfo.url');
     const newUrl = updateUrl(
-      urlObj.value,
+      urlInstance.value,
       UrlParmasType.Key,
       currentKey,
       currentIndex,
-      value
+      newValue.value
     );
-    nextById('requestInfo.url', {
-      ...urlObj,
+    set('requestInfo.url', {
+      ...urlInstance,
       value: newUrl,
     });
   };
+  const get: IRdxFormWatcherGet<any, HttpSettingState & { data: unknown}> = ({ id, get }) => {
+    const ids = id.split('.');
+    const currentIndex = ids[ids.length - 2];
+    const currentKey = ids[ids.length - 1];
+    // @ts-ignore
+    const value = parseGetParams(get('requestInfo.url').value);
+    return {
+      value: value[currentIndex][currentKey],
+      visible: true,
+      disabled: false,
+    };
+  };
   return (
-    <RdxFormContext state={value} onChange={onChange}>
-      {/* <FormLayout> */}
-      <RdxFormItem name='requestInfo' type={BaseType.Object} title='请求配置'>
-        <Input.Group>
+    <InfoWrapper title='请求信息'>
+      <RdxFormItem name='requestInfo' type={BaseType.Object}>
+        <div style={{ display: 'flex' }}>
           <RdxFormItem
             name='requestType'
             type={BaseType.String}
-            dataSource={REQUEST_TYPE.map((item) => ({
-              label: item,
-              value: item,
-            }))}
+            componentProps={{
+              dataSource: REQUEST_TYPE.map((item) => ({
+                label: item,
+                value: item,
+              }))
+            }}
+            
+            default={REQUEST_TYPE[0]}
             xComponent={XComponentType.Select}
-          ></RdxFormItem>
+          />
           <RdxFormItem
             name='url'
             type={BaseType.String}
-            reaction={(context) => {
-              const { value } = context;
-              new URL(value.value);
-            }}
             rules={[
               async (value) => {
                 try {
@@ -110,76 +180,63 @@ export default function HttpSetting(props: IHttpSetting) {
               },
             ]}
             componentProps={{ style: { width: 320 } }}
-          ></RdxFormItem>
-          <RdxView
-            id='data'
-            render={(context) => {
-              const { refresh } = context;
-              return (
-                <Button
-                  type='primary'
-                  onClick={() => {
-                    refresh();
-                  }}
-                >
-                  查询
-                </Button>
-              );
-            }}
-            reaction={async (context) => {
-              try {
-                const { value, updateState, state } = context;
-                const res = await fetchData({
-                  defaultOptions: state.state,
-                  isFormatter: false,
-                });
-                updateState({ ...(value as any), value: res });
-              } catch (error) {}
-            }}
-            areEqualForTask={() => {
-              return false;
-            }}
-          ></RdxView>
-        </Input.Group>
+          />
+          <FetchComponent />
+        </div>
 
         <RdxFormItem
-          deps={[{ id: 'url' }]}
-          reaction={(context) => {
-            const { updateState, value, id, depsValues } = context;
-            const [urlObj] = depsValues;
-            updateState({
-              ...value,
-              visible: true,
-              value: parseGetParams(urlObj.value),
-            });
-          }}
           name='params'
           title='参数配置'
-          compute={(value, context) => {
-            const { depsValues, nextById } = context;
-            const [urlObj] = depsValues;
-            nextById('requestInfo.url', {
-              ...urlObj,
-              value: createNewUrl(urlObj.value, value),
-            });
-          }}
+          virtual={true}
           xComponent={XComponentType.ArrayTable}
           type={BaseType.Array}
+          get={({ get }) => {
+            const value = get('params' as any)
+            const url = get('requestInfo.url').value;
+            try {
+              new URL(url);
+              return {
+                ...value,
+                visible: true,
+                value: parseGetParams(url),
+              };
+            } catch (error) {
+              return {
+                ...value,
+                visible: false,
+              };
+            }
+          }}
+          set={({ id, get, set }, newValue) => {
+            const urlObj = get('requestInfo.url');
+            try {
+              // @ts-ignore
+              set('requestInfo.url', {
+                ...urlObj,
+                value: createNewUrl(urlObj.value, newValue.value),
+              });
+            } catch (error) {
+              Notification.help({
+                content: JSON.stringify(error.toString()),
+              });
+            }
+          }}
         >
-          <RdxFormItem type={BaseType.Object} default={{ key: '', value: '' }}>
+          <RdxFormItem
+            type={BaseType.Object}
+            default={{ key: '1', value: '2' }}
+          >
             <RdxFormItem
-              deps={[{ id: 'requestInfo.url', type: DepsType.Absolute }]}
-              compute={compute}
+              set={compute}
+              get={get}
               title='key'
-              default={'1'}
               name='key'
               type={BaseType.String}
             ></RdxFormItem>
             <RdxFormItem
-              deps={[{ id: 'requestInfo.url', type: DepsType.Absolute }]}
-              compute={compute}
+              set={compute}
+              get={get}
               title='value'
-              default={'2'}
               name='value'
               type={BaseType.String}
             ></RdxFormItem>
@@ -189,7 +246,6 @@ export default function HttpSetting(props: IHttpSetting) {
           name='body'
           defaultVisible={false}
           type={BaseType.String}
-          deps={[{ id: 'requestType' }]}
           default={'{}'}
           rules={[
             async (value) => {
@@ -202,145 +258,152 @@ export default function HttpSetting(props: IHttpSetting) {
             },
           ]}
           xComponent={XComponentType.JsonEditor}
-          reaction={async (context) => {
-            const { updateState, value, depsValues } = context;
-            const [requestType] = depsValues.map((item) => item.value);
-            updateState({
+          get={async ({ get }) => {
+            const value = get('params'as any)as any
+            const requestType = get('requestInfo.requestType').value;
+            return {
               ...value,
               visible: requestType === RequestType.POST,
-            });
+            };
           }}
         ></RdxFormItem>
       </RdxFormItem>
-
-      <RdxFormItem name={'requestProcess'} type={BaseType.Object}>
-        <FormLayout labelCol={8}>
-          <RdxFormItem
-            name={'useParamsTransform'}
-            title='默认参数'
-            desc='默认参数指的是(pageIndex, pageSize, sort)等参数'
-            xComponent={XComponentType.Checkbox}
-            type={BaseType.Boolean}
-          ></RdxFormItem>
-        </FormLayout>
-      </RdxFormItem>
-      <RdxFormItem name={'resultProcess'} type={BaseType.Object}>
-        <FormLayout>
-          <RdxFormItem
-            name={'useFilter'}
-            xComponent={XComponentType.Checkbox}
-            title='开启过滤器'
-            type={BaseType.Boolean}
-          ></RdxFormItem>
-          <RdxFormItem
-            deps={[{ id: 'useFilter' }]}
-            reaction={(context) => {
-              const { value, updateState, depsValues } = context;
-              const [useFilterInstance] = depsValues;
-              updateState({
-                ...value,
-                visible: !useFilterInstance.value,
-              });
-            }}
-            default={'data'}
-            name={'dataField'}
-            title='接口数据字段'
-            type={BaseType.String}
-          ></RdxFormItem>
-          <RdxFormItem<IEditorWithInAndOut>
-            name={'filter'}
-            defaultVisible={false}
-            deps={[
-              { id: 'useFilter' },
-              { id: 'data', type: DepsType.Absolute },
-              { id: 'requestInfo.requestType', type: DepsType.Absolute },
-              { id: 'requestInfo.url', type: DepsType.Absolute },
-              { id: 'requestInfo.body', type: DepsType.Absolute },
-            ]}
-            reaction={(context) => {
-              const { value, updateState, depsValues } = context;
-              const [
-                useFilterInstance,
-                data,
-                requestTypeIsntance,
-                urlInstance,
-                body,
-              ] = depsValues.map((item) => item.value);
-              try {
-                const result = mockResult(
-                  data,
-                  value,
-                  requestTypeIsntance,
-                  urlInstance,
-                  body
-                );
-                updateState({
-                  ...value,
-                  visible: useFilterInstance === true,
-                  componentProps: {
-                    src: result,
-                  },
-                });
-              } catch (error) {}
-            }}
-            componentProps={{
-              isDialog: true,
-              trigger: <Button type='primary'>打开过滤器编辑器</Button>,
-            }}
-            title='数据过滤器'
-            type={BaseType.String}
-            xComponent={'code'}
-          ></RdxFormItem>
-        </FormLayout>
-      </RdxFormItem>
-
-      <RdxFormItem
-        name='watchResult'
-        type={BaseType.String}
-        deps={[
-          { id: 'resultProcess.useFilter' },
-          { id: 'resultProcess.filter', type: DepsType.Absolute },
-          { id: 'resultProcess.dataField', type: DepsType.Absolute },
-          { id: 'data', type: DepsType.Absolute },
-          { id: 'requestInfo.requestType', type: DepsType.Absolute },
-          { id: 'requestInfo.url', type: DepsType.Absolute },
-          { id: 'requestInfo.body', type: DepsType.Absolute },
-        ]}
-        reaction={(context) => {
-          try {
-            const { value, updateState, depsValues } = context;
-            let [
-              useFilter,
-              filter,
-              dataField,
-              result,
-              requestType,
-              url,
-              body,
-            ] = depsValues.map((item) => item.value);
-            if (useFilter) {
-              result = mockResult(result, filter, requestType, url, body);
-            }
-            result = parseResult({
-              result,
-              useFilter,
-              filterBody: filter,
-              dataField,
-            });
-
-            updateState({
-              ...value,
-              value: JSON.stringify(result),
-            });
-          } catch (error) {}
-        }}
-        xComponent={XComponentType.Json}
-        title='结果预览'
-      ></RdxFormItem>
-
-      {/* </FormLayout> */}
-      {/* <DevVisualTableTool /> */}
-      {/* <DevVisualGraphTool /> */}
-    </RdxFormContext>
+    </InfoWrapper>
   );
+};
+
+export default function HttpSetting(props: IHttpSetting) {
+  const { value, onChange } = props;
+
+  return (
+    <RdxContext>
+      <div>
+        <h4>问题总结： </h4>
+        <div>1. 数据的类型推断非常的不友好，怎样可以让类型推断友好一些</div>
+        <div>
+          解法. 本来就是表单工具，可以通过type的类型，来进行get返回数据的推论
+        </div>
+        <div>2. 通过get方式返回数据的方式还需要考虑原来的状态，不太好用</div>
+        <div>解法. 和第三点合并，一起解</div>
+        <div>3. get里面获取当前节点自己原来的数据是一件比较麻烦的事情</div>
+        <div>解法. 将原来的数据传递下来</div>
+        <div>
+          4. 整体表单的数据获取get使用的太多了，获取一个组件依赖的数据太麻烦了
+        </div>
+        <div>解法. 不需要解</div>
+        <div>5. 获取表单的数据，需要绝对路径，比较冗长。</div>
+        <div>解法. 不需要解</div>
+        <div>6. 通过代码，生成ts定义</div>
+      </div>
+      <RdxFormContext
+        state={value}
+        onChange={onChange}
+        typescriptGenerateOptions={{ rootName: 'HttpSettingState' }}
+        enabledStatePreview={true}
+        enabledTypescriptGenerte={true}
+      >
+        <RequestInfo></RequestInfo>
+        <InfoWrapper title='请求参数处理'>
+          <RdxFormItem name={'requestProcess'} type={BaseType.Object}>
+            <FormLayout labelCol={8}>
+              <RdxFormItem
+                name={'useParamsTransform'}
+                title='默认参数'
+                desc='默认参数指的是(pageIndex, pageSize, sort)等参数'
+                xComponent={XComponentType.Checkbox}
+                type={BaseType.Boolean}
+              ></RdxFormItem>
+            </FormLayout>
+          </RdxFormItem>
+        </InfoWrapper>
+        <InfoWrapper title='返回结果处理'>
+          <RdxFormItem name={'resultProcess'} type={BaseType.Object}>
+            <FormLayout>
+              <RdxFormItem
+                name={'useFilter'}
+                xComponent={XComponentType.Checkbox}
+                title='开启过滤器'
+                default={false}
+                type={BaseType.Boolean}
+              ></RdxFormItem>
+              <RdxFormItem
+                get={({ get }) => {
+                  const useFilterInstance = get('resultProcess.useFilter');
+                  return {
+                    ...value,
+                    visible: !useFilterInstance.value,
+                  };
+                }}
+                default={'data'}
+                name={'dataField'}
+                title='接口数据字段'
+                type={BaseType.String}
+              ></RdxFormItem>
+              <RdxFormItem
+                name={'filter'}
+                defaultVisible={false}
+                get={({ get }) => {
+                  const data = get('data').value;
+                  const useFilter = get('resultProcess.useFilter').value;
+                  const requestType = get('requestInfo.requestType');
+                  const urlInstance = get('requestInfo.url');
+                  const body = get('requestInfo.body');
+
+                  const filter = get('resultProcess.filter');
+                  const baseValue = {
+                    ...value,
+                    visible: useFilter === true,
+                  };
+                  try {
+                    const result = mockResult(
+                      data,
+                      get('params' as any).value,
+                      requestType as any,
+                      urlInstance.value,
+                      body.value
+                    );
+                    return {
+                      ...baseValue,
+                      componentProps: {
+                        ...filter.componentProps,
+                        src: result,
+                      },
+                    };
+                  } catch (error) {
+                    return baseValue;
+                  }
+                }}
+                componentProps={{
+                  isDialog: true,
+                  trigger: <Button type='primary'>打开过滤器编辑器</Button>,
+                }}
+                title='数据过滤器'
+                type={'string'}
+                xComponent={'code'}
+              ></RdxFormItem>
+            </FormLayout>
+          </RdxFormItem>
+        </InfoWrapper>
+      </RdxFormContext>
+    </RdxContext>
+  );
+}
+
+interface HttpSettingState {
+  requestInfo: RequestInfo;
+  requestProcess: RequestProcess;
+  resultProcess: ResultProcess;
+}
+interface ResultProcess {
+  useFilter: boolean;
+  dataField: string;
+  filter: string;
+}
+interface RequestProcess {
+  useParamsTransform: boolean;
+}
+interface RequestInfo {
+  requestType: string;
+  url: string;
+  body: string;
 }

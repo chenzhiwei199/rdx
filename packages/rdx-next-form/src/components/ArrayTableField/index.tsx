@@ -1,8 +1,19 @@
-import React, { useContext } from 'react';
-import { PathContextInstance, getChlidFieldInfo } from '@czwcode/rdx-form';
+import React, { memo, useContext, useEffect, useMemo } from 'react';
+import {
+  PathContextInstance,
+  getChlidFieldInfo,
+  FormContextInstance,
+  createArrayMutators,
+  RenderPerCell,
+  IFieldDefine,
+  getWatcherId,
+  useRdxFormStateContext,
+  BaseType,
+} from '@czwcode/rdx-form';
 import styled from 'styled-components';
 import { Table, Icon, Button } from '@alifd/next';
-import { createMutators } from '../../utils/array';
+import '@alifd/next/dist/next.css';
+
 export interface IArray {
   value: any[];
   onChange: (v: any[]) => void;
@@ -17,80 +28,109 @@ export interface IArrayItem {
   paths: string[];
   children: React.ReactNode;
 }
-
-const Array = (props: IArray) => {
-  const { value = [], onChange, children, name } = props;
-  const { paths: parentPaths = [] } = useContext(PathContextInstance);
-  const infos = getChlidFieldInfo(children);
-  const { children: childrenInfos = [] } = infos;
-  const { remove, moveDown, moveUp, add } = createMutators(
-    value,
-    onChange,
-    infos
+const Cell = ({ children, rowIndex, colIndex }) => {
+  useEffect(() => {
+    return () => {
+      console.log('unmount    dddd');
+    };
+  }, []);
+  return (
+    <RenderPerCell
+      key={`${rowIndex}-${colIndex}`}
+      children={children}
+      rowIndex={rowIndex}
+      colIndex={colIndex}
+      processProps={() => ({ title: undefined })}
+    />
   );
+};
+
+const ArrayTableField = (props: IArray) => {
+  const { onChange, children } = props;
+  const { paths = [] } = useContext(PathContextInstance);
+  const { name } = useContext(FormContextInstance);
+  const id = [...paths, name].join('.');
+  const context = useRdxFormStateContext();
+  const getValue = () => {
+    return (
+      (context.getTaskStateById(getWatcherId(id)) || ({} as any)).value || []
+    );
+  };
+  const { remove, moveDown, moveUp, add } = createArrayMutators((v) => {
+    onChange(v);
+  }, children);
+  const operateColumn = {
+    dataIndex: '____operation',
+    title: '操作',
+    cell: (v, index) => {
+      const ReDefineButton = Button as any;
+      // @ts-ignore
+      return (
+        <ReDefineButton
+          type='primary'
+          // style={{ display: 'flex', justifyContent: 'space-around' }}
+        >
+          <Icon
+            onClick={() => {
+              remove(index);
+            }}
+            style={{ marginRight: 6 }}
+            type='ashbin'
+          ></Icon>
+          <Icon
+            onClick={() => {
+              moveUp(index);
+            }}
+            style={{ marginRight: 6 }}
+            type='arrow-up'
+          ></Icon>
+          <Icon
+            onClick={() => {
+              moveDown(index);
+            }}
+            type='arrow-down'
+          ></Icon>
+        </ReDefineButton>
+      );
+    },
+  };
+  const fieldInfo = getChlidFieldInfo(children);
+  const columns =
+    fieldInfo.type !== BaseType.Object
+      ? [fieldInfo]
+      : (fieldInfo.children as any);
   return (
     <StyleCard>
-      {/* tslint:disable */}
-      <Table
-        dataSource={JSON.parse(JSON.stringify(value))}
-        columns={[
-          ...childrenInfos.map((item, colIndex) => ({
-            dataIndex: item.xComponent,
-            title: item.title,
-            cell: (value, rowIndex) => {
-              const currentPaths = [...parentPaths, name, rowIndex.toString()];
-              return (
-                <PathContextInstance.Provider
-                  value={{
-                    paths: currentPaths,
-                  }}
-                >
-                  {React.cloneElement(item.child, {
-                    ...item.child.props,
-                    title: undefined,
-                    key: `${rowIndex}-${item.name}`,
-                  })}
-                </PathContextInstance.Provider>
-              );
-            },
-          })),
-          {
-            dataIndex: '____operation',
-            title: '操作',
-            cell: (v, index) => {
-              const ReDefineButton = Button as any;
-              // @ts-ignore
-              return (
-                <div style={{ display: 'flex' }}>
-                  <ReDefineButton type='primary'>
-                    <Icon
-                      onClick={() => {
-                        remove(index);
-                      }}
-                      style={{ marginRight: 6 }}
-                      type='ashbin'
-                    ></Icon>
-                    <Icon
-                      onClick={() => {
-                        moveUp(index);
-                      }}
-                      style={{ marginRight: 6 }}
-                      type='arrow-up'
-                    ></Icon>
-                    <Icon
-                      onClick={() => {
-                        moveDown(index);
-                      }}
-                      type='arrow-down'
-                    ></Icon>
-                  </ReDefineButton>
-                </div>
-              );
-            },
-          },
-        ]}
-        {...({} as any)}
-      ></Table>
+      <Table dataSource={getValue()}>
+        {useMemo(() => {
+          console.log('222, useMemo');
+          return [
+            ...columns.map((item, colIndex) => ({
+              dataIndex: item.name,
+              title: item.title,
+              cell: (value, rowIndex) => {
+                console.log('unmount    dddd', rowIndex, colIndex);
+                return (
+                  <Cell
+                    key={`${rowIndex}-${colIndex}`}
+                    children={children}
+                    rowIndex={rowIndex}
+                    colIndex={colIndex}
+                  />
+                );
+              },
+            })),
+            operateColumn,
+          ].map((item) => {
+            return (
+              <Table.Column
+                key={item.dataIndex || item.title || 'default'}
+                {...item}
+              />
+            );
+          });
+        }, [children])}
+      </Table>
       <StyledAdd
         onClick={() => {
           add();
@@ -122,4 +162,4 @@ const StyledAdd = styled.div`
   border-right: 1px solid rgb(220, 222, 227);
   border-bottom: 1px solid rgb(220, 222, 227);
 `;
-export default Array;
+export default ArrayTableField;

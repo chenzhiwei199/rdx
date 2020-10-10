@@ -50,23 +50,6 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
   getEE() {
     return this.ee;
   }
-  getTaskByPoints(p: string | string[]) {
-    // @ts-ignore
-    const ps = normalizeSingle2Arr<string>(p);
-    const newPs = ps.map((currentP) =>
-      this.configMap.get(currentP)
-    ) as PointWithWeight[];
-
-    return this.cleanInVaildDeps(newPs);
-  }
-
-  cleanInVaildDeps(config: PointWithWeight[]) {
-    const configMap = arr2Map(config, (a) => a && a.key);
-    return config.map((item) => ({
-      ...item,
-      deps: (item.deps || []).filter((dep) => configMap.get(dep.id)),
-    }));
-  }
 
   deliver(executeTasks: NotifyPoint[]) {
     // downstreamOnly: boolean = false
@@ -75,42 +58,16 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
       return;
     }
     // 获的未运行完成的点
-    const notFinish = this.graph.getNotFinishPoints();
-    const runningPointsMap = arr2Map(notFinish, (item) => item.key);
-    let {
-      intersectPoints,
-      pendingPoints,
-      downStreamPoints,
-    } = this.beforeDeliver(executeTasks);
-    // const triggerPoint = executeTasks[executeTasks.length - 1];
-    // // 补充触发节点
-    // if (!pendingPoints.includes(triggerPoint.key)) {
-    //   pendingPoints.push(triggerPoint.key);
-    // }
-    // const { points: newPendingPoints, edgeCuts } = cleanConfig(
-    //   this.getTaskByPoints(pendingPoints),
-    //   triggerPoint.key,
-    //   triggerPoint.downStreamOnly
-    // );
+    let { pendingPoints } = this.beforeDeliver(executeTasks);
 
     const newPendingPoints = this.getTaskByPoints(pendingPoints);
     const graph = new Graph(newPendingPoints);
     const circles = graph.findCycles();
     if (circles.length !== 0) {
-      throw new Error('detect circle deps' + JSON.stringify(circles) );
+      throw new Error('detect circle deps' + JSON.stringify(circles));
     }
     // 传递新触发节点
-    this.ee.emit(IEventType.onStart, {
-      graph: this.config,
-      preRunningPoints: this.getTaskByPoints(
-        notFinish.map((item) => item.key)
-      ).map((item) => ({ ...item, status: runningPointsMap[item.key] })),
-      triggerPoints: point2WithWeightAdapter(executeTasks),
-      effectPoints: downStreamPoints,
-      conflictPoints: intersectPoints,
-      currentAllPoints: this.getTaskByPoints(pendingPoints),
-      currentRunningPoints: point2WithWeightAdapter(newPendingPoints),
-    });
+    this.ee.emit(IEventType.onStart, this.getExecutingStates(executeTasks));
 
     // 构建任务处理器
     const endPoint = {
@@ -133,9 +90,11 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
     ];
     if (!this.scheduledCore) {
       this.scheduledCore = new ScheduledCore(runningPointsWithEndPoint);
+    } else {
+      // 更新任务
+      this.scheduledCore.update(runningPointsWithEndPoint, this.canReuse);
     }
-    // 更新任务
-    this.scheduledCore.update(runningPointsWithEndPoint, this.canReuse);
+
     // 启动任务
     this.scheduledCore.start(
       this.callbackFunction.bind(this, new Graph(newPendingPoints))

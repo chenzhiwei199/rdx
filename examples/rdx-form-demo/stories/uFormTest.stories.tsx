@@ -22,22 +22,41 @@ export const FormItemSample = () => {
       >
         点击切换数据源
       </Button>
-      <SchemaForm onChange={(value) => {
-        
-      }}initialValues={{}} onSubmit={(v) => 
+      <SchemaForm>
         <SchemaMarkupField
           title='数组'
           name='array'
-          maxItems={3}
           type='array'
           x-props={{
             renderAddition: '这是定制的添加文案',
             renderRemove: '这是定制的删除文案',
           }}
         >
-          <SchemaMarkupField type='object' default={{ aa: 33}}>
-            <SchemaMarkupField name='aa' type='string' title='字段1' default={11}/>
-            <SchemaMarkupField name='bb' type='string' title='字段2' default={22}/>
+          <SchemaMarkupField type='object' >
+            <SchemaMarkupField
+              title='数组'
+              name='array2'
+              type='array'
+              x-props={{
+                renderAddition: '这是定制的添加文案',
+                renderRemove: '这是定制的删除文案',
+              }}
+            >
+              <SchemaMarkupField type='object' default={{ aa: 33 }}>
+                <SchemaMarkupField
+                  name='aa'
+                  type='string'
+                  title='字段1'
+                  default={11}
+                />
+                <SchemaMarkupField
+                  name='bb'
+                  type='string'
+                  title='字段2'
+                  default={22}
+                />
+              </SchemaMarkupField>
+            </SchemaMarkupField>
           </SchemaMarkupField>
         </SchemaMarkupField>
       </SchemaForm>

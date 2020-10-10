@@ -2,13 +2,19 @@ import React, { useContext, useRef, useState } from 'react';
 import 'react-sortable-tree/style.css';
 import {
   PathContextInstance,
+  createArrayMutators,
+  FormContextInstance,
+  RdxFormContext,
+  useFormId,
+  get,
+  set,
+  BaseType,
   getChlidFieldInfo,
-  renderChildren,
+  RenderPerRow,
 } from '@czwcode/rdx-form';
 import styled from 'styled-components';
 import Tree from 'react-sortable-tree';
 import { IArray } from '../ArrayTableField';
-import { createMutators } from '../../utils/array';
 import { Icon } from '@alifd/next';
 import CustomSymbolTree from './treeCore';
 export interface ITreeField extends IArray {
@@ -31,27 +37,26 @@ const TreeField = (props: ITreeField) => {
     value = [],
     onChange,
     children,
-    name,
     style,
     renderTitle = (data) => data[props.titleKey || 'id'],
   } = props;
-  const { paths: parentPaths = [] } = useContext(PathContextInstance);
+  const id = useFormId();
   const [active, setActive] = useState<number[]>([]);
-  const infos = getChlidFieldInfo(children);
+  const activePathWithChildren  =active.map((item, index) => {
+    if (index === active.length - 1) {
+      return item;
+    } else {
+      return item + '.children';
+    }
+  })
   const currentPaths = [
-    ...parentPaths,
-    name,
-    ...active.map((item, index) => {
-      if (index === active.length - 1) {
-        return item;
-      } else {
-        return item + '.children';
-      }
-    }),
+    id,
+    ...activePathWithChildren,
   ] as string[];
-  const { add } = createMutators(value, onChange, infos);
+  const { add } = createArrayMutators(onChange, children);
   const customTree = new CustomSymbolTree(value);
   const newLayout = customTree.map((node, paths, index) => {
+    const isActive = paths.join('.') === active.join('.');
     return {
       paths,
       index,
@@ -60,6 +65,7 @@ const TreeField = (props: ITreeField) => {
         return (
           <div
             style={{
+              border: `1px solid ${isActive ? '#23a3ff' : ' #bbb'}`,
               display: 'flex',
               width: '100%',
               height: '100%',
@@ -91,6 +97,7 @@ const TreeField = (props: ITreeField) => {
       expanded: true,
     };
   });
+  console.log('path', active, currentPaths);
   return (
     <StyleTree style={style}>
       <StyledAdd
@@ -102,6 +109,26 @@ const TreeField = (props: ITreeField) => {
       </StyledAdd>
       <Tree
         style={{ flex: 1, height: '100%', overflow: 'auto' }}
+        onMoveNode={(data) => {
+          // const preIndex = [ data.node.paths].join('.');
+          // const parentPaths = data.nextParentNode
+          //   ? data.nextParentNode.paths
+          //   : [];
+          // const lastIndex = (data.nextParentNode
+          //   ? data.nextParentNode.children
+          //   : (data.treeData as any)
+          // ).findIndex(
+          //   (item) => item.memeroyNode.id === data.node.memeroyNode.id
+          // );
+          // const nextIndex = [...parentPaths, lastIndex].join(
+          //   '.'
+          // );
+          // setActive([])
+          // moveItem(preIndex, nextIndex);
+          // console.log('data', data, preIndex, nextIndex);
+          // onChange(tempData.current);
+          // switchItem()
+        }}
         onChange={(value) => {
           onChange(
             new CustomSymbolTree(value as any).map((item) => item.memeroyNode)
@@ -111,16 +138,25 @@ const TreeField = (props: ITreeField) => {
         treeData={newLayout}
       />
       {active.length > 0 && (
-        <div style={{ flex: 1 }}>
-          <PathContextInstance.Provider
-            key={active.join('.')}
-            value={{
-              paths: currentPaths,
-            }}
-          >
-            {renderChildren(infos, children)}
-          </PathContextInstance.Provider>
-        </div>
+        <RenderPerRow children={children} rowIndex={activePathWithChildren.join('.')} />
+        // <div style={{ flex: 1 }}>
+        //   <RdxFormContext
+        //     key={active.join('.')}
+        //     initializeState={get(value, activePathWithChildren.join('.'))}
+        //     onChange={(v) => {
+        //       const { name = '' } = getChlidFieldInfo(children)
+        //       onChange(set(JSON.parse(JSON.stringify(value)), activePathWithChildren.join('.'), v[name]));
+        //     }}
+        //   >
+        //     <PathContextInstance.Provider
+        //       value={{
+        //         paths: [],
+        //       }}
+        //     >
+        //       {children}
+        //     </PathContextInstance.Provider>
+        //   </RdxFormContext>
+        // </div>
       )}
     </StyleTree>
   );

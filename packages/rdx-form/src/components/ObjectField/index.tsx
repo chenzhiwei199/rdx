@@ -1,17 +1,17 @@
 import React, { useContext } from 'react';
 import { PathContextInstance } from '../../hooks/pathContext';
+import { FormContextInstance } from '../../hooks/formContext';
 
 export interface IObjectItem {
-  name: string;
-  paths?: string[];
   children: React.ReactNode;
 }
 
 const ObjectField = (props: IObjectItem) => {
-  const { children, paths = [], name } = props;
-  const { paths: parentPaths = [], isArray = false} = useContext(PathContextInstance)
+  const { children } = props;
+  const { name } = useContext(FormContextInstance)
+  const { paths = []} = useContext(PathContextInstance)
   return (
-    <PathContextInstance.Provider value={{ paths: isArray ? [...parentPaths, ...paths]: [...parentPaths, ...paths, name] }}>
+    <PathContextInstance.Provider value={{ paths: [...paths, name]  }}>
       {children}
     </PathContextInstance.Provider>
   );

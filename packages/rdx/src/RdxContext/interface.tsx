@@ -1,30 +1,25 @@
 import {
-  ReactionContext,
-  STATUS_TYPE,
   Point,
   ISnapShotTrigger,
   IStatusInfo,
   TASK_PROCESS_TYPE,
-  IRdxView,
   BasePoint,
-  PreDefinedTaskQueue,
-} from '../global';
+} from '@czwcode/task-queue';
 import { TaskStatus, ShareContextClass } from './shareContext';
 import { Base } from './core';
+import { IRdxView } from '../global';
 
 export type MapObject<T> = { [key: string]: T | null };
 
-export interface RdxContextProps<IModel, IRelyModel> {
+export interface RdxContextProps<GModel> {
   name?: string;
   children: React.ReactNode;
-  withRef?: React.MutableRefObject<ShareContextClass<IModel, IRelyModel>>;
-  // 全局状态数据，更新数据可能会触发调度更新，会对数据进行shallow Equal，更新必须是新对象
-  state?: MapObject<IModel>;
-  initializeState?: MapObject<IModel>;
-  onStateChange?: (key: string, value: any, type: ActionType) => void;
-  onChange?: (state: MapObject<IModel>, stateInstance: any) => void;
-  shouldUpdate?: (preValue: IModel, nextValue: IModel) => void;
-  createStore?: (data: any) => Base<IModel>;
+  context?: React.Context<ShareContextClass>;
+  withRef?: React.MutableRefObject<ShareContextClass>;
+  initializeState?: MapObject<GModel>;
+  onChange?: (state: MapObject<GModel>) => void;
+  createStore?: (data: any) => Base<GModel>;
+  visualStatePlugins?: React.ReactNode | React.ReactNode[]
   // 依赖数据池
 }
 
@@ -48,51 +43,21 @@ export enum ActionType {
   Merge = 'merge',
 }
 export enum TargetType {
-  TasksMap = 'tasksMap',
+  TasksMap = 'tasks',
   TaskState = 'taskState',
   Trigger = 'trigger',
   CustomAction = 'customAction',
   TaskStatus = 'taskStatus',
   CancelMap = 'cancelMap',
 }
-export interface Action<IModel, IRelyModel> {
+export interface Action<GModel> {
   type?: ActionType;
   targetType: TargetType;
   payload?:
     | {
         key: string;
-        value:
-          | IRdxView<IModel, IRelyModel>
-          | TaskStatus
-          | IModel
-          | (() => void)
-          | null;
+        value: IRdxView<GModel> | TaskStatus | GModel | (() => void) | null;
       }
     | { points: BasePoint[]; refresh: boolean; executeTask: boolean }
     | { id: string; customAction: any };
 }
-export interface BaseLifeCycleProps<IModel, IRelyModel> {
-  state: ShareContextClass<IModel, IRelyModel>;
-  preState?: ShareContextClass<IModel, IRelyModel>;
-}
-export interface LifeCycleProps<IModel, IRelyModel>
-  extends BaseLifeCycleProps<IModel, IRelyModel> {
-  statusType?: STATUS_TYPE;
-  unMountRef: React.MutableRefObject<boolean>;
-  onChange: (value: MapObject<IModel>) => void;
-  queue?: PreDefinedTaskQueue<IModel> | null;
-  showLoading?: (context: ReactionContext<IModel, IRelyModel>) => boolean;
-  dispatch: React.Dispatch<Action<IModel, IRelyModel>[]>;
-  // 默认false
-  isFirst?: boolean;
-}
-/**
- * 定义静态reducer， 否则可能同时存在多个reducer
- * https://stackoverflow.com/questions/54892403/usereducer-action-dispatched-twice
- *
- * @template T
- * @template U
- * @param {ShareContextClass<IModel, IRelyModel>} state
- * @param {Action<IModel, IRelyModel>} action
- * @returns
- */

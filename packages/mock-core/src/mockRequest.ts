@@ -1,22 +1,20 @@
 import mockData, { dimensions, measures } from './mockData';
 import { AggregateType, aggregateData, ICube } from './aggregateCore';
-import { IQueryConfig } from './types';
+import { Filter, Filters, IQueryConfig } from './types';
 import { dataFilter } from './utils';
 
-function mockRequest(data): Promise<{ success: boolean, data: any}> {
+function mockRequest(data): Promise<{ success: boolean; data: any }> {
   return new Promise((resolve, reject) => {
-    if(false) {
-      reject("数据返回错误啦")
+    if (false) {
+      reject('数据返回错误啦');
     } else {
       setTimeout(() => {
         resolve({
           success: true,
-          data: data
+          data: data,
         });
       }, 1000 + Math.random() * 1000);
     }
-    
-    
   });
 }
 export function getMetas() {
@@ -50,15 +48,22 @@ export function getData(config: IQueryConfig) {
     })
   );
 }
-
-export function getDimensions() {
+export function getDimension(config: { dimensions: string; filters?: Filters }) {
+  console.log('getDimension config: ', config);
+  const { filters, dimensions } = config;
+  const vaildData  =dataFilter(mockData, filters)
   return mockRequest(
-    dimensions
+    vaildData.map((item) => ({
+      label: item[dimensions],
+      value: item[dimensions],
+    }))
   );
 }
 
+export function getDimensions() {
+  return mockRequest(dimensions);
+}
+
 export function getMeasures() {
-  return mockRequest(
-    measures
-  );
+  return mockRequest(measures);
 }

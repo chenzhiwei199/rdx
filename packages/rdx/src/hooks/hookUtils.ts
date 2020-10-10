@@ -28,20 +28,14 @@ export function createStore(): [() => any, (v: any) => void] {
   ];
 }
 
-
-export function useStateUpdate<IModel, IRelyModel>(
-  id: string,
-  context: ShareContextClass<IModel, IRelyModel>,
-  type: StateUpdateType
-) {
+export function useGlobalStateUpdate(context: ShareContextClass,) {
   const forceUpdate = useForceUpdate();
   useEffect(() => {
-    const eventKey = id + '----' + type;
-    context.eventEmitter.on(eventKey, () => {
+    context.getEventEmitter().on(StateUpdateType.GlobalState, () => {
       forceUpdate();
     });
     return () => {
-      context.eventEmitter.off(eventKey);
+      context.getEventEmitter().off(StateUpdateType.GlobalState);
     };
   }, []);
 }

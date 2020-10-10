@@ -10,9 +10,10 @@ import {
 } from '@czwcode/rdx';
 import axios from 'axios';
 import { Menu, Grid } from '@alifd/next';
+import { DevVisualTableTool } from '@czwcode/rdx-plugins';
 const { Row, Col } = Grid;
 export default {
-  title: '简单例子/hooks用法',
+  title: '简单例子/级联用法',
   parameters: {
     info: { inline: true },
   },
@@ -105,16 +106,19 @@ const View = (props: {
 
 export const 联动Hooks例子 = () => {
   return (
-    <RdxContext>
+    <RdxContext visualStatePlugins={<DevVisualTableTool />}>
       {/* <DevVisualGraphTool /> */}
       <Row>
         <Col>
+          <h3>province</h3>
           <View atom={province} watcher={administrativeData} />
         </Col>
         <Col>
+          <h3>city</h3>
           <View atom={city} watcher={cityDataSource} />
         </Col>
         <Col>
+          <h3>area</h3>
           <View atom={area} watcher={areaDataSource} />
         </Col>
       </Row>

@@ -1,16 +1,22 @@
 import * as React from 'react';
 
 import {
-  ISnapShot,
   TaskEventType,
-  ISnapShotTrigger,
-  IStatusInfo,
   NodeStatus,
   ShareContextClass,
-  ShareContextInstance,
   IStateInfo,
+  useRdxStateContext,
+  IStatusInfo,
+  IRdxSnapShotTrigger,
 } from '@czwcode/rdx';
 import { getDefaultSnapShot } from './utils';
+
+export interface ISnapShot extends IRdxSnapShotTrigger {
+  // 事件类型
+  type: TaskEventType;
+  // 当前点的状态
+  status: IStatusInfo[];
+}
 
 export enum DISPLAY_STATE {
   CANCEL = 'CANCEL',
@@ -34,8 +40,8 @@ export const stateLabel = {
   [DISPLAY_STATE.CANCEL]: '取消',
   [DISPLAY_STATE.CONFLICT]: '冲突',
 };
-export interface IGraph<IModel, IRelyModel> {
-  context: ShareContextClass<IModel, IRelyModel>;
+export interface IGraph<IModel> {
+  context: ShareContextClass;
 }
 
 export enum GraphType {
@@ -61,10 +67,16 @@ interface DataPersistenceHookState {
   snapShots: DataPersistSnapShot[];
   temporarySnapShots: DataPersistSnapShot;
 }
-const DataPersistenceHook = () => {
-  const context = React.useContext<ShareContextClass<any, any>>(
-    ShareContextInstance
-  );
+export interface IDataPersistenData {
+  realTimeState: any;
+  allSnapShots: DataPersistSnapShot[];
+  snapShots: DataPersistSnapShot[];
+  temporarySnapShots: DataPersistSnapShot;
+}
+const DataPersistenceHook = (
+  shareContext?: React.Context<ShareContextClass>
+) => {
+  const context = useRdxStateContext(shareContext);
   const [state, setState] = React.useState<{
     snapShots: DataPersistSnapShot[];
     temporarySnapShots: DataPersistSnapShot;
@@ -81,70 +93,105 @@ const DataPersistenceHook = () => {
     }));
   };
   const initSnapShot = React.useCallback((type: TaskEventType) => {
+    setStateProxy((state) => {
+      return {
+        snapShots:
+          !state.temporarySnapShots !== null
+            ? [...state.snapShots, state.temporarySnapShots]
+            : state.snapShots,
+        temporarySnapShots: getDefaultSnapShot(type),
+      };
+    });
+  }, []);
+  const mergeTemporarySnapShots = React.useCallback(() => {
     setStateProxy((state) => ({
       snapShots: [...state.snapShots, state.temporarySnapShots],
-      temporarySnapShots: getDefaultSnapShot(type),
+      temporarySnapShots: null,
     }));
   }, []);
-  React.useEffect(() => {
-    context.subject.on(TaskEventType.Init, (process) => {
-      initSnapShot(TaskEventType.Init);
-    });
-    context.subject.on(TaskEventType.RdxContextInit, (process) => {
-      initSnapShot(TaskEventType.RdxContextInit);
-    });
-    context.subject.on(TaskEventType.EventTrigger, (process) => {
-      initSnapShot(TaskEventType.EventTrigger);
-    });
-    context.subject.on(TaskEventType.BatchEventTrigger, (process) => {
-      initSnapShot(TaskEventType.BatchEventTrigger);
-    });
-    context.subject.on(TaskEventType.TaskChange, (process) => {
-      initSnapShot(TaskEventType.TaskChange);
-    });
-    context.subject.on(
-      TaskEventType.ProcessRunningGraph,
-      (process: ISnapShotTrigger) => {
+  const deleteEvent = React.useMemo(() => {
+    const startTypes = [
+      TaskEventType.Init,
+      TaskEventType.UserAction,
+    ];
+    for (let type of startTypes) {
+      context.getSubject().on(type, () => {
+        initSnapShot(type);
+      });
+    }
+    const runningTypes = [TaskEventType.Initializing];
+    for (let type of runningTypes) {
+      context.getSubject().on(type, (process) => {
         setStateProxy((state) => ({
           temporarySnapShots: { ...state.temporarySnapShots, ...process },
         }));
-      }
-    );
+      });
+    }
+    context.getSubject().on(TaskEventType.Trigger, ({ type, process}) => {
+      initSnapShot(type);
+      setStateProxy((state) => ({
+        temporarySnapShots: { ...state.temporarySnapShots, ...process },
+      }));
+    });
+    const endTypes = [
+      TaskEventType.InitEnd,
+      TaskEventType.UserActionEnd,
+      TaskEventType.TaskExecutingEnd,
+    ];
+    for (let type of endTypes) {
+      context.getSubject().on(type, () => {
+        mergeTemporarySnapShots();
+      });
+    }
 
-    context.subject.on(TaskEventType.StateChange, (stateInfo: IStateInfo) => {
-      setStateProxy((state) => ({
-        temporarySnapShots: {
-          ...state.temporarySnapShots,
-          states: [
-            ...(state.temporarySnapShots
-              ? state.temporarySnapShots.states
-              : []),
-            stateInfo,
-          ],
-        },
-      }));
-    });
-    context.subject.on(TaskEventType.StatusChange, (process: IStatusInfo) => {
-      setStateProxy((state) => ({
-        temporarySnapShots: {
-          ...state.temporarySnapShots,
-          status: [...state.temporarySnapShots.status, process],
-        },
-      }));
-    });
+    context
+      .getSubject()
+      .on(TaskEventType.StateChange, (stateInfo: IStateInfo) => {
+        setStateProxy((state) => ({
+          temporarySnapShots: {
+            ...state.temporarySnapShots,
+            states: [
+              ...(state.temporarySnapShots && state.temporarySnapShots.states
+                ? state.temporarySnapShots.states
+                : []),
+              stateInfo,
+            ],
+          },
+        }));
+      });
+    context
+      .getSubject()
+      .on(TaskEventType.StatusChange, (process: IStatusInfo) => {
+        setStateProxy((state) => {
+          return {
+            temporarySnapShots: {
+              ...state.temporarySnapShots,
+              status: [
+                ...(state.temporarySnapShots
+                  ? state.temporarySnapShots.status
+                  : []),
+                process,
+              ],
+            },
+          }
+        });
+      });
     return () => {
-      const ee = context.subject;
+      const ee = context.getSubject();
       ee.removeAllListeners(TaskEventType.Init);
       ee.removeAllListeners(TaskEventType.RdxContextInit);
-      ee.removeAllListeners(TaskEventType.EventTrigger);
-      ee.removeAllListeners(TaskEventType.ProcessRunningGraph);
       ee.removeAllListeners(TaskEventType.StatusChange);
-      ee.removeAllListeners(TaskEventType.TaskChange);
     };
   }, []);
+  React.useEffect(() => {
+    return () => {
+      deleteEvent();
+    };
+  }, []);
+  console.log('TaskEventType...', state);
   return {
     ...state,
-    realTimeState: context.taskState.getAll(),
+    realTimeState: context.getAllTaskState(),
     allSnapShots: [...state.snapShots, state.temporarySnapShots].filter(
       Boolean
     ),

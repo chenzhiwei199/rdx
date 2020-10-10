@@ -63,7 +63,7 @@ const OtherView = () => {
     </div>
   );
 };
-export const Atom基础用例 = () => {
+export const Atom基础用法 = () => {
   return (
     <RdxContext>
       <CounterView />
@@ -74,7 +74,7 @@ export const Atom基础用例 = () => {
 };
 
 export default {
-  title: 'Usage/Atom',
+  title: 'Usage',
   parameters: {
     info: { inline: true },
   },

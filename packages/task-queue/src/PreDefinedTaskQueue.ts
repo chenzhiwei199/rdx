@@ -1,6 +1,5 @@
 import { normalizeSingle2Arr, NotifyPoint } from '@czwcode/graph-core';
 import DeliverByPreDefinedTask from './DeliverByPreDefinedTask';
-import { BasePoint } from '@czwcode/graph-core';
 
 export default class CommonQueue<T> extends DeliverByPreDefinedTask<T> {
   getTaskByPointWithScope(points: string[], scope: string | null) {

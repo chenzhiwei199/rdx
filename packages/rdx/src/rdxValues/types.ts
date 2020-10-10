@@ -1,1 +1,3 @@
-export type DataModel<IModel> = IModel | Promise<IModel> | RdxNode<IModel>;
+import { RdxNode } from '.';
+
+export type DataModel<GModel> = GModel | Promise<GModel> | RdxNode<GModel>;

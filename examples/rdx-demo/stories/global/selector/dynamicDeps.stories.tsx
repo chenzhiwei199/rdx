@@ -1,11 +1,6 @@
 import React from 'react';
-import {
-  atom,
-  RdxContext,
-  watcher,
-  useRdxState,
-} from '@czwcode/rdx';
-import { DevVisualGraphTool } from '@czwcode/rdx-plugins';
+import { atom, RdxContext, watcher, useRdxState } from '@czwcode/rdx';
+import { DevVisualTableTool } from '@czwcode/rdx-plugins';
 import { Button, Input, Checkbox } from '@alifd/next';
 const toggleAtom = atom({
   id: 'toggle1',
@@ -69,9 +64,7 @@ const BaseCounterView = ({ title, atom }) => {
   );
 };
 const WatcherPreview = () => {
-  const [countFromwatcher, setCountBywatcher] = useRdxState(
-    Counterwatcher
-  );
+  const [countFromwatcher, setCountBywatcher] = useRdxState(Counterwatcher);
   return (
     <div>
       <div style={{ fontSize: 20 }}>Preview watcher: {countFromwatcher}</div>
@@ -92,17 +85,16 @@ const CounterView = () => {
     </div>
   );
 };
-export const Atom基础用例 = () => {
+export const 动态依赖示例 = () => {
   return (
-    <RdxContext>
+    <RdxContext visualStatePlugins={<DevVisualTableTool />}>
       <CounterView />
-      <DevVisualGraphTool />
     </RdxContext>
   );
 };
 
 export default {
-  title: 'Usage/动态依赖',
+  title: 'Usage',
   parameters: {
     info: { inline: true },
   },

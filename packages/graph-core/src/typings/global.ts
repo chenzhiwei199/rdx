@@ -48,11 +48,11 @@ export enum POINT_RELEVANT_STATUS {
 }
 
 export enum NodeStatus {
-  Running = 'RUNNING',
-  Finish = 'FINISH',
-  Waiting = 'WATTING',
-  IDeal = 'NONE',
-  Error = 'ERROR',
+  Running = 'Running',
+  Finish = 'Finish',
+  Waiting = 'Watting',
+  IDeal = 'IDeal',
+  Error = 'Error',
 }
 export interface RunningPoint extends BasePoint {
   key: string;

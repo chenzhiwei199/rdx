@@ -1,8 +1,6 @@
 import { ShareContextClass, DeliverOptions } from '../RdxContext/shareContext';
 import {
   BaseContext,
-  IGraphDeps,
-  RENDER_STATUS,
   Status,
   IRdxView,
   IRdxAnyDeps,
@@ -10,58 +8,49 @@ import {
 import { RdxNode } from '../RdxValues';
 
 export function getDepId(dep: IRdxAnyDeps) {
-  if(dep instanceof RdxNode) {
-    return dep.getId()
+  if (dep instanceof RdxNode) {
+    return dep.getId();
   } else {
-    return dep
+    return dep;
   }
 }
 
 export function getDepIds(deps: IRdxAnyDeps[] = []) {
-  return deps.map(getDepId)
+  return deps.map(getDepId);
 }
-export function createBaseContext<IModel, IRelyModel>(
+export function createBaseContext<GModel>(
   id: string,
-  context: ShareContextClass<IModel, IRelyModel>,
-  defaultTaskMap?: IRdxView<IModel, IRelyModel>
-): BaseContext<IModel, IRelyModel> {
-  let taskInfo = context.getTaskMap(id);
+  context: ShareContextClass,
+  defaultTaskMap?: IRdxView<GModel>
+): BaseContext<GModel> {
+  let taskInfo = context.getTaskById(id);
   taskInfo = taskInfo ? taskInfo : defaultTaskMap;
-  const { deps = [] } = taskInfo;
   return {
     id,
-    deps: deps,
-    depsValues: ((deps || (taskInfo && taskInfo.deps) || []).map((key) => {
-      const currentDeptId = getDepId(key);
-      return context.taskState.get(currentDeptId);
-    }) as unknown) as IRelyModel,
-    state: context.taskState.getAll(),
-    value: context.taskState.get(id),
+    state: context.getAllTaskState(),
+    value: context.getTaskStateById(id),
     status:
-      context.taskStatus.get(id) && context.taskStatus.get(id).value
-        ? context.taskStatus.get(id).value
-        : RENDER_STATUS.FirstRender,
+      context.getTaskStatus(id) && context.getTaskStatus(id).value
+        ? context.getTaskStatus(id).value
+        : Status.FirstRender,
     loading: [Status.Waiting, Status.Running].includes(
-      context.taskStatus.get(id)?.value
+      context.getTaskStatus(id)?.value
     ),
-    errorMsg: (context.taskStatus.get(id) || {}).errorMsg,
-    lastDepsValue: deps.map((dep) => {
-      const tasksMap = context.tasksMap;
-      if (tasksMap.get(getDepId(dep))) {
-        return context.preTaskState && context.preTaskState.get(getDepId(dep));
-      } else {
-        return null;
-      }
-    }) as any,
+    errorMsg: (context.getTaskStatus(id) || {}).errorMsg,
+    // lastDepsValue: deps.map((dep) => {
+    //   const tasksMap = context.tasks;
+    //   if (context.hasTask(getDepId(dep))) {
+    //     return context.preTaskState && context.preTaskState.get(getDepId(dep));
+    //   } else {
+    //     return null;
+    //   }
+    // }) as any,
   };
 }
 
-export function createMutators<IModel, IRelyModel>(
-  id: string,
-  context: ShareContextClass<IModel, IRelyModel>
-) {
+export function createMutators(id: string, context: ShareContextClass) {
   return {
-    next: (selfValue: IModel, options?: DeliverOptions) => {
+    next: (selfValue: any, options?: DeliverOptions) => {
       context.next(id, selfValue, options);
     },
     refreshView: () => {
@@ -72,7 +61,7 @@ export function createMutators<IModel, IRelyModel>(
     },
     // ? 这里应该加上scope， 刷新只刷新作用域下面的
     refresh: () => {
-      context.next(id, (v) => v, { refresh: true});
+      context.next(id, (v) => v, { refresh: true });
     },
     loading: isLoading(context, id),
     // TODO: 其他组件中的默认值， 怎么获取
@@ -82,12 +71,9 @@ export function createMutators<IModel, IRelyModel>(
   };
 }
 
-const isLoading = <IModel, IRelyModel>(
-  context: ShareContextClass<IModel, IRelyModel>,
-  id: string
-) => {
+const isLoading = (context: ShareContextClass, id: string) => {
   return (
-    context.taskStatus.get(id)?.value === Status.Waiting ||
-    context.taskStatus.get(id)?.value === Status.Running
+    context.getTaskStatus(id)?.value === Status.Waiting ||
+    context.getTaskStatus(id)?.value === Status.Running
   );
 };

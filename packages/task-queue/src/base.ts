@@ -5,10 +5,11 @@ import {
   GLOBAL_DEPENDENCE_SCOPE,
   Scope,
   NotifyPoint,
+  arr2Map,
 } from '@czwcode/graph-core';
 import { Graph, BasePoint } from '@czwcode/graph-core';
-import { graphAdapter, cleanConfig } from './utils';
-import { PointWithWeight } from './typings/global';
+import { graphAdapter, cleanConfig, point2WithWeightAdapter } from './utils';
+import { PointWithWeight, ISnapShotTrigger } from './typings/global';
 
 export default abstract class BaseQueue<T extends PointWithWeight> {
   config: T[] = [] as T[];
@@ -108,7 +109,45 @@ export default abstract class BaseQueue<T extends PointWithWeight> {
     }
   }
 
-  beforeDeliver(executeTasks: NotifyPoint | NotifyPoint[]) {
+  getTaskByPoints(p: string | string[]) {
+    // @ts-ignore
+    const ps = normalizeSingle2Arr<string>(p);
+    const newPs = ps.map((currentP) =>
+      this.configMap.get(currentP)
+    ) as PointWithWeight[];
+
+    return this.cleanInVaildDeps(newPs);
+  }
+
+  cleanInVaildDeps(config: PointWithWeight[]) {
+    const configMap = arr2Map(config, (a) => a && a.key);
+    return config.map((item) => ({
+      ...item,
+      deps: (item.deps || []).filter((dep) => configMap.get(dep.id)),
+    }));
+  }
+  getExecutingStates(executeTask: NotifyPoint | NotifyPoint[]) {
+    const executeTasks = normalizeSingle2Arr(executeTask);
+    const notFinish = this.graph.getNotFinishPoints();
+    const runningPointsMap = arr2Map(notFinish, (item) => item.key);
+    let {
+      intersectPoints,
+      pendingPoints,
+      downStreamPoints,
+    } = this.getWillExecuteInfo(executeTasks);
+    const newPendingPoints = this.getTaskByPoints(pendingPoints);
+    return {
+      graph: this.config,
+      preRunningPoints: this.getTaskByPoints(
+        notFinish.map((item) => item.key)
+      ).map((item) => ({ ...item, status: runningPointsMap[item.key] })),
+      triggerPoints: point2WithWeightAdapter(executeTasks),
+      effectPoints: downStreamPoints,
+      conflictPoints: intersectPoints,
+      currentRunningPoints: point2WithWeightAdapter(newPendingPoints),
+    } as ISnapShotTrigger;
+  }
+  getWillExecuteInfo(executeTasks: NotifyPoint | NotifyPoint[]) {
     // 数据格式类型统一处理
     // @ts-ignore
     const normalizeExecuteTasks = normalizeSingle2Arr<NotifyPoint>(
@@ -124,13 +163,20 @@ export default abstract class BaseQueue<T extends PointWithWeight> {
     // 构建运行时图
     const intersectPoints = this.getIntersectPoints(downStreamPoints);
 
+    return { downStreamPoints, intersectPoints, pendingPoints };
+  }
+  beforeDeliver(executeTasks: NotifyPoint | NotifyPoint[]) {
+    const {
+      downStreamPoints,
+      intersectPoints,
+      pendingPoints,
+    } = this.getWillExecuteInfo(executeTasks);
     const pendingConfig = this.config.filter((rowConfig) =>
       pendingPoints.includes(rowConfig.key)
     );
-
     // 设置当前任务流的节点状态
     this.graph.udpateRunningGraph(graphAdapter(pendingConfig));
 
-    return { downStreamPoints, intersectPoints, pendingConfig, pendingPoints };
+    return { downStreamPoints, intersectPoints, pendingPoints };
   }
 }

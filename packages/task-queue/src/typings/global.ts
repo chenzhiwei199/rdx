@@ -23,7 +23,6 @@ export interface PointWithWeight extends BasePoint {
   deps?: IDeps[];
 }
 
-
 export interface TaskInfo extends Point {
   // 当前任务被取消的标记
   isCancel: () => boolean;
@@ -34,11 +33,10 @@ export interface TaskInfo extends Point {
 export interface CallbackInfo {
   currentKey?: string | null;
   isEnd?: boolean;
-  onError?: (error: Error) => void,
-  onSuccess?: () => void,
-  isCancel?: () => boolean,
+  onError?: (error: Error) => void;
+  onSuccess?: () => void;
+  isCancel?: () => boolean;
 }
-
 
 export interface STATUS_CHANGE_INFO {
   // 当前触发节点
@@ -53,13 +51,23 @@ export enum TASK_PROCESS_TYPE {
   STATUS_CHANGE = 2,
 }
 
-export enum TaskEventType {
-  ProcessRunningGraph = 'ProcessRunningGraph',
-  TaskChange = 'TaskChange',
-  Init = 'Init',
-  RdxContextInit = 'RdxContextInit',
-  EventTrigger = 'EventTrigger',
+export enum TaskEventTriggerType {
   BatchEventTrigger = 'BatchEventTrigger',
+  BatchReactionOnMount = 'BatchReactionOnMount',
+  Reset = 'Reset',
+  ResetById = 'ResetById',
+  TaskCreated = 'TaskCreated',
+  Set = 'Set',
+}
+export enum TaskEventType {
+  Trigger = 'Trigger',
+  Init = 'Init',
+  Initializing = 'Initializing',
+  InitEnd = 'InitEnd',
+  UserAction = 'UserAction',
+  UserActionEnd = 'UserActionEnd',
+  TaskExecutingEnd = 'TaskExecutingEnd',
+  RdxContextInit = 'RdxContextInit',
   StatusChange = 'StatusChange',
   StateChange = 'StateChange',
 }
@@ -90,17 +98,6 @@ export interface ISnapShotTrigger {
   effectPoints: string[];
   // 冲突的点
   conflictPoints: string[];
-  // 当前所有的点
-  currentAllPoints: PointWithWeight[];
-  // 减枝过程
-  edgeCutFlow: IEdgeCutFlow[];
   // 当前运行的点
   currentRunningPoints: PointWithWeight[];
-}
-
-export interface ISnapShot extends ISnapShotTrigger {
-  // 事件类型
-  type: TaskEventType;
-  // 当前点的状态
-  status: IStatusInfo[];
 }

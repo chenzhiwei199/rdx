@@ -1,17 +1,22 @@
-const sum = (a, b) => {
-  return a + b
-}
 
-test('adds 1 + 2 to equal 3', () => {
-  expect(sum(1, 2)).toBe(3);
+import renderer from 'react-test-renderer';
+import {render} from '@testing-library/react';
+import { RdxContext } from '../../RdxContext';
+import React from 'react';
+import { useRdxAtom } from '../../hooks/stateHooks';
+
+test('当Rdx外部初始化了数据，不应该被默认值设置覆盖', () => {
+  const Test = () => {
+    const [atom] = useRdxAtom({
+      id: 'test',
+      defaultValue: 'default'
+    })
+    return <div>{atom}</div>
+  }
+  const { getByText } = render(
+    <RdxContext initializeState={{ 'test': 'init'}}>
+      <Test></Test>
+    </RdxContext>
+  );
+  expect(getByText('init')).toBeTruthy();
 });
-// 用例
-// atom 静态值， atom使用atom， atom使用selector
-// selector async 方法， 同步方法， 
-// atom同步，atom异步
-// selector同步， selector异步
-
-// 同步-> 同步
-// 异步 -> 同步
-// 异步 -> 异步
-// 

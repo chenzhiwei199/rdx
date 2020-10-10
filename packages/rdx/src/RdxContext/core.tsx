@@ -8,7 +8,11 @@ export interface Base<T> {
 }
 export class BaseMap<T extends Object> implements Base<T> {
   clone(): Base<T> {
-    return new BaseMap(this.v) as any
+    const newMap = new Map();
+    Array.from(this.v.keys()).forEach((key) => {
+      newMap.set(key, this.v.get(key));
+    });
+    return new BaseMap(newMap) as any
   }
   merge(scope: string): void {
     throw new Error("Method not implemented.");
@@ -58,7 +62,7 @@ export class BaseObject<T extends Object> implements Base<T> {
     throw new Error("Method not implemented.");
   }
   clone() {
-    return new BaseObject(this.v)
+    return new BaseObject({...this.v})
   }
   getAll() {
     return this.v;

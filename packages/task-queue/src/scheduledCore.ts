@@ -28,19 +28,17 @@ export default class ScheduledCore {
     this.deliverMap = this.createDeliverMap();
     //判断是否有可以重复利用的任务
     const currentStartPoints = this.getStartPoints();
-
+    
     // 停止不可复用的任务
-    const notInsectionsPoints = currentStartPoints.filter((id) => {
-      if (canReuse) {
-        return !canReuse(id);
-      } else {
-        // 默认不可以复用
-        return false;
-      }
+    const canReusePoints = currentStartPoints.filter((id) => {
+      return canReuse && canReuse(id);
     });
-    notInsectionsPoints.forEach((id) => {
-      this.taskQueue.get(id) && this.taskQueue.get(id).stop();
-      this.taskQueue.delete(id);
+    console.log('currentStartPoints: ', currentStartPoints, canReusePoints);
+    Array.from(this.taskQueue.keys()).forEach((key) => {
+      if (!canReusePoints.includes(key)) {
+        this.taskQueue.get(key) && this.taskQueue.get(key).stop();
+        this.taskQueue.delete(key);
+      }
     });
   }
 
@@ -151,7 +149,7 @@ export class ScheduledTask {
     this.next = next;
     this.callback = callback;
     this.promise = new Promise((resove, reject) => {
-      this.resolvePersist = resove;
+      this.resolvePersist = resove as any;
       this.rejectPersist = reject;
     });
   }

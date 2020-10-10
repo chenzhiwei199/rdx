@@ -4,7 +4,7 @@ interface ITab {
   dataSource: { label: string; children?: any[]; value: string }[];
   active?: string;
   defaultActive?: string;
-  onChange: () => void;
+  onChange?: () => void;
   children?: (
     v: string,
     row: { label: string; value: string; children?: any[] }
@@ -25,9 +25,10 @@ const activeStyle = {
 const Tab = (props: ITab) => {
   const { onChange, defaultActive, dataSource, children } = props;
   const [realActive, setRealActive] = React.useState(defaultActive);
+  const findItem = dataSource.find((item) => item.value === realActive);
   return (
     <div style={{ width: '100%', overflowX: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'center'}}>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
         {dataSource.map((row) => {
           const isActive = row.value === realActive;
           return (
@@ -37,7 +38,7 @@ const Tab = (props: ITab) => {
                 ...(isActive ? activeStyle : {}),
               }}
               onClick={() => {
-                onChange();
+                onChange && onChange();
                 setRealActive(row.value);
               }}
             >
@@ -46,16 +47,8 @@ const Tab = (props: ITab) => {
           );
         })}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center'}}>
-        {dataSource.map((item) => {
-          const isActive = item.value === realActive;
-          return (
-            <div
-            >
-              {children && isActive && children(item.value, item)}
-            </div>
-          );
-        })}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        {findItem && children(findItem.value, findItem)}
       </div>
     </div>
   );

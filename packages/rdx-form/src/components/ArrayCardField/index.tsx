@@ -1,56 +1,47 @@
-import React, { useContext, useRef } from 'react';
+import React, { useContext } from 'react';
 import styled from 'styled-components';
-import { renderChildren } from '../../utils/render';
-import { PathContextInstance } from '../../hooks/pathContext';
-import { getChlidFieldInfo, getEmptyValue } from '../../utils/functions';
+import { RenderPerRow } from '../../utils/render';
+import { createArrayMutators } from './utils';
+import { FormContextInstance } from '../../hooks';
+export * from './utils';
 
 export interface IArray {
   value: any[];
   onChange: (v: any[]) => void;
   name: string;
-  paths?: string[];
   children: React.ReactNode;
 }
 
 export interface IArrayItem {
-  name: string;
   value: any;
   paths: string[];
   children: React.ReactNode;
 }
 
 const Array = (props: IArray) => {
-  const { value = [], onChange, children, name } = props;
-  const { paths: parentPaths = [] } = useContext(PathContextInstance);
-  const itemRef = getChlidFieldInfo(children);
-
+  const { value = [], onChange, children } = props;
+  const { name } = useContext(FormContextInstance);
+  console.log('ArrayCardField: ', name, value);
+  const { remove, moveDown, moveUp, add } = createArrayMutators(
+    onChange,
+    children
+  );
   return (
     <StyleCard>
-      {value.length === 0 && (
+      {/* {value.length === 0 && (
         <StyleEmpty>
           <img
             src='//img.alicdn.com/tfs/TB1cVncKAzoK1RjSZFlXXai4VXa-184-152.svg'
             style={{ background: 'transparent' }}
           ></img>
         </StyleEmpty>
-      )}
+      )} */}
       {value.map((item, index) => {
-        const currentPaths = [...parentPaths, name, index.toString()];
-
-        return (
-          <PathContextInstance.Provider
-            value={{
-              paths: currentPaths,
-            }}
-          >
-            {renderChildren(itemRef, children)}
-          </PathContextInstance.Provider>
-        );
+        return <RenderPerRow key={index} children={children} rowIndex={index} />;
       })}
-
       <StyledAdd
         onClick={() => {
-          onChange([...value, getEmptyValue(itemRef)]);
+          add();
         }}
       >
         添加一个数组
@@ -58,7 +49,6 @@ const Array = (props: IArray) => {
     </StyleCard>
   );
 };
-
 
 const StyleEmpty = styled.div`
   display: flex;

@@ -1,4 +1,4 @@
-import { TaskEventType, ISnapShot } from '@czwcode/rdx';
+import { TaskEventType } from '@czwcode/rdx';
 import { DataPersistSnapShot } from './DataPersistence';
 
 export function getDefaultSnapShot(
@@ -16,10 +16,6 @@ export function getDefaultSnapShot(
     effectPoints: [],
     // 冲突的点
     conflictPoints: [],
-    // 当前所有的点
-    currentAllPoints: [],
-    // 减枝过程
-    edgeCutFlow: [],
     // 当前的点
     currentRunningPoints: [],
     // 当前点的状态

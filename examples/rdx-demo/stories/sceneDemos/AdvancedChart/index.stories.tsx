@@ -9,14 +9,11 @@ import {
 } from '@czwcode/mock-core';
 import uuid from 'uuid';
 import {
-  watcher,
-  useRdxStateLoader,
   Status,
   RdxContext,
   useRdxAtom,
   useRdxWatcher,
   useRdxWatcherLoader,
-  useRdxValue,
 } from '@czwcode/rdx';
 import { Chart, IChartEventHandlerValueType, ActiveStyle } from './chart';
 import BaseDataDesigner, { isMeasureField } from './dndFrame/BaseDataDesigner';
@@ -189,49 +186,61 @@ const ChartDemo = () => {
           </div>
         </Dropdown>
       </div>
-      <Chart
-        onChange={(v) => {
-          if (v.type === IChartEventHandlerValueType.Click) {
-            const clickItem = v[IChartEventHandlerValueType.Click].x;
-            const isSelected = selected.includes(clickItem);
-            if (isSelected) {
-              setSelected(selected.filter((item) => item !== clickItem));
-            } else {
-              setSelected(selected.concat([clickItem]));
+      <div style={{ display: 'flex' }}>
+        <Chart
+          onChange={(v) => {
+            if (v.type === IChartEventHandlerValueType.Click) {
+              const clickItem = v[IChartEventHandlerValueType.Click].x;
+              const isSelected = selected.includes(clickItem);
+              if (isSelected) {
+                setSelected(selected.filter((item) => item !== clickItem));
+              } else {
+                setSelected(selected.concat([clickItem]));
+              }
             }
-          }
-        }}
-        options={{
-          grid: {
-            containLabel: true,
-          },
-          tooltip: {
-            trigger: 'axis',
-            axisPointer: {
-              // 坐标轴指示器，坐标轴触发有效
-              type: 'shadow', // 默认为直线，可选为：'line' | 'shadow'
+          }}
+          options={{
+            grid: {
+              containLabel: true,
             },
-          },
-          xAxis: {
-            type: 'category',
-            data: categorySeries,
-          },
-          yAxis: {
-            type: 'value',
-          },
-          series: [
-            {
-              data: data.map((item, index) => {
-                return {
-                  value: item[fields.measures[0].code],
-                  itemStyle: selectedIndex.includes(index) ? ActiveStyle : {},
-                };
-              }),
-              type: 'bar',
+            tooltip: {
+              trigger: 'axis',
+              axisPointer: {
+                // 坐标轴指示器，坐标轴触发有效
+                type: 'shadow', // 默认为直线，可选为：'line' | 'shadow'
+              },
             },
-          ],
-        }}
-      />
+            xAxis: {
+              type: 'category',
+              data: categorySeries,
+            },
+            yAxis: {
+              type: 'value',
+            },
+            series: [
+              {
+                data: data.map((item, index) => {
+                  return {
+                    value: item[fields.measures[0].code],
+                    itemStyle: selectedIndex.includes(index) ? ActiveStyle : {},
+                  };
+                }),
+                type: 'bar',
+              },
+            ],
+          }}
+        />
+        <div>
+          {filter.map((item) => {
+            const { data, operate, field } = item;
+            return (
+              <div>
+                <strong>{field}</strong>operate: {operate}| data: {data}
+              </div>
+            );
+          })}
+        </div>
+      </div>
       <JsonView src={data}></JsonView>
     </div>
   );
@@ -347,10 +356,8 @@ const DropContainer = () => {
   return <DataDesigner dataSource={fields} onChange={setFields} />;
 };
 const DataView = () => {
-  return <div>
-
-  </div>
-}
+  return <div></div>;
+};
 export const 交互式柱状图 = () => {
   return (
     <RdxContext>

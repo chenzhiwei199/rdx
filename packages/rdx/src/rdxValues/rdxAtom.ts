@@ -1,38 +1,53 @@
-import { IRdxDeps, Status, IRdxView } from '../global';
-import { IRdxNode, RdxNode, registNode, IRdxNodeLifeCycle } from './base';
+import { IRdxDeps, IRdxView } from '../global';
+import { IRdxNode, RdxNode, IRdxNodeLifeCycle, RdxNodeType } from './base';
 import { isPromise } from '../utils';
 import { ShareContextClass } from '../RdxContext/shareContext';
-import { ActionType, TargetType } from '../RdxContext/interface';
 import { DataModel } from './types';
-import { loadDefualtValue } from './core';
+import { loadDefaultValue } from './core';
 
-export interface IRdxAtomNode<IModel> extends IRdxNode {
-  defaultValue: IModel | Promise<IModel> | RdxNode<IModel>;
+export function atom<GModel>(config: IRdxAtomNode<GModel>): RdxNode<GModel> {
+  const atom = new RdxAtomNode<GModel>(config);
+  return atom;
 }
-export class RdxAtomNode<IModel> extends RdxNode<IModel>
-  implements IRdxNodeLifeCycle<IModel> {
-  private defaultValue: DataModel<IModel>;
-  constructor(config: IRdxAtomNode<IModel>) {
+
+export interface IRdxAtomNode<GModel> extends IRdxNode {
+  defaultValue: GModel | Promise<GModel> | RdxNode<GModel>;
+}
+export class RdxAtomNode<GModel> extends RdxNode<GModel>
+  implements IRdxNodeLifeCycle {
+  private defaultValue: DataModel<GModel>;
+  constructor(config: IRdxAtomNode<GModel>) {
     super(config);
     this.defaultValue = config.defaultValue;
   }
-  load(context: ShareContextClass<any, any>) {
-    const viewInfos: IRdxView<IModel, any> = {
+  load(context: ShareContextClass) {
+    const viewInfos: IRdxView<GModel> = {
+      type: RdxNodeType.Atom,
       id: this.getId(),
       deps: [] as IRdxDeps<any>[],
       reaction: isPromise(this.defaultValue)
         ? async (context) => {
-            context.updateState(await (this.defaultValue as Promise<IModel>));
+            context.updateState(await (this.defaultValue as Promise<GModel>));
           }
-        : undefined,
+        : (context) => {
+            context.updateState(this.defaultValue as any);
+          },
     };
-    loadDefualtValue(this.getId(), context, this.defaultValue);
-    context.addOrUpdateTask(this.getId(), viewInfos, false);
+    const value = loadDefaultValue(context, this.defaultValue);
+    context.addOrUpdateTask(this.getId(), viewInfos, !value.ready);
+    if (value.ready) {
+      // TODO: 理清楚这里有几种设置默认值的条件
+      // 默认值为空的情况
+      // 没设置过数据的情况
+      if (
+        context.getTaskStateById(this.getId()) === undefined &&
+        this.defaultValue !== undefined
+      ) {
+        context.set(this.getId(), value.data);
+      }
+      context.markIDeal(this.getId());
+    } else {
+      context.markWaiting(this.getId());
+    }
   }
-}
-
-export function atom<IModel>(config: IRdxAtomNode<IModel>): RdxNode<IModel> {
-  const atom = new RdxAtomNode<IModel>(config);
-  registNode(config.id, atom);
-  return atom;
 }
