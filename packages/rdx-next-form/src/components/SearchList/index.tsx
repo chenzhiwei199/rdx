@@ -21,7 +21,7 @@ export function SearchListLayout(props: ISearchList) {
   const grids: React.ReactNode[] = [];
   for (let index = 0; index < childNum; index += rowNums) {
     grids.push(
-      <Row>
+      <Row key={index}>
         {childrens.slice(index, index + rowNums).map((child, key) => {
           return (
             <Col key={key} {...normalizerCols[key % normalizerCols.length]}>

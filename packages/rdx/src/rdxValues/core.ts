@@ -1,40 +1,47 @@
 import { ShareContextClass } from '../RdxContext/shareContext';
-import { RdxNode, RdxNode2 } from './base';
-import { ActionType, TargetType } from '../RdxContext/interface';
+import { RdxNode } from './base';
 import { DataModel } from './types';
-import { RdxWatcherNode } from './RdxWatcher';
 import { isPromise } from '../utils';
 
 /**
+ *
+ * 判断当前的value是否是同步的值
+ * @export
  * @template GModel
- * @param {string} id
- * @param {ShareContextClass<any, any>} context
+ * @param {ShareContextClass} context
  * @param {DataModel<GModel>} value
- * @returns 如果加载正确的值， 则返回值，否则返回null
+ * @returns
  */
-export function loadDefaultValue<GModel>(
+export function checkValueIsSync<GModel>(
   context: ShareContextClass,
   value: DataModel<GModel>
-): { ready: boolean; data: GModel | Promise<GModel> | null } {
-  // 静态数据
-  if (!isPromise(value) && !(value instanceof RdxNode)) {
-    return { ready: true, data: value as GModel };
-  }
+) {
   // promise数据
   if (isPromise(value)) {
-    return { ready: false, data: value as Promise<GModel> };
-  }
-
-  // RdxNode
-  if (value instanceof RdxNode) {
-    // 加载节点
+    return false;
+  } else if (value instanceof RdxNode) {
+    // 保证节点的加载
     if (!context.hasTask(value.getId())) {
       value.load(context);
     }
+    // 通过判断依赖节点的加载状态来确定是否是同步的
     if (context.isTaskReady(value.getId())) {
-      return { ready: true, data: context.getTaskStateById(value.getId()) };
+      return true;
     } else {
-      return { ready: false, data: null };
+      return false;
     }
+  } else {
+    // 静态数据
+    return true;
+  }
+}
+export function getSyncValue<GModel>(
+  context: ShareContextClass,
+  value: DataModel<GModel>
+) {
+  if (value instanceof RdxNode) {
+    return context.getTaskStateById(value.getId())
+  } else {
+    return value
   }
 }

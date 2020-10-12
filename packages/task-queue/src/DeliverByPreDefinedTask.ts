@@ -1,6 +1,4 @@
 import {
-  normalizeSingle2Arr,
-  NodeStatus,
   arr2Map,
   NotifyPoint,
   Graph,
@@ -8,17 +6,14 @@ import {
 import Base from './base';
 import {
   END,
-  cleanConfig,
-  point2WithWeightAdapter,
-  graphAdapter,
 } from './utils';
 import {
-  CallbackInfo as ICallbackInfo,
+  ICallbackInfo ,
   ISnapShotTrigger,
   IStatusInfo,
   PointWithWeight,
 } from './typings/global';
-import ScheduledCore, { ScheduledTask } from './scheduledCore';
+import ScheduledCore, { CallbackOptions } from './scheduledCore';
 import EE from 'eventemitter3';
 export interface IError {
   currentKey: string;
@@ -35,7 +30,6 @@ export enum IEventType {
   onError = 'onError',
   onSuccess = 'onSuccess',
   onStart = 'onStart',
-  onStatusChange = 'onStatusChange',
 }
 export default class DeliverByCallback<T> extends Base<PointWithWeight> {
   scheduledCore?: ScheduledCore;
@@ -104,7 +98,7 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
   private callbackFunction(
     runningGraph: Graph,
     currentKey: string,
-    options: { next: () => void; scheduledTask: ScheduledTask }
+    options: CallbackOptions
   ) {
     if (currentKey === END) {
       // 结束状态
@@ -112,19 +106,16 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
     } else {
       // onCall前的回调
       this.ee.emit(IEventType.onBeforeCall, { currentKey: currentKey });
-      const { next, scheduledTask } = options;
+      const { next, isPause, close } = options;
       // 记录图的运行时状态
       if (currentKey !== null) {
         const curConfig = this.graph.configMap.get(currentKey);
+        // 暂停，依赖未准备好的情况，不执行下去
         const onSuccessProcess = () => {
-          if (!scheduledTask.isStop()) {
+          if (!isPause()) {
             // 设置运行结束状态
             this.graph.setFinish(currentKey);
             // 传递状态
-            this.ee.emit(IEventType.onStatusChange, {
-              id: currentKey,
-              status: NodeStatus.Finish,
-            } as IStatusInfo);
             this.ee.emit(IEventType.onSuccess, {
               currentKey,
             });
@@ -134,7 +125,7 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
         };
         // 当前链路中出现错误了，
         const onErrorProcess = (error: Error) => {
-          if (!scheduledTask.isStop()) {
+          if (!isPause()) {
             // 当前分支上未完成的点
             const relationPoints = runningGraph.getAllPointsByPoints({
               key: currentKey,
@@ -155,12 +146,6 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
                 ? error.stack.toString()
                 : error.toString()
               : '运行错误';
-            // 传递错误状态
-            this.ee.emit(IEventType.onStatusChange, {
-              id: currentKey,
-              status: NodeStatus.Error,
-            } as IStatusInfo);
-
             this.ee.emit(IEventType.onError, {
               currentKey,
               notFinishPoint,
@@ -171,15 +156,18 @@ export default class DeliverByCallback<T> extends Base<PointWithWeight> {
               `${currentKey}任务执行失败, depsKeys:${curConfig &&
                 JSON.stringify(curConfig.deps)} errorMsg: ${errorMsg}`
             );
+            // 关闭任务
+            close()
           }
         };
         this.ee.emit(IEventType.onCall, {
           currentKey: currentKey,
           onError: onErrorProcess,
           onSuccess: onSuccessProcess,
-          isCancel: () => scheduledTask.isStop(),
+          close: close,
+          isCancel: () => isPause(),
           isEnd: false,
-        });
+        } as ICallbackInfo);
       }
     }
   }

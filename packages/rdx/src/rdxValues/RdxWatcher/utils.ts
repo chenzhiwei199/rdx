@@ -1,6 +1,9 @@
 import {
+  createMutators,
+  DataModel,
   getDepId,
   IRdxAnyDeps,
+  IRdxDeps,
   isPromise,
   RdxNode,
   RdxWatcherNode,
@@ -8,8 +11,9 @@ import {
   Status,
 } from '../..';
 import logger from '../../utils/log';
-import { loadDefaultValue } from '../core';
-
+export enum WatcherErrorType {
+  DepsNotReady = 'DepsNotReady',
+}
 /**
  * 检查依赖是否改变
  * @param preDeps
@@ -34,19 +38,21 @@ export function isDepsChange(
  * @export
  * @param {RdxNode} watcher
  * @param {ShareContextClass<any, any>} context
+ * @param {boolean} force 如果force 为true，则会强制检查更新，如果force为false，则会检查缓存，如果有缓存则不检查更新
  * @returns
  */
 export function detectValueAndDeps<GModel>(
   watcher: RdxWatcherNode<GModel>,
   context: ShareContextClass,
+  force: boolean = false,
   loggerInfo?: string
-) {
+): void {
+  const mutators = createWatcherMutators(context, watcher);
+  if(!force && mutators.hasCache()) {
+    return;
+  }
   const deps: IRdxAnyDeps[] = [];
   const depsIdSets = new Set();
-  const specificWatcher = watcher as RdxWatcherNode<GModel>;
-  const isChange = (deps) => {
-    return isDepsChange(context.getDeps(watcher.getId()), deps);
-  };
   const get = (atom) => {
     const id = getDepId(atom);
     if (!depsIdSets.has(id)) {
@@ -64,17 +70,18 @@ export function detectValueAndDeps<GModel>(
     if (context.isTaskReady(id)) {
       return context.getTaskStateById(id);
     } else {
-      throw new Error(`依赖节点${id}暂未初始化完成`);
+      // `依赖节点${id}暂未初始化完成`
+      throw new Error(WatcherErrorType.DepsNotReady);
     }
   };
   try {
     logger.info('detectValueAndDeps-' + loggerInfo, watcher.getId());
     watcher.fireGet();
-    let value = specificWatcher.get({
+    let value = watcher.get({
       id: watcher.getId(),
-      value: context.hasTask(watcher.getId())
+      value: context.hasTask(watcher.getId()) && context.isTaskReady(watcher.getId())
         ? context.getTaskStateById(watcher.getId())
-        : undefined,
+        : watcher.defaultValue,
       get: get,
     });
     // DataModel<GModel> = GModel | Promise<GModel> | RdxNode<GModel>;
@@ -82,33 +89,14 @@ export function detectValueAndDeps<GModel>(
     // RdxNode这种情况目前还没有考虑到
     // 1. GModel的异常处理，GModel异常处理可以直接反馈出来
     // 2. Promise<GModel> 的异常处理只有在调用then的时候才会表现出来
-    // if (isPromise(value)) {
-    //   (value as any).catch(() => {
-       
-    //   });
-    // }
-    // 更新依赖
-    context.setDeps(watcher.getId(), deps);
-    // 重新触发调度
-    context.markDirtyNodes({ key: watcher.getId(), includesSelf: true });
-    // context.executeTask({
-    //   key: watcher.getId(),
-    //   downStreamOnly: false,
-    // }, null);
-    return { value, deps: deps.slice() };
-  } catch (error) {
-    context.markWaiting(watcher.getId());
-    if (isChange(deps)) {
-      // 更新依赖
-      context.setDeps(watcher.getId(), deps);
-      // 重新触发调度
-      context.markDirtyNodes({ key: watcher.getId(), includesSelf: true });
-      context.executeTask({
-        key: watcher.getId(),
-        downStreamOnly: false,
-      }, null);
+    if (isPromise(value)) {
+      (value as any).catch(() => {});
     }
-    return { value: new NullTag(), deps: deps.slice() };
+    mutators.setCache({ value, deps });
+  } catch (error) {
+    mutators.setCache({ value: new NullTag(), deps });
+  } finally {
+    context.setDeps(watcher.getId(), deps);
   }
 }
 
@@ -150,24 +138,24 @@ export const createWatcherMutators = (
       return context.getCache(id);
     },
     checkAndUpdateDeps: () => {
-      const value = detectValueAndDeps(watcher, context, 'checkAndUpdateDeps');
-      const deps = value.deps;
-      if (isDepsChange(context.getDeps(id), deps)) {
-        context.setDeps(id, deps);
-      }
+      detectValueAndDeps(watcher, context, true,  'checkAndUpdateDeps');
+      const mutators = createWatcherMutators(context, watcher);
+      const value = mutators.getCache();
       context.setCache(id, value);
-    },
-    loadDefault: () => {
-      const valueAndDeps = context.getCache(id);
-      let value: { ready: boolean; data: any | null } = {
-        ready: false,
-        data: null,
-      };
-      // 设置默认值
-      if (!isNullTag(valueAndDeps.value)) {
-        value = loadDefaultValue<any>(context, valueAndDeps.value as any);
-      }
-      return value;
     },
   };
 };
+
+
+export function uniqBy<T>(arr: T[], getValue: (pre:T) => any) {
+  let newArr = [] as T[]
+  const set = new Set()
+  arr.forEach((arrItem) => {
+    const v = getValue(arrItem)
+    if(!set.has(v)) {
+      set.add(v)
+      newArr.push(arrItem)
+    }
+  })
+  return newArr
+}

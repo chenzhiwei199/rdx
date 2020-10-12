@@ -141,9 +141,6 @@ export function getDefaultValue(
     componentProps,
   };
 }
-export function getWatcherId(id) {
-  return '@@watcher@@' + id;
-}
 export function useVirtual(props: { virtual?: boolean }) {
   const { virtual } = useContext(FormContextInstance);
   return virtual || props.virtual;
@@ -185,46 +182,42 @@ export const BaseRdxFormItem = <ISource, T extends BaseType>(
     defaultVisible,
     componentProps
   );
-  // // currentVirtual， 用来虚拟值项
-  // !currentVirtual &&
-  //   useRdxFormAtomLoader<IModel<SuspectType<T>>>({
-  //     id: id,
-  //     defaultValue: defaultValue,
-  //   });
-  const [atomValue, atomNext] = useRdxFormAtomLoader<IModel<SuspectType<T>>>({
-    id: id,
-    defaultValue: defaultValue,
-  });
+  // useRdxFormAtomLoader<IModel<SuspectType<T>>>({
+  //   id: id,
+  //   defaultValue: defaultValue,
+  // });
   const [value = defaultValue, next, context] = useRdxFormWatcherLoader<
     IModel<SuspectType<T>>
   >({
-    id: getWatcherId(id),
+    defaultValue: defaultValue,
+    virtual: currentVirtual,
+    id: id,
     get: get
-      ? (({ id: innerId, get: innerGet}) => {
-        const decorateGet = (pathId) => {
-          if(pathId === id) {
-            return innerGet(pathId)
-          } else {
-            return innerGet(getWatcherId(pathId))
-          }
-        }
-        return get({ id, get: decorateGet})
-      } ) as any
-      : ({ get }) => {
-          if (currentVirtual) {
-            // TODO: 设置了virtual属性，不应该读取当前组件的信息
-          } else {
-            return get(id);
-          }
+      ? get
+      : ({ value }) => {
+          return value;
         },
+    // ? (({ id: innerId, get: innerGet}) => {
+    //   const decorateGet = (pathId) => {
+    //     if(pathId === id) {
+    //       return innerGet(pathId)
+    //     } else {
+    //       return innerGet(getWatcherId(pathId))
+    //     }
+    //   }
+    //   return get({ id, get: decorateGet})
+    // } ) as any
+    // : ({ get }) => {
+    //     if (currentVirtual) {
+    //       // TODO: 设置了virtual属性，不应该读取当前组件的信息
+    //     } else {
+    //       return get(id);
+    //     }
+    //   },
     set: set
       ? set
       : ({ set }, newValue) => {
-          if (currentVirtual) {
-            // TODO: 设置了virtual属性，不应该读取当前组件的信息
-          } else {
-            set(id, newValue);
-          }
+          set(id, newValue);
         },
   });
   const { status, errorMsg, refreshView } = context;
@@ -269,6 +262,7 @@ export const BaseRdxFormItem = <ISource, T extends BaseType>(
           state,
           onChange: (v) => {
             const newValue = { ...value, value: v };
+            console.log("next set", newValue)
             next(newValue);
             validator(v, context)
               .then((errors) => {

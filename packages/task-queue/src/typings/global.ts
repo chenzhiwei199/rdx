@@ -30,9 +30,11 @@ export interface TaskInfo extends Point {
   next: () => void;
 }
 
-export interface CallbackInfo {
+export interface ICallbackInfo {
   currentKey?: string | null;
   isEnd?: boolean;
+  // 关闭任务，且不通知下游
+  close: () => void
   onError?: (error: Error) => void;
   onSuccess?: () => void;
   isCancel?: () => boolean;
@@ -52,6 +54,8 @@ export enum TASK_PROCESS_TYPE {
 }
 
 export enum TaskEventTriggerType {
+  AddTask = 'AddTask',
+  DepsUpdate = 'DepsUpdate',
   BatchEventTrigger = 'BatchEventTrigger',
   BatchReactionOnMount = 'BatchReactionOnMount',
   Reset = 'Reset',
@@ -68,7 +72,6 @@ export enum TaskEventType {
   UserActionEnd = 'UserActionEnd',
   TaskExecutingEnd = 'TaskExecutingEnd',
   RdxContextInit = 'RdxContextInit',
-  StatusChange = 'StatusChange',
   StateChange = 'StateChange',
 }
 

@@ -5,8 +5,6 @@ import {
   FormContextInstance,
   createArrayMutators,
   RenderPerCell,
-  IFieldDefine,
-  getWatcherId,
   useRdxFormStateContext,
   BaseType,
 } from '@czwcode/rdx-form';
@@ -53,7 +51,7 @@ const ArrayTableField = (props: IArray) => {
   const context = useRdxFormStateContext();
   const getValue = () => {
     return (
-      (context.getTaskStateById(getWatcherId(id)) || ({} as any)).value || []
+      (context.getTaskStateById(id) || ({} as any)).value || []
     );
   };
   const { remove, moveDown, moveUp, add } = createArrayMutators((v) => {

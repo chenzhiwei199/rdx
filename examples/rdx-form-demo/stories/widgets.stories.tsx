@@ -1,5 +1,5 @@
 import React from 'react';
-import { DevVisualTableTool, DevVisualGraphTool } from '@czwcode/rdx-plugins';
+import { DevVisualTableTool } from '@czwcode/rdx-plugins';
 import '@alifd/next/dist/next.css';
 import { useState } from 'react';
 import {
@@ -52,7 +52,6 @@ export const 表单对象 = () => {
       <RdxFormItem name='parent' title='parent' type={'object'}>
         <RdxFormItem name='child' title='111' type={'string'} />
       </RdxFormItem>
-      <DevVisualGraphTool />
     </RdxFormContext>
   );
 };
@@ -66,7 +65,7 @@ export const 多对象嵌套 = () => {
           <RdxFormItem name='child-2' title='111' type={'string'} />
         </RdxFormItem>
       </RdxFormItem>
-      <DevVisualGraphTool />
+
       <DevVisualTableTool />
     </RdxFormContext>
   );
@@ -97,7 +96,6 @@ export const 默认值配置 = () => {
     <RdxFormContext onChange={(value) => {}}>
       <RdxFormItem name='a' title='111' type={'string'} default={'haha'} />
       <RdxFormItem name='b' title='111' type={'string'} default={'hehe'} />
-      <DevVisualGraphTool />
     </RdxFormContext>
   );
 };
@@ -121,7 +119,6 @@ export const 受控例子 = () => {
         修改数据
       </Button>
       <RdxFormItem name='a' title='111' type={'string'} default={'haha'} />
-      <DevVisualGraphTool />
     </RdxFormContext>
   );
 };
@@ -159,7 +156,6 @@ export const 联动例子 = () => {
           return { ...value, dataSource: a };
         }}
       />
-      <DevVisualGraphTool />
     </RdxFormContext>
   );
 };
@@ -194,7 +190,6 @@ export const 展示隐藏 = () => {
           };
         }}
       />
-      <DevVisualGraphTool />
     </RdxFormContext>
   );
 };

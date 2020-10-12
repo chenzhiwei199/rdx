@@ -1,10 +1,5 @@
 import { ShareContextClass, DeliverOptions } from '../RdxContext/shareContext';
-import {
-  BaseContext,
-  Status,
-  IRdxView,
-  IRdxAnyDeps,
-} from '../global';
+import { BaseContext, Status, IRdxTask, IRdxAnyDeps } from '../global';
 import { RdxNode } from '../RdxValues';
 
 export function getDepId(dep: IRdxAnyDeps) {
@@ -21,7 +16,7 @@ export function getDepIds(deps: IRdxAnyDeps[] = []) {
 export function createBaseContext<GModel>(
   id: string,
   context: ShareContextClass,
-  defaultTaskMap?: IRdxView<GModel>
+  defaultTaskMap?: IRdxTask<GModel>
 ): BaseContext<GModel> {
   let taskInfo = context.getTaskById(id);
   taskInfo = taskInfo ? taskInfo : defaultTaskMap;

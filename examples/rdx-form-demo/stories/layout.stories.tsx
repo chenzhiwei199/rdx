@@ -22,7 +22,7 @@ export default {
   },
 };
 
-export const FormLayout_Show = () => {
+export const FormLayout布局 = () => {
   return (
     <RdxFormContext>
       <h3>栅格布局</h3>
@@ -49,7 +49,7 @@ export const FormLayout_Show = () => {
   );
 };
 
-export const FormItemGrid_Show = () => {
+export const FormItemGrid布局 = () => {
   return (
     <RdxFormContext>
       <h3>栅格布局</h3>
@@ -76,7 +76,7 @@ export const FormItemGrid_Show = () => {
   );
 };
 
-export const Compose_FormItemGrid_FormLayout = () => {
+export const FormItemGrid_FormLayout组合布局 = () => {
   return (
     <RdxFormContext>
       <h3>栅格布局</h3>
@@ -113,7 +113,7 @@ const sexData = async () => {
   ];
 };
 const pause = (t: number) => new Promise((resolve) => setTimeout(resolve, t));
-export const SearchList = () => {
+export const 搜索列表 = () => {
   return (
     <div style={{ background: '#F5F5F5', padding: '12px' }}>
       <RdxFormContext
@@ -135,9 +135,7 @@ export const SearchList = () => {
           <RdxNextFormItem
             name='sex'
             type='string'
-            get={async ({ get }) => {
-              // @ts-ignore
-              const value = get('sex') as any;
+            get={async ({ value, get }) => {
               if (!(value.componentProps && value.componentProps.dataSource)) {
                 return {
                   ...(value as any),
@@ -184,7 +182,7 @@ export const SearchList = () => {
   );
 };
 
-export const CascaderList = () => {
+export const 异步级联列表 = () => {
   // 地区名称,业务员名称,客户分类,客户名称,存货名称,部门名称
   return (
     <div style={{ background: '#F5F5F5', padding: '12px' }}>
@@ -200,21 +198,16 @@ export const CascaderList = () => {
           <RdxNextFormItem
             name='单据日期'
             type='string'
-            get={async ({ get }) => {
-              const value = get('单据日期');
-              if (!(value.componentProps && value.componentProps.dataSource)) {
-                const data = await getDimension({
-                  dimensions: '单据日期',
-                });
-                return {
-                  ...(value as any),
-                  componentProps: {
-                    dataSource: data.data,
-                  },
-                };
-              } else {
-                return value;
-              }
+            get={async ({ value, get }) => {
+              const data = await getDimension({
+                dimensions: '单据日期',
+              });
+              return {
+                ...(value as any),
+                componentProps: {
+                  dataSource: data.data,
+                },
+              };
             }}
             xComponent={'select'}
             title={'单据日期'}
@@ -222,28 +215,23 @@ export const CascaderList = () => {
           <RdxNextFormItem
             name='地区名称'
             type='string'
-            get={async ({ get }) => {
-              const value = get('地区名称');
-              if (!(value.componentProps && value.componentProps.dataSource)) {
-                const data = await getDimension({
-                  dimensions: '地区名称',
-                  filters: [
-                    {
-                      operator: Operator.equals,
-                      member: '单据日期',
-                      values: get('单据日期').value,
-                    },
-                  ],
-                });
-                return {
-                  ...(value as any),
-                  componentProps: {
-                    dataSource: data.data,
+            get={async ({ value, get }) => {
+              const data = await getDimension({
+                dimensions: '地区名称',
+                filters: [
+                  {
+                    operator: Operator.equals,
+                    member: '单据日期',
+                    values: get('单据日期').value,
                   },
-                };
-              } else {
-                return value;
-              }
+                ],
+              });
+              return {
+                ...(value as any),
+                componentProps: {
+                  dataSource: data.data,
+                },
+              };
             }}
             xComponent={'select'}
             title={'地区名称'}
@@ -251,33 +239,28 @@ export const CascaderList = () => {
           <RdxNextFormItem
             name='客户分类'
             type='string'
-            get={async ({ get }) => {
-              const value = get('客户分类');
-              if (!(value.componentProps && value.componentProps.dataSource)) {
-                const data = await getDimension({
-                  dimensions: '客户分类',
-                  filters: [
-                    {
-                      operator: Operator.equals,
-                      member: '单据日期',
-                      values: get('单据日期').value,
-                    },
-                    {
-                      operator: Operator.equals,
-                      member: '地区名称',
-                      values: get('地区名称').value,
-                    },
-                  ],
-                });
-                return {
-                  ...(value as any),
-                  componentProps: {
-                    dataSource: data.data,
+            get={async ({ value, get }) => {
+              const data = await getDimension({
+                dimensions: '客户分类',
+                filters: [
+                  {
+                    operator: Operator.equals,
+                    member: '单据日期',
+                    values: get('单据日期').value,
                   },
-                };
-              } else {
-                return value;
-              }
+                  {
+                    operator: Operator.equals,
+                    member: '地区名称',
+                    values: get('地区名称').value,
+                  },
+                ],
+              });
+              return {
+                ...(value as any),
+                componentProps: {
+                  dataSource: data.data,
+                },
+              };
             }}
             xComponent={'select'}
             title={'客户分类'}
@@ -288,7 +271,7 @@ export const CascaderList = () => {
   );
 };
 
-export const CascaderListSetDefault= () => {
+export const CascaderListSetDefault = () => {
   // 地区名称,业务员名称,客户分类,客户名称,存货名称,部门名称
   return (
     <div style={{ background: '#F5F5F5', padding: '12px' }}>
@@ -304,22 +287,17 @@ export const CascaderListSetDefault= () => {
           <RdxNextFormItem
             name='单据日期'
             type='string'
-            get={async ({ get }) => {
-              const value = get('单据日期');
-              if (!(value.componentProps && value.componentProps.dataSource)) {
-                const data = await getDimension({
-                  dimensions: '单据日期',
-                });
-                return {
-                  ...(value as any),
-                  value: data.data[0].value,
-                  componentProps: {
-                    dataSource: data.data,
-                  },
-                };
-              } else {
-                return value;
-              }
+            get={async ({ value, get }) => {
+              const data = await getDimension({
+                dimensions: '单据日期',
+              });
+              return {
+                ...(value as any),
+                value: data.data[0].value,
+                componentProps: {
+                  dataSource: data.data,
+                },
+              };
             }}
             xComponent={'select'}
             title={'单据日期'}
@@ -327,29 +305,24 @@ export const CascaderListSetDefault= () => {
           <RdxNextFormItem
             name='地区名称'
             type='string'
-            get={async ({ get }) => {
-              const value = get('地区名称');
-              if (!(value.componentProps && value.componentProps.dataSource)) {
-                const data = await getDimension({
-                  dimensions: '地区名称',
-                  filters: [
-                    {
-                      operator: Operator.equals,
-                      member: '单据日期',
-                      values: get('单据日期').value,
-                    },
-                  ],
-                });
-                return {
-                  ...(value as any),
-                  value: data.data[0].value,
-                  componentProps: {
-                    dataSource: data.data,
+            get={async ({ value, get }) => {
+              const data = await getDimension({
+                dimensions: '地区名称',
+                filters: [
+                  {
+                    operator: Operator.equals,
+                    member: '单据日期',
+                    values: get('单据日期').value,
                   },
-                };
-              } else {
-                return value;
-              }
+                ],
+              });
+              return {
+                ...(value as any),
+                value: data.data[0].value,
+                componentProps: {
+                  dataSource: data.data,
+                },
+              };
             }}
             xComponent={'select'}
             title={'地区名称'}
@@ -357,34 +330,29 @@ export const CascaderListSetDefault= () => {
           <RdxNextFormItem
             name='客户分类'
             type='string'
-            get={async ({ get }) => {
-              const value = get('客户分类');
-              if (!(value.componentProps && value.componentProps.dataSource)) {
-                const data = await getDimension({
-                  dimensions: '客户分类',
-                  filters: [
-                    {
-                      operator: Operator.equals,
-                      member: '单据日期',
-                      values: get('单据日期').value,
-                    },
-                    {
-                      operator: Operator.equals,
-                      member: '地区名称',
-                      values: get('地区名称').value,
-                    },
-                  ],
-                });
-                return {
-                  ...(value as any),
-                  value: data.data[0].value,
-                  componentProps: {
-                    dataSource: data.data,
+            get={async ({ value, get }) => {
+              const data = await getDimension({
+                dimensions: '客户分类',
+                filters: [
+                  {
+                    operator: Operator.equals,
+                    member: '单据日期',
+                    values: get('单据日期').value,
                   },
-                };
-              } else {
-                return value;
-              }
+                  {
+                    operator: Operator.equals,
+                    member: '地区名称',
+                    values: get('地区名称').value,
+                  },
+                ],
+              });
+              return {
+                ...(value as any),
+                value: data.data[0].value,
+                componentProps: {
+                  dataSource: data.data,
+                },
+              };
             }}
             xComponent={'select'}
             title={'客户分类'}

@@ -2,7 +2,7 @@ import {
   Status,
   IRdxAnyDeps,
   DataContext,
-  IRdxView,
+  IRdxTask,
   StateUpdateType,
 } from '../global';
 import { RdxNode } from '../RdxValues/base';
@@ -23,7 +23,7 @@ import {
 import { ShareContextClass, TNext } from '..';
 
 export function createRdxHooks(provider = DefaultContext) {
-  function getId<GModel>(props: IRdxView<GModel> | RdxNode<GModel>) {
+  function getId<GModel>(props: IRdxTask<GModel> | RdxNode<GModel>) {
     if (props instanceof RdxNode) {
       return props.getId();
     } else {
@@ -31,10 +31,7 @@ export function createRdxHooks(provider = DefaultContext) {
     }
   }
 
-  function useStateUpdate(
-    id: string,
-    type: StateUpdateType
-  ) {
+  function useStateUpdate(id: string, type: StateUpdateType) {
     const context = useRdxStateContext(provider);
     const forceUpdate = useForceUpdate();
     useEffect(() => {
@@ -117,6 +114,7 @@ export function createRdxHooks(provider = DefaultContext) {
   }
   function useRdxWatcher<GModel>(props: IRdxWatcherNode<GModel>, deps?: any[]) {
     const newProps = { ...props };
+    // 这里通过rdxWatcher实现类比WatcherFamily的功能
     if (deps && Array.isArray(deps)) {
       newProps.id = `${newProps.id}__watcher/${JSON.stringify(deps)}`;
     }
@@ -125,12 +123,14 @@ export function createRdxHooks(provider = DefaultContext) {
   }
 
   function useRdxWatcherLoader<GModel>(
-    props: IRdxWatcherNode<GModel>
+    props: IRdxWatcherNode<GModel>,
+    deps?: string[]
   ): [GModel, TNext<GModel>, DataContext<GModel>] {
     const newProps = { ...props };
-    // if (deps && Array.isArray(deps)) {
-    //   newProps.id = `${newProps.id}__watcher/${JSON.stringify(deps)}`;
-    // }
+    // 这里通过rdxWatcher实现类比WatcherFamily的功能
+    if (deps && Array.isArray(deps)) {
+      newProps.id = `${newProps.id}__watcher/${JSON.stringify(deps)}`;
+    }
     const watcher = new RdxWatcherNode(newProps);
     useStateUpdate(watcher.getId(), StateUpdateType.ReactionStatus);
     const dataContext = useRdxNodeBinding<GModel>(watcher);

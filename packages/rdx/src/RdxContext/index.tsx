@@ -46,7 +46,7 @@ const Rdx = (props: RdxContextProps<any>) => {
   };
 
   store.current.batchUiChange = () => {
-    uiNotifyBatcherOfChange.current();
+    uiNotifyBatcherOfChange.current && uiNotifyBatcherOfChange.current();
   };
 
   withRef && (withRef.current = store.current);
@@ -54,7 +54,10 @@ const Rdx = (props: RdxContextProps<any>) => {
   React.useEffect(() => {
     store.current.parentMounted = true;
     // 执行初始化任务
-    store.current.executeTask(Array.from(store.current.getNotifyQueue()), TaskEventTriggerType.BatchReactionOnMount);
+    store.current.executeTask(
+      Array.from(store.current.getNotifyQueue()),
+      TaskEventTriggerType.BatchReactionOnMount
+    );
     store.current.getNotifyQueue().clear();
 
     // 初始化状态和后续状态不一样，则触发onChange

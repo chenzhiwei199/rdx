@@ -1,8 +1,7 @@
 import React, { Consumer, Provider, useContext } from 'react';
 import {
-  IRdxView,
+  IRdxTask,
   ReactionContext,
-  STATUS_TYPE,
   StateUpdateType,
   IStateInfo,
   ASYNC_TASK,
@@ -17,10 +16,8 @@ import {
   TaskEventType,
   PreDefinedTaskQueue,
   ISnapShotTrigger,
-  CallbackInfo,
-  union,
+  ICallbackInfo,
   normalizeSingle2Arr,
-  IDeps,
   TaskEventTriggerType,
 } from '@czwcode/task-queue';
 import { ActionType } from './interface';
@@ -53,7 +50,7 @@ export class ShareContextClass {
 
   private virtualTaskState: Base<any> = new ScopeObject({}) as any;
 
-  private tasks: BaseMap<IRdxView<any>>;
+  private tasks: BaseMap<IRdxTask<any>>;
   private taskState: Base<any>;
   private taskStatus: BaseObject<TaskStatus>;
 
@@ -73,15 +70,12 @@ export class ShareContextClass {
     });
     const ee = this._taskScheduler.getEE();
 
-    ee.on(IEventType.onStatusChange, (content) => {
-      this.subject.emit(TaskEventType.StatusChange, content);
-    });
     ee.on(IEventType.onBeforeCall, this.preChange);
     ee.on(IEventType.onCall, this.onChange);
     ee.on(IEventType.onSuccess, this.onSuccess);
     ee.on(IEventType.onError, this.onError);
     ee.on(IEventType.onStart, (content: ISnapShotTrigger) => {
-      const { currentRunningPoints, triggerPoints, conflictPoints } = content;
+      const { currentRunningPoints } = content;
       // 通知冲突的点
       currentRunningPoints.forEach((item) => {
         const { key: id } = item;
@@ -215,31 +209,31 @@ export class ShareContextClass {
     }
   }
   reset = (ids: string[]) => {
-    this.executeTask(
-      ids.map((id) => ({ key: id, downStreamOnly: false })),
+    for (let id of ids) {
+      this.getTaskById(id).reset(this);
+    }
+    this.notifyDownStreamPoints(
+      ids.map((id) => ({ key: id, downStreamOnly: true })),
       TaskEventTriggerType.Reset
     );
   };
   resetById = (id: string) => {
-    this.executeTask(
-      [{ key: id, downStreamOnly: false }],
+    this.getTaskById(id).reset(this);
+    this.notifyDownStreamPoints(
+      [{ key: id, downStreamOnly: true }],
       TaskEventTriggerType.ResetById
     );
-    // this.updateState(
-    //   id,
-    //   ActionType.Update,
-    //   TargetType.TaskState,
-    //   this.getTaskById(id).defaultValue
-    // );
   };
   set = (id: string, value: any) => {
     this.updateState(id, ActionType.Update, TargetType.TaskState, value);
   };
-  onSuccess = (callback: CallbackInfo) => {
+  onSuccess = (callback: ICallbackInfo) => {
     const { currentKey: key } = callback;
     this.updateState(key, ActionType.Update, TargetType.TaskStatus, {
       value: NodeStatus.IDeal,
     });
+    // 节点标记执行完成后，触发其他依赖项的更新
+    this.fireWhenDepsUpdate(key);
     logger.info('onTaskExecutingEnd', key);
     logger.info(
       'UI onSuccess',
@@ -278,13 +272,13 @@ export class ShareContextClass {
    *
    * @memberof BaseFieldContext
    */
-  onChange = (callbackInfo: CallbackInfo) => {
+  onChange = (callbackInfo: ICallbackInfo) => {
     // 1. 清理脏节点
     // 2. 标记脏节点
-    const { currentKey: key, onSuccess, onError, isEnd } = callbackInfo;
+    const { currentKey: key, close, onSuccess, onError, isEnd } = callbackInfo;
     logger.info('onTaskExecuting', key, isEnd, this.taskState.getAll());
     if (isEnd) {
-      this.getSubject().emit(TaskEventType.TaskExecutingEnd);
+      // this.getSubject().emit(TaskEventType.TaskExecutingEnd);
       this.cancelMap.removeAll();
       this.onPropsChange(this.taskState.getAll(), this.taskState);
       this.getCallbackQueue().forEach((item) => {
@@ -299,11 +293,11 @@ export class ShareContextClass {
       this.removeDataDirtyKey(key);
       const currentTask = this.getTaskById(key);
       const reactionContext = this.createReactionContext(
-        key
+        key,
+        close
       ) as ReactionContext<any>;
 
       const success = () => {
-        this.fireWhenDepsUpdate(key);
         onSuccess();
       };
       function fail(error) {
@@ -363,7 +357,7 @@ export class ShareContextClass {
     scope?: string;
   }[] {
     const tasks = [...this.tasks.getAll().values()];
-    const newTasks = (tasks as IRdxView<any>[]).map((task) => {
+    const newTasks = (tasks as IRdxTask<any>[]).map((task) => {
       // 判断是否是初始化应该在事件初始化的时候，如果放在回调中，那么判断就滞后了，用了回调时的taskMap判断了
       return {
         key: task.id,
@@ -373,9 +367,10 @@ export class ShareContextClass {
     return newTasks;
   }
 
-  createReactionContext(key: string) {
+  createReactionContext(key: string, close: () => void) {
     let reactionContext: ReactionContext<any> = {
       ...createBaseContext(key, this),
+      close: close,
       updateState: (value: any) => {
         // 记录脏节点
         this.markDirtyNodes({ key, includesSelf: true });
@@ -412,7 +407,7 @@ export class ShareContextClass {
   hasTask(id: string) {
     return !!this.getTaskById(id);
   }
-  getTaskById(id: string): IRdxView<any> {
+  getTaskById(id: string): IRdxTask<any> {
     return this.tasks.get(id);
   }
   getTasks() {
@@ -487,14 +482,21 @@ export class ShareContextClass {
     });
   }
   /**
-   * 更新当前节点数据，刷新ui，并标记dirtyUI
+   * 更新当前节点数据,需要做如下几件事：
+   * 1. 标记脏节点
+   * 2. 更新ui
+   * 3. 进行相关的依赖检测
+   * 4. 通知下游节点执行
    *
    * @param {string} id
    * @param {*} value
    * @param {DeliverOptions} [options={ refresh: false }]
    * @memberof ShareContextClass
    */
-  notifyDownStreamPoints(collectDirtys: NotifyPoint[]) {
+  notifyDownStreamPoints(
+    collectDirtys: NotifyPoint[],
+    taskEventTriggerType: TaskEventTriggerType = TaskEventTriggerType.Set
+  ) {
     this.markDirtyNodes(
       collectDirtys.map((item) => ({
         key: item.key,
@@ -508,7 +510,7 @@ export class ShareContextClass {
       this.notifyModule(dirty.key, true, StateUpdateType.State);
       // 所有的改变元素，都要触发下游任务
     }
-    this.executeTask(collectDirtys, TaskEventTriggerType.Set);
+    this.executeTask(collectDirtys, taskEventTriggerType);
   }
 
   /**
@@ -555,27 +557,15 @@ export class ShareContextClass {
    * @param taskInfo
    * @param notifyTask
    */
-  addOrUpdateTask(
-    id: string,
-    taskInfo: IRdxView<any>,
-    notifyTask: boolean = false
-  ) {
+  addOrUpdateTask(id: string, taskInfo: IRdxTask<any>) {
     this.updateState(id, ActionType.Update, TargetType.TasksMap, taskInfo);
-    if (notifyTask) {
-      const point = { key: id, downStreamOnly: false } as any;
-      if (!this.parentMounted) {
-        this.willNotifyQueue.add(point);
-      } else {
-        this.executeTask(point, TaskEventTriggerType.TaskCreated);
-      }
-    }
   }
 
   removeTask(id: string) {
     this.updateState(id, ActionType.Remove, TargetType.TaskState);
     this.updateState(id, ActionType.Remove, TargetType.TaskStatus);
-    this.uiDirtySets.delete(id);
-    this.dataDirtySets.delete(id);
+    this.removeUiDirtyKey(id);
+    this.removeDataDirtyKey(id);
     this.cache.delete(id);
     this.cancelMap.remove(id);
     this.updateState(id, ActionType.Remove, TargetType.TasksMap);
@@ -585,7 +575,7 @@ export class ShareContextClass {
     key: string,
     type: ActionType,
     targetType: TargetType,
-    paylaod?: TaskStatus | any | IRdxView<any> | (() => void)
+    paylaod?: TaskStatus | any | IRdxTask<any> | (() => void)
   ) {
     this.subject.emit(TaskEventType.StateChange, {
       actionType: type,
@@ -619,7 +609,7 @@ export class ShareContextClass {
       tasks: Array.from(this.getTasks().values()),
     } as IRdxSnapShotTrigger;
   }
-  emitBase(type: TaskEventType,taskKeys: NotifyPoint | NotifyPoint[] = []) {
+  emitBase(type: TaskEventType, taskKeys: NotifyPoint | NotifyPoint[] = []) {
     this._taskScheduler.updateTasks(this.createTaskForSchedule());
     this.getSubject().emit(type, this.getProcessInfo(taskKeys));
   }
@@ -653,6 +643,7 @@ export class ShareContextClass {
     });
     if (allFirePoint.length > 0) {
       this.emit(TaskEventType.Trigger, taskEventType, currentTaskKeys);
+      logger.info('onTaskExecutingEnd executeTask', taskEventType, taskKeys);
       this._taskScheduler.notifyDownstream(currentTaskKeys);
     }
   }
@@ -663,7 +654,7 @@ export interface ShareContext<GModel> {
    * 任务信息
    */
   name?: string;
-  tasks: BaseMap<IRdxView<GModel>>;
+  tasks: BaseMap<IRdxTask<GModel>>;
   taskState: Base<GModel>;
   virtualTaskState: Base<GModel>;
   taskStatus: BaseObject<TaskStatus>;

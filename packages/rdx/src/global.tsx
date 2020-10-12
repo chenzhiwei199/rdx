@@ -20,6 +20,10 @@ export interface ReactionContext<GModel> extends BaseContext<GModel> {
    * 更新数据的方法
    */
   updateState: (v: GModel) => void;
+  /**
+   * 停止任务，并且不执行下游，并且任务不会重复利用
+   */
+  close: () => void
 }
 
 export type ASYNC_TASK<GModel> = (
@@ -136,7 +140,7 @@ export interface IViewRender<GModel> {
   component?: React.ComponentType<DataContext<GModel>>;
 }
 
-export interface IRdxViewBase<GModel> extends IRdxReactionProps<GModel> {
+export interface IRdxTaskBase<GModel> extends IRdxReactionProps<GModel> {
   /**
    * 模块依赖的id列表
    *
@@ -152,8 +156,8 @@ export interface IRdxViewBase<GModel> extends IRdxReactionProps<GModel> {
    */
   defaultValue?: GModel;
 }
-export interface IRdxView<GModel>
-  extends IRdxViewBase<GModel>,
+export interface IRdxTask<GModel>
+  extends IRdxTaskBase<GModel>,
     IViewRender<GModel> {
   /**
    * 模块的唯一id
@@ -162,16 +166,10 @@ export interface IRdxView<GModel>
    * @memberof IBase
    */
   id: string;
-  /**
-   *
-   */
   type: RdxNodeType;
-  /**
-   * getValue
-   */
+  reset: (context: ShareContextClass) => void
   getValue?: (id: string) => GModel;
   setValue?: (id: string, value: GModel) => void;
-  rerunWhenDepsChange?: boolean;
 }
 
 export interface IRdxState<GModel> {
@@ -218,7 +216,7 @@ export interface IStateInfo {
 
 export interface IRdxSnapShotTrigger extends ISnapShotTrigger {
   // 当前的所有task信息
-  tasks?: IRdxView<any>[]
+  tasks?: IRdxTask<any>[]
 }
 // 当前节点的state
 // states: IStateInfo[];

@@ -2,7 +2,6 @@ import { getEmptyValue, getChlidFieldInfo } from '../../utils/functions';
 import { useContext } from 'react';
 import { FormContextInstance } from '../../hooks/formContext';
 import { PathContextInstance } from '../../hooks/pathContext';
-import { getWatcherId } from '../FromItem';
 import { useRdxFormStateContext } from '../../hooks/rdxStateFormHooks';
 import { BaseType } from '../../global';
 export function createArrayMutators(onChange: any, children) {
@@ -10,7 +9,7 @@ export function createArrayMutators(onChange: any, children) {
   const context = useRdxFormStateContext();
   const getValue = () => {
     return (
-      (context.getTaskStateById(getWatcherId(id)) || ({} as any)).value || []
+      (context.getTaskStateById(id) || ({} as any)).value || []
     );
   };
   const getAtomValue = () => {

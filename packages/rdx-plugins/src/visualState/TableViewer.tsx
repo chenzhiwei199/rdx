@@ -16,7 +16,7 @@ const EventStatusComponent = ({
     <Table
       dataSource={allSnapShots}
       maxBodyHeight={300}
-      getCellProps={(rowIndex) => {
+      cellProps={(rowIndex) => {
         return {
           style: { background: rowIndex === activeIndex && '#87befd88' },
         };

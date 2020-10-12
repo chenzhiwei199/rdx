@@ -1,9 +1,9 @@
-import { IRdxDeps, IRdxView } from '../global';
+import { IRdxDeps, IRdxTask } from '../global';
 import { IRdxNode, RdxNode, IRdxNodeLifeCycle, RdxNodeType } from './base';
 import { isPromise } from '../utils';
 import { ShareContextClass } from '../RdxContext/shareContext';
 import { DataModel } from './types';
-import { loadDefaultValue } from './core';
+import { checkValueIsSync, getSyncValue } from './core';
 
 export function atom<GModel>(config: IRdxAtomNode<GModel>): RdxNode<GModel> {
   const atom = new RdxAtomNode<GModel>(config);
@@ -20,34 +20,48 @@ export class RdxAtomNode<GModel> extends RdxNode<GModel>
     super(config);
     this.defaultValue = config.defaultValue;
   }
-  load(context: ShareContextClass) {
-    const viewInfos: IRdxView<GModel> = {
+  getTaskInfo(context: ShareContextClass) {
+    const taskInfos: IRdxTask<GModel> = {
       type: RdxNodeType.Atom,
       id: this.getId(),
       deps: [] as IRdxDeps<any>[],
-      reaction: isPromise(this.defaultValue)
-        ? async (context) => {
+      reset: (context: ShareContextClass) => {
+        this.reset(context);
+      },
+      reaction: checkValueIsSync(context, this.defaultValue)
+        ? (context) => {}
+        : async (context) => {
+            // 设置默认值
             context.updateState(await (this.defaultValue as Promise<GModel>));
-          }
-        : (context) => {
-            context.updateState(this.defaultValue as any);
           },
     };
-    const value = loadDefaultValue(context, this.defaultValue);
-    context.addOrUpdateTask(this.getId(), viewInfos, !value.ready);
-    if (value.ready) {
-      // TODO: 理清楚这里有几种设置默认值的条件
-      // 默认值为空的情况
-      // 没设置过数据的情况
+    return taskInfos;
+  }
+  init(context: ShareContextClass, force: boolean = false) {
+    if (checkValueIsSync(context, this.defaultValue)) {
+      // 1.如果已经有数据了，那就不用再设置默认值了，非受控的情况， 外部传入值的情况，不能把原来的数据覆盖掉了
+      // 2. 默认值不为undefined的时候可以设置
       if (
-        context.getTaskStateById(this.getId()) === undefined &&
-        this.defaultValue !== undefined
+        (context.getTaskStateById(this.getId()) === undefined &&
+          this.defaultValue !== undefined) ||
+        force
       ) {
-        context.set(this.getId(), value.data);
+        context.set(this.getId(), getSyncValue(context, this.defaultValue));
       }
       context.markIDeal(this.getId());
     } else {
       context.markWaiting(this.getId());
+      context.batchTriggerSchedule({
+        key: this.getId(),
+        downStreamOnly: false,
+      });
     }
+  }
+  reset(context: ShareContextClass) {
+    this.init(context, true);
+  }
+  load(context: ShareContextClass) {
+    context.addOrUpdateTask(this.getId(), this.getTaskInfo(context));
+    this.init(context);
   }
 }

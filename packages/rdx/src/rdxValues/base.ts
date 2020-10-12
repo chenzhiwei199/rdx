@@ -1,10 +1,11 @@
 import { ShareContextClass, StoreValues } from '../RdxContext/shareContext';
-import { IRdxAnyDeps, IRdxView } from '../global';
+import { IRdxAnyDeps, IRdxTask } from '../global';
 
 import { get } from 'lodash';
 export enum RdxNodeType {
   Atom = 'atom',
   Watcher = 'watcher',
+  Mixed = 'mixed',
   WatcherFamily = 'watcherFamily',
   Reaction = 'reaction',
 }
@@ -22,8 +23,8 @@ export interface IRdxNodeLifeCycle {
  */
 export class RdxNode<GModel> implements IRdxNodeLifeCycle {
   load(context: ShareContextClass): void {}
-  private id: string;
-  private type: RdxNodeType = RdxNodeType.Atom;
+  public id: string;
+  public type: RdxNodeType = RdxNodeType.Atom;
   constructor(config: IRdxNode) {
     this.id = config.id;
     this.type = config.type;
@@ -34,6 +35,7 @@ export class RdxNode<GModel> implements IRdxNodeLifeCycle {
   getId() {
     return this.id;
   }
+  reset(context: ShareContextClass) {}
 }
 
 export class RdxNode2<GModel> implements IRdxNodeLifeCycle {

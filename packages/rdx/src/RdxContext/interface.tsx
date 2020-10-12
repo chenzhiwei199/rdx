@@ -7,7 +7,7 @@ import {
 } from '@czwcode/task-queue';
 import { TaskStatus, ShareContextClass } from './shareContext';
 import { Base } from './core';
-import { IRdxView } from '../global';
+import { IRdxTask } from '../global';
 
 export type MapObject<T> = { [key: string]: T | null };
 
@@ -19,7 +19,7 @@ export interface RdxContextProps<GModel> {
   initializeState?: MapObject<GModel>;
   onChange?: (state: MapObject<GModel>) => void;
   createStore?: (data: any) => Base<GModel>;
-  visualStatePlugins?: React.ReactNode | React.ReactNode[]
+  visualStatePlugins?: React.ReactNode | React.ReactNode[];
   // 依赖数据池
 }
 
@@ -56,7 +56,7 @@ export interface Action<GModel> {
   payload?:
     | {
         key: string;
-        value: IRdxView<GModel> | TaskStatus | GModel | (() => void) | null;
+        value: IRdxTask<GModel> | TaskStatus | GModel | (() => void) | null;
       }
     | { points: BasePoint[]; refresh: boolean; executeTask: boolean }
     | { id: string; customAction: any };

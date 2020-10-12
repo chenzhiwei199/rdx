@@ -159,28 +159,27 @@ const DataPersistenceHook = (
           },
         }));
       });
-    context
-      .getSubject()
-      .on(TaskEventType.StatusChange, (process: IStatusInfo) => {
-        setStateProxy((state) => {
-          return {
-            temporarySnapShots: {
-              ...state.temporarySnapShots,
-              status: [
-                ...(state.temporarySnapShots
-                  ? state.temporarySnapShots.status
-                  : []),
-                process,
-              ],
-            },
-          }
-        });
-      });
+    // context
+    //   .getSubject()
+    //   .on(TaskEventType.StatusChange, (process: IStatusInfo) => {
+    //     setStateProxy((state) => {
+    //       return {
+    //         temporarySnapShots: {
+    //           ...state.temporarySnapShots,
+    //           status: [
+    //             ...(state.temporarySnapShots
+    //               ? state.temporarySnapShots.status
+    //               : []),
+    //             process,
+    //           ],
+    //         },
+    //       }
+    //     });
+    //   });
     return () => {
       const ee = context.getSubject();
       ee.removeAllListeners(TaskEventType.Init);
       ee.removeAllListeners(TaskEventType.RdxContextInit);
-      ee.removeAllListeners(TaskEventType.StatusChange);
     };
   }, []);
   React.useEffect(() => {

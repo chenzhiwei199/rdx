@@ -71,6 +71,7 @@ export type RdxFormSet<ISource, IValueType> = <INode extends TPath<ISource, IVal
 
 export type IRdxFormWatcherGet<IValueType, ISource> = (config: {
   id: string;
+  value: IModel<IValueType>;
   get: RdxFormGet<ISource, IValueType>;
 }) => DataModel<IModel<IValueType>>;
 

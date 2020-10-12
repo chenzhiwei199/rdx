@@ -2,13 +2,31 @@ export interface Data {
   id: string;
   deps?: string[];
 }
-export type Callback = (
-  id: string,
-  options: {
-    scheduledTask: ScheduledTask;
-    next: () => void;
-  }
-) => void;
+
+/**
+ * 任务执行单元
+ * id:当前任务唯一标识
+ */
+export type Callback = (id: string, options: CallbackOptions) => void;
+
+/**
+ * next: 通过该方法通知下游任务执行
+ * isStop: 通过该方法判断任务是否终止
+ * close: 通过该方法，关闭任务执行，并且不执行下游任务
+ */
+export interface CallbackOptions {
+  isPause: () => boolean;
+  close: () => void;
+  next: () => void;
+}
+/**
+ * 任务执行管理器
+ * 1. 支持任务Pause
+ * 2. 支持任务Continue
+ *
+ * @export
+ * @class ScheduledCore
+ */
 export default class ScheduledCore {
   dataSource: Data[];
   inDegree: Map<string, number> = new Map();
@@ -28,20 +46,29 @@ export default class ScheduledCore {
     this.deliverMap = this.createDeliverMap();
     //判断是否有可以重复利用的任务
     const currentStartPoints = this.getStartPoints();
-    
-    // 停止不可复用的任务
+
     const canReusePoints = currentStartPoints.filter((id) => {
       return canReuse && canReuse(id);
     });
-    console.log('currentStartPoints: ', currentStartPoints, canReusePoints);
-    Array.from(this.taskQueue.keys()).forEach((key) => {
+
+    // 关闭不可复用的任务
+    for (let key of Array.from(this.taskQueue.keys())) {
       if (!canReusePoints.includes(key)) {
-        this.taskQueue.get(key) && this.taskQueue.get(key).stop();
-        this.taskQueue.delete(key);
+        this.closeTask(key);
       }
-    });
+    }
   }
 
+  /**
+   * 关闭某个任务
+   *
+   * @param {string} key
+   * @memberof ScheduledCore
+   */
+  closeTask(key: string) {
+    this.taskQueue.get(key) && this.taskQueue.get(key).pause();
+    this.taskQueue.delete(key);
+  }
   /**
    * 创建下游通知列表
    */
@@ -70,13 +97,7 @@ export default class ScheduledCore {
     });
     return m;
   }
-  /**
-   * 终止调用链路
-   */
-  stop() {
-    this.taskQueue.forEach((task) => task.stop());
-    this.taskQueue.clear();
-  }
+
   canExecute(id) {
     return this.inDegree.get(id) === 0;
   }
@@ -91,14 +112,6 @@ export default class ScheduledCore {
   }
   start(callback: Callback) {
     this.batchExecute(this.getStartPoints(), callback);
-
-    //  // 获得可复用的任务
-    //  const insectionsPoints = currentStartPoints.filter((id) => {
-    //   return this.taskQueue.has(id)
-    // })
-    // const canReusePoints = insectionsPoints.filter(id => {
-    //   return canReuse(id) || false
-    // })
   }
   batchExecute(ids: string[], callback: Callback) {
     ids.forEach((item) => {
@@ -123,12 +136,21 @@ export default class ScheduledCore {
       const willExcuteIds = deliverIds.filter((item) => this.canExecute(item));
       this.batchExecute(willExcuteIds, callback);
     };
-    // 如果没有重用任务，则创建新任务，否则复用上次的任务
+    const close = () => {
+      this.closeTask(id);
+    };
     let task;
     if (this.taskQueue.has(id)) {
-      task = this.taskQueue.get(id).fork(next);
+      // 执行下游任务
+      task = this.taskQueue.get(id).fork({ next, close})
     } else {
-      task = new ScheduledTask(id, next, callback);
+      // 没有可以复用的任务，创建新的任务
+      task = new ScheduledTask({
+        id,
+        next,
+        callback,
+        close,
+      });
     }
 
     this.taskQueue.set(id, task);
@@ -137,45 +159,123 @@ export default class ScheduledCore {
 }
 
 export class ScheduledTask {
-  stopSingnal: boolean = false;
+  pauseSignal: boolean = false;
+  finishSignal: boolean = false;
   callback: Callback;
   id: string;
   next: () => void;
+  close: () => void;
   promise: Promise<any>;
   resolvePersist: () => void;
-  rejectPersist: () => void;
-  constructor(id: string, next: () => void, callback: Callback) {
+  constructor(config: {
+    id: string;
+    next: () => void;
+    close: () => void;
+    callback: Callback;
+  }) {
+    const { id, next, close, callback } = config;
     this.id = id;
     this.next = next;
+    this.close = close;
     this.callback = callback;
     this.promise = new Promise((resove, reject) => {
       this.resolvePersist = resove as any;
-      this.rejectPersist = reject;
     });
   }
-  isStop() {
-    return this.stopSingnal;
+  isPause() {
+    return this.pauseSignal;
   }
-  stop() {
-    this.stopSingnal = true;
+  pause() {
+    this.pauseSignal = true;
   }
+  /**
+   * 执行任务,
+   *
+   * @memberof ScheduledTask
+   */
   execute() {
     this.callback(this.id, {
       next: () => {
-        if (!this.isStop()) {
+        if (!this.isPause()) {
+          this.finishSignal = true
           this.resolvePersist();
+          // 通知下游
           this.next();
         }
       },
-      scheduledTask: this,
+      isPause: () => this.isPause(),
+      close: () => {
+        this.close();
+      },
     });
   }
-  fork(next: () => void) {
-    return new ScheduledTask(this.id, next, (id, options) => {
-      const { next } = options;
-      this.promise.then(() => {
-        next();
-      });
+
+  fork(config: { next: () => void, close: () => void}) {
+    const { next, close} = config
+    return new ScheduledTask({
+      id: this.id,
+      next,
+      close,
+      callback: (id, options) => {
+        // 构造callback
+        const { next } = options;
+        if(this.finishSignal) {
+          // 已经执行完了
+          next()
+        } else {
+          // 还没有执行完，等待执行
+          this.promise.then(() => {
+            next();
+          });
+        }
+        
+      }
     });
   }
 }
+
+
+
+// export class ScheduledTask {
+//   stopSingnal: boolean = false;
+//   callback: Callback;
+//   id: string;
+//   next: () => void;
+//   promise: Promise<any>;
+//   resolvePersist: () => void;
+//   rejectPersist: () => void;
+//   constructor(id: string, next: () => void, callback: Callback) {
+//     this.id = id;
+//     this.next = next;
+//     this.callback = callback;
+//     this.promise = new Promise((resove, reject) => {
+//       this.resolvePersist = resove;
+//       this.rejectPersist = reject;
+//     });
+//   }
+//   isStop() {
+//     return this.stopSingnal;
+//   }
+//   stop() {
+//     this.stopSingnal = true;
+//   }
+//   execute() {
+//     this.callback(this.id, {
+//       next: () => {
+//         if (!this.isStop()) {
+//           this.resolvePersist();
+//           this.next();
+//         }
+//       },
+//       scheduledTask: this,
+//     });
+//   }
+//   fork(next: () => void) {
+//     return new ScheduledTask(this.id, next, (id, options) => {
+//       const { next } = options;
+//       this.promise.then(() => {
+//         next();
+//       });
+//     });
+//   }
+// }

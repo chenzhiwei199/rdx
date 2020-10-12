@@ -10,7 +10,10 @@ export interface IRdxWatcherOperate<GModel> {
   get: IRdxWatcherGet<GModel>;
   set?: IRdxWatcherSet<GModel>;
 }
-export type IRdxWatcherNode<GModel> = IRdxNode & IRdxWatcherOperate<GModel>;
+export type IRdxWatcherNode<GModel> = IRdxNode & IRdxWatcherOperate<GModel> & {
+  defaultValue?: GModel,
+  virtual?: boolean
+};
 
 export type IRdxWatcherGet<GModel> = (config: {
   id: string;
