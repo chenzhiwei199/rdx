@@ -1,7 +1,7 @@
 {
   "name": "website",
   "private": true,
-  "version": "1.0.63",
+  "version": "1.0.64",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -15,8 +15,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@czwcode/rdx": "^0.0.4",
-    "@czwcode/rdx-next-form": "0.0.5",
+    "@czwcode/rdx": "^0.0.5",
+    "@czwcode/rdx-next-form": "^0.0.6",
     "codesandbox": "^2.2.1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",

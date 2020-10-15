@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/rdx",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -37,23 +37,23 @@
     "@types/shallowequal": "^1.1.1",
     "babel-jest": "^26.3.0",
     "jest": "^26.4.2",
-    "ts-jest": "^26.2.0",
     "react-test-renderer": "^16.13.1",
-    "tslint-config-prettier": "^1.18.0",
-    "typescript": "^4.1.0-beta",
     "rollup": "^1.31.1",
-    "rollup-plugin-postcss": "^2.5.0",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-postcss": "^2.5.0",
     "rollup-plugin-serve": "^1.0.1",
     "rollup-plugin-sizes": "^1.0.1",
     "rollup-plugin-terser": "^5.2.0",
     "rollup-plugin-typescript": "^1.0.1",
-    "rollup-plugin-typescript2": "0.25.3"
+    "rollup-plugin-typescript2": "0.25.3",
+    "ts-jest": "^26.2.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^4.1.0-beta"
   },
   "dependencies": {
-    "@czwcode/graph-core": "^0.0.5",
-    "@czwcode/task-queue": "^0.0.4",
+    "@czwcode/graph-core": "^0.0.6",
+    "@czwcode/task-queue": "^0.0.5",
     "eventemitter3": "^4.0.4",
     "react": "^16.12.0",
     "react-dom": "^16.12.0"

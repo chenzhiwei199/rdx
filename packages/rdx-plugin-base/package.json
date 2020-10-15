@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/rdx-plugin-base",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -30,8 +30,8 @@
     "@types/react": "^16.9.15",
     "@types/shallowequal": "^1.1.1",
     "@types/uuid": "^3.4.6",
-    "jest": "^24.9.0",
     "babel-jest": "^26.3.0",
+    "jest": "^24.9.0",
     "ts-jest": "^24.1.0",
     "ts-lint": "^4.5.1",
     "tslint-config-prettier": "^1.18.0",
@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@alifd/next": "^1.20.14",
-    "@czwcode/rdx": "^0.0.4",
+    "@czwcode/rdx": "^0.0.5",
     "@types/rc-slider": "^8.6.5",
     "echarts": "^4.8.0",
     "eventemitter3": "^4.0.4",

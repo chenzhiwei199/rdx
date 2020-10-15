@@ -1,7 +1,7 @@
 {
   "name": "rdx-form-demo",
   "private": true,
-  "version": "1.0.63",
+  "version": "1.0.64",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,8 +13,8 @@
   "license": "ISC",
   "dependencies": {
     "@alifd/next": "^1.x",
+    "@czwcode/rdx-next-form": "^0.0.6",
     "@uform/next": "^1.0.5",
-    "@czwcode/rdx-next-form": "0.0.5",
     "axios": "^0.19.1",
     "echarts": "^4.8.0",
     "fetch-jsonp": "^1.1.3",

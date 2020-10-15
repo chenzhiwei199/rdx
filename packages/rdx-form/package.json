@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/rdx-form",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -35,7 +35,7 @@
     "typescript": "^4.1.0-beta"
   },
   "dependencies": {
-    "@czwcode/rdx": "^0.0.4",
+    "@czwcode/rdx": "^0.0.5",
     "json-to-ts": "^1.7.0",
     "react": "^16.12.0",
     "react-is": "^16.13.1",

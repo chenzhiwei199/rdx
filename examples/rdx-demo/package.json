@@ -1,7 +1,7 @@
 {
   "name": "rdx-demo",
   "private": true,
-  "version": "1.0.63",
+  "version": "1.0.64",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,9 +13,9 @@
   "license": "ISC",
   "dependencies": {
     "@alifd/next": "^1.x",
-    "@czwcode/mock-core": "0.0.5",
+    "@czwcode/mock-core": "^0.0.6",
+    "@czwcode/rdx-plugins": "^0.0.5",
     "@types/react-window": "^1.8.2",
-    "@czwcode/rdx-plugins": "0.0.4",
     "antd": "^4.5.4",
     "axios": "^0.19.1",
     "echarts": "^4.9.0",
