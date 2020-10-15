@@ -18,6 +18,7 @@ export interface RdxContextProps<GModel> {
   withRef?: React.MutableRefObject<ShareContextClass>;
   initializeState?: MapObject<GModel>;
   onChange?: (state: MapObject<GModel>) => void;
+  onLoading?: () => void
   createStore?: (data: any) => Base<GModel>;
   visualStatePlugins?: React.ReactNode | React.ReactNode[];
   // 依赖数据池

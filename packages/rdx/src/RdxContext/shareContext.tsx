@@ -1,4 +1,4 @@
-import React, { Consumer, Provider, useContext } from 'react';
+import  { Consumer, Provider } from 'react';
 import {
   IRdxTask,
   ReactionContext,
@@ -25,6 +25,7 @@ import { createBaseContext, getDepIds } from '../utils';
 import { NodeStatus, NotifyPoint, IEventType } from '@czwcode/task-queue';
 import logger from '../utils/log';
 import { RdxNode } from '../RdxValues/base';
+import { isDepsChange } from '..';
 export interface TaskStatus {
   value: NodeStatus;
   quiet?: boolean;
@@ -61,7 +62,7 @@ export class ShareContextClass {
   private _parentMounted?: boolean = false;
   private _batchUiChange: any;
   onPropsChange: (v: { [key: string]: any }, vObj: any) => void = () => {};
-  private _forceReplacedState?: boolean = false;
+  onPropsLoading: () => void = () => {};
   constructor(config: ShareContext<any>) {
     this.eventEmitter = new EventEmitter();
     this.subject = new EventEmitter<TaskEventType, ProcessGraphContent>();
@@ -79,13 +80,12 @@ export class ShareContextClass {
       // 通知冲突的点
       currentRunningPoints.forEach((item) => {
         const { key: id } = item;
-        const status = this.getTaskStatus(id);
+        const status = this.getTaskStatusById(id);
         if (!status || status.value !== NodeStatus.Waiting) {
           this.updateState(id, ActionType.Update, TargetType.TaskStatus, {
             value: NodeStatus.Waiting,
             errorMsg: undefined,
           });
-          this.notifyModule(id, false, StateUpdateType.ReactionStatus);
         }
       });
     });
@@ -113,6 +113,9 @@ export class ShareContextClass {
   }
   setChangeCallback(callback) {
     this.onPropsChange = callback;
+  }
+  setLoadingCallback(callback) {
+    this.onPropsLoading = callback;
   }
   getSubject() {
     return this.subject;
@@ -150,10 +153,12 @@ export class ShareContextClass {
     return this.getTaskById(id).deps || [];
   }
   setDeps(id: string, deps: IRdxAnyDeps[]) {
-    this.tasks.update(id, {
-      ...this.getTaskById(id),
-      deps,
-    });
+    if (this.hasTask(id) && isDepsChange(this.getTaskById(id).deps, deps)) {
+      this.updateState(id, ActionType.Update, TargetType.TasksMap, {
+        ...this.getTaskById(id),
+        deps,
+      });
+    }
   }
 
   /**
@@ -169,7 +174,6 @@ export class ShareContextClass {
         value: NodeStatus.Running,
         errorMsg: undefined,
       });
-      this.notifyModule(key, false, StateUpdateType.ReactionStatus);
     }
   };
 
@@ -192,21 +196,11 @@ export class ShareContextClass {
         value: NodeStatus.Error,
         errorMsg: errorMsg,
       });
-      this.notifyModule(k, false, StateUpdateType.ReactionStatus);
     });
   };
 
-  notifyModule(
-    id: string,
-    now: boolean = false,
-    type: StateUpdateType = StateUpdateType.State
-  ) {
-    if (now) {
-      this.eventEmitter.emit(id + '----' + type);
-    } else {
-      this.uiQueue.add(id + '----' + type);
-      this.batchUiChange();
-    }
+  notifyModule(id: string, type: StateUpdateType = StateUpdateType.State) {
+    this.eventEmitter.emit(id + '----' + type);
   }
   reset = (ids: string[]) => {
     for (let id of ids) {
@@ -243,7 +237,6 @@ export class ShareContextClass {
     // 如果没有处理函数，则不更新模块
     if (this.uiDirtySets.has(key)) {
       // 组件有任务执行的时候需要刷新
-      this.notifyModule(key, false, StateUpdateType.State);
       this.removeUiDirtyKey(key);
     } else {
       logger.warn(
@@ -260,7 +253,7 @@ export class ShareContextClass {
    * @memberof ShareContextClass
    */
   fireWhenDepsUpdate(key: string) {
-    this.getTask()
+    this.getStandardTasks()
       .filter((task) => task.deps.some((dep) => dep === key))
       .forEach((task) => {
         const { fireWhenDepsUpdate } = this.getTaskById(task.key);
@@ -275,7 +268,14 @@ export class ShareContextClass {
   onChange = (callbackInfo: ICallbackInfo) => {
     // 1. 清理脏节点
     // 2. 标记脏节点
-    const { currentKey: key, close, onSuccess, onError, isEnd } = callbackInfo;
+    const {
+      currentKey: key,
+      close,
+      onSuccess,
+      onError,
+      isEnd,
+      isCancel,
+    } = callbackInfo;
     logger.info('onTaskExecuting', key, isEnd, this.taskState.getAll());
     if (isEnd) {
       // this.getSubject().emit(TaskEventType.TaskExecutingEnd);
@@ -294,7 +294,8 @@ export class ShareContextClass {
       const currentTask = this.getTaskById(key);
       const reactionContext = this.createReactionContext(
         key,
-        close
+        close,
+        isCancel
       ) as ReactionContext<any>;
 
       const success = () => {
@@ -304,6 +305,12 @@ export class ShareContextClass {
         onError(error);
       }
       if (currentTask.reaction) {
+        // 执行reaction的时候，需要调用cancel callback
+        const cancel = this.cancelMap.get(key);
+        if (cancel) {
+          cancel();
+          this.cancelMap.remove(key);
+        }
         // reaction生命周期开始
         const p = (currentTask.reaction as ASYNC_TASK<any>)(reactionContext);
         if (p instanceof Promise) {
@@ -333,7 +340,7 @@ export class ShareContextClass {
    * @param id
    */
   duplicateCheck(id: string) {
-    const isDuplicate = this.getTask().some((item) => item.key === id);
+    const isDuplicate = this.getStandardTasks().some((item) => item.key === id);
     if (isDuplicate) {
       logger.error(`id为${id}的节点被重复声明了`);
     }
@@ -341,7 +348,7 @@ export class ShareContextClass {
   }
 
   createTaskForSchedule() {
-    return this.getTask().map((item) => {
+    return this.getStandardTasks().map((item) => {
       return {
         ...item,
         deps: item.deps.map((item) => ({ id: item })),
@@ -351,12 +358,15 @@ export class ShareContextClass {
   /**
    * 获取当前的任务列表
    */
-  getTask(): {
+  getStandardTasks(): {
     key: string;
     deps: string[];
     scope?: string;
   }[] {
-    const tasks = [...this.tasks.getAll().values()];
+    const m = new Map([[1,1], [2,2]])
+
+    console.log("getTaskgetTask",[...m.values()])
+    const tasks = Array.from(this.getTasks().values());
     const newTasks = (tasks as IRdxTask<any>[]).map((task) => {
       // 判断是否是初始化应该在事件初始化的时候，如果放在回调中，那么判断就滞后了，用了回调时的taskMap判断了
       return {
@@ -367,28 +377,32 @@ export class ShareContextClass {
     return newTasks;
   }
 
-  createReactionContext(key: string, close: () => void) {
+  createConflictCallback(key: string) {
+    return (callback: () => void) => {
+      const cancel = this.cancelMap.get(key);
+      if (cancel) {
+        cancel();
+        this.cancelMap.remove(key);
+      }
+      this.updateState(key, ActionType.Update, TargetType.CancelMap, callback);
+    };
+  }
+  createReactionContext(
+    key: string,
+    close: () => void,
+    isCancel: () => boolean
+  ) {
     let reactionContext: ReactionContext<any> = {
       ...createBaseContext(key, this),
       close: close,
       updateState: (value: any) => {
-        // 记录脏节点
-        this.markDirtyNodes({ key, includesSelf: true });
-        this.updateState(key, ActionType.Update, TargetType.TaskState, value);
-      },
-      callbackMapWhenConflict: (callback: () => void) => {
-        const cancel = this.cancelMap.get(key);
-        if (cancel) {
-          cancel();
-          this.cancelMap.remove(key);
+        if (!isCancel()) {
+          // 记录脏节点
+          this.markDirtyNodes({ key, includesSelf: true });
+          this.updateState(key, ActionType.Update, TargetType.TaskState, value);
         }
-        this.updateState(
-          key,
-          ActionType.Update,
-          TargetType.CancelMap,
-          callback
-        );
       },
+      callbackMapWhenConflict: this.createConflictCallback(key),
     };
     return reactionContext;
   }
@@ -401,7 +415,8 @@ export class ShareContextClass {
   }
   isTaskReady(id: string) {
     return (
-      this.getTaskStatus(id) && this.getTaskStatus(id).value === Status.IDeal
+      this.getTaskStatusById(id) &&
+      this.getTaskStatusById(id).value === Status.IDeal
     );
   }
   hasTask(id: string) {
@@ -434,7 +449,7 @@ export class ShareContextClass {
   setVirtualTaskState(id, value) {
     return this.virtualTaskState.update(id, value);
   }
-  getTaskStatus(id: string) {
+  getTaskStatusById(id: string) {
     return this.taskStatus.get(id);
   }
 
@@ -468,7 +483,7 @@ export class ShareContextClass {
   ) {
     const ids = normalizeSingle2Arr(id);
     // 依赖当前节点的项 + includesSelf 判断当前节点
-    const affectNodes = this.getTask().filter(
+    const affectNodes = this.getStandardTasks().filter(
       (item) =>
         item.deps.some((dep) => ids.some((item) => item.key === dep)) ||
         ids.some(
@@ -506,10 +521,8 @@ export class ShareContextClass {
     for (let dirty of collectDirtys) {
       // 通知依赖进行更新执行
       this.fireWhenDepsUpdate(dirty.key);
-      //  通知组件状态更新, 直接修改的相关数据，立即更新
-      this.notifyModule(dirty.key, true, StateUpdateType.State);
-      // 所有的改变元素，都要触发下游任务
     }
+    // 所有的改变元素，都要触发下游任务
     this.executeTask(collectDirtys, taskEventTriggerType);
   }
 
@@ -595,6 +608,11 @@ export class ShareContextClass {
       }
       this[targetType] = this[targetType].clone();
     }
+    if (targetType === TargetType.TaskState) {
+      this.notifyModule(key);
+    } else if (targetType === TargetType.TaskStatus) {
+      this.notifyModule(key, StateUpdateType.ReactionStatus);
+    }
   }
 
   getAllPointFired(taskKeys: NotifyPoint | NotifyPoint[]) {
@@ -609,13 +627,13 @@ export class ShareContextClass {
       tasks: Array.from(this.getTasks().values()),
     } as IRdxSnapShotTrigger;
   }
-  emitBase(type: TaskEventType, taskKeys: NotifyPoint | NotifyPoint[] = []) {
+  emitBase(type: string) {
     this._taskScheduler.updateTasks(this.createTaskForSchedule());
-    this.getSubject().emit(type, this.getProcessInfo(taskKeys));
+    this.getSubject().emit(TaskEventType.TaskLoad, type);
   }
   emit(
     type: TaskEventType,
-    taskEventTriggerType: TaskEventTriggerType,
+    taskEventTriggerType: TaskEventTriggerType | string,
     taskKeys: NotifyPoint | NotifyPoint[] = []
   ) {
     this._taskScheduler.updateTasks(this.createTaskForSchedule());
@@ -625,26 +643,27 @@ export class ShareContextClass {
     });
   }
 
-  batchTriggerSchedule(taskKeys: NotifyPoint | NotifyPoint[]) {
-    this.executeTask(taskKeys, null);
-  }
   executeTask(
     taskKeys: NotifyPoint | NotifyPoint[],
-    taskEventType: TaskEventTriggerType
+    taskEventType: TaskEventTriggerType | string
   ) {
+    this._taskScheduler.updateTasks(this.createTaskForSchedule())
     const allFirePoint = this.getAllPointFired(taskKeys);
     const currentTaskKeys = normalizeSingle2Arr(taskKeys);
-    allFirePoint.forEach((point) => {
-      const cancel = this.cancelMap.get(point);
-      if (cancel) {
-        cancel();
-        this.cancelMap.remove(point);
-      }
-    });
+    // 不能复用的节点才需要调用cancel
     if (allFirePoint.length > 0) {
       this.emit(TaskEventType.Trigger, taskEventType, currentTaskKeys);
       logger.info('onTaskExecutingEnd executeTask', taskEventType, taskKeys);
+      this.getEventEmitter().emit(StateUpdateType.TriggerTaskSchedule);
+      if (!this.taskScheduler.isRunning()) {
+        this.onPropsLoading();
+      }
+
       this._taskScheduler.notifyDownstream(currentTaskKeys);
+    } else {
+      if (!this.taskScheduler.isRunning()) {
+        this.onPropsChange(this.taskState.getAll(), this.taskState);
+      }
     }
   }
 }
@@ -675,16 +694,3 @@ export const initValue = () => ({
   cancelMap: new BaseMap(new Map()),
   parentMounted: false,
 });
-
-export function createRdxStaterContext() {
-  return React.createContext<ShareContextClass>(
-    new ShareContextClass(initValue())
-  );
-}
-
-export const DefaultContext = createRdxStaterContext();
-export function useRdxStateContext(
-  context: React.Context<ShareContextClass> = DefaultContext
-) {
-  return useContext(context);
-}

@@ -1,5 +1,5 @@
 import {DataModel, RdxNode, RdxReset, ValueOrUpdater} from '@czwcode/rdx'
-type Join<K , P > = K extends string | number ? P extends string | number ?  `${K}${"."}${ P}` : never : never;
+export type Join<K , P > = K extends string | number ? P extends string | number ?  `${K}${"."}${ P}` : never : never;
 type valueof<T> = T[keyof T]
 type ArrayCondition<Conditon, Success, Fail> = Conditon extends [] ? Success : Fail;
 
@@ -72,6 +72,12 @@ export type RdxFormSet<ISource, IValueType> = <INode extends TPath<ISource, IVal
 export type IRdxFormWatcherGet<IValueType, ISource> = (config: {
   id: string;
   value: IModel<IValueType>;
+  /**
+   * 当事件冲突时触发时候的回调
+   *
+   * @memberof ReactionContext
+   */
+  callbackMapWhenConflict: (callback: () => void) => void;
   get: RdxFormGet<ISource, IValueType>;
 }) => DataModel<IModel<IValueType>>;
 
@@ -86,22 +92,6 @@ export type IRdxFormWatcherSet<IValueType, ISource> = (
   newValue: IModel<IValueType>
 ) => void;
 
-  
-interface HttpSettingState {
-  // requestInfo: RequestInfo;
-  requestProcess: RequestProcess;
-  resultProcess: ResultProcess;
-}
-interface ResultProcess {
-  useFilter: boolean;
-  dataField: string;
-  filter: string;
-}
-interface RequestProcess {
-  useParamsTransform: boolean;
-}
-interface RequestInfo {
-  requestType: string;
-  url: string;
-  body: string;
-}
+
+
+export type RuleDetail = (value, context) => Promise<string | undefined>;

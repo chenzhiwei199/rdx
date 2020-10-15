@@ -2,8 +2,8 @@ import {
   Status,
   IRdxAnyDeps,
   DataContext,
-  IRdxTask,
   StateUpdateType,
+  TNext,
 } from '../global';
 import { RdxNode } from '../RdxValues/base';
 import {
@@ -12,32 +12,87 @@ import {
   IRdxWatcherNode,
   RdxWatcherNode,
 } from '../RdxValues';
-import { useRef, useMemo, useEffect } from 'react';
-import { useRdxStateContext, DefaultContext } from '../RdxContext/shareContext';
-import { useForceUpdate, useGlobalStateUpdate } from './hookUtils';
+import { useRef, useMemo, useEffect, useState, useContext } from 'react';
 import {
-  getDepId,
-  createBaseContext,
-  createMutators,
-} from '../utils/taskUtils';
-import { ShareContextClass, TNext } from '..';
+  initValue,
+  ShareContextClass,
+  TaskStatus,
+} from '../RdxContext/shareContext';
+import { getId, createBaseContext, createMutators } from '../utils/taskUtils';
+import { useForceUpdate } from './hookUtils';
+import React from 'react';
+
+export function createRdxStaterContext() {
+  return React.createContext<ShareContextClass>(
+    new ShareContextClass(initValue())
+);
+}
+
+export const DefaultContext = createRdxStaterContext();
+export function useRdxStateContext(
+  context: React.Context<ShareContextClass> = DefaultContext
+) {
+  return useContext(context);
+}
 
 export function createRdxHooks(provider = DefaultContext) {
-  function getId<GModel>(props: IRdxTask<GModel> | RdxNode<GModel>) {
-    if (props instanceof RdxNode) {
-      return props.getId();
-    } else {
-      return props.id;
-    }
+  const useContext = () => {
+    return useRdxStateContext(provider)
+  }
+  function useRdxLoading() {
+    const context = useContext();
+    useGlobalStateUpdate()
+    useTriggerTaskScheduleUpdate()
+    return () => context.taskScheduler.isRunning()
+  }
+  function useStateUpdate(id: string) {
+    const context = useContext();
+    const [state, setState] = useState();
+    // const forceUpdate = useForceUpdate();
+    useEffect(() => {
+      const eventKey = id + '----' + StateUpdateType.State;
+      context.getEventEmitter().on(eventKey, () => {
+        setState(context.getTaskStateById(id));
+      });
+      return () => {
+        context.getEventEmitter().off(eventKey);
+      };
+    }, []);
   }
 
-  function useStateUpdate(id: string, type: StateUpdateType) {
-    const context = useRdxStateContext(provider);
+  function useGlobalStateUpdate() {
+    const context = useContext();
     const forceUpdate = useForceUpdate();
     useEffect(() => {
-      const eventKey = id + '----' + type;
-      context.getEventEmitter().on(eventKey, () => {
+      context.getEventEmitter().on(StateUpdateType.GlobalState, () => {
         forceUpdate();
+      });
+      return () => {
+        context.getEventEmitter().off(StateUpdateType.GlobalState);
+      };
+    }, []);
+  }
+
+  function useTriggerTaskScheduleUpdate() {
+    const context = useContext();
+    const forceUpdate = useForceUpdate();
+    useEffect(() => {
+      context.getEventEmitter().on(StateUpdateType.TriggerTaskSchedule, () => {
+        forceUpdate();
+      });
+      return () => {
+        context.getEventEmitter().off(StateUpdateType.TriggerTaskSchedule);
+      };
+    }, []);
+  }
+
+  function useStatusUpdate(id: string) {
+    const context = useContext();
+    const [state, setState] = useState<TaskStatus>();
+    useEffect(() => {
+      const eventKey = id + '----' + StateUpdateType.ReactionStatus;
+      context.getEventEmitter().on(eventKey, () => {
+        setState(context.getTaskStatusById(id));
       });
       return () => {
         context.getEventEmitter().off(eventKey);
@@ -48,7 +103,7 @@ export function createRdxHooks(provider = DefaultContext) {
   function useTaskBinding<GModel>(props: RdxNode<GModel>) {
     // 1. 初始化的时候根据atom 默认值类型判断是否是异步任务，判断是否要重跑任务
     // 2. 根据get是否是异步任务，判断是否需要重跑任务
-    const context = useRdxStateContext(provider);
+    const context = useContext();
     if (!context.getTaskStateById) {
       throw new Error('使用rdx的组件必须为rdxContext子孙组件');
     }
@@ -73,19 +128,19 @@ export function createRdxHooks(provider = DefaultContext) {
    * @param node
    */
   function useRdxNodeBinding<GModel>(
-    node: RdxNode<GModel> | string
+    node: RdxNode<GModel> | string, stateUpdate: boolean = true
   ): DataContext<GModel> {
-    const context = useRdxStateContext(provider);
+    const context = useContext();
     if (node instanceof RdxNode) {
       useTaskBinding(node);
     } else if (!context.hasTask(node)) {
       throw new Error(`未找到id为${node}的节点`);
     }
-    useStateUpdate(getDepId(node), StateUpdateType.State);
+    stateUpdate && useStateUpdate(getId(node));
 
     const data: DataContext<GModel> = {
-      ...createBaseContext(getDepId(node), context),
-      ...createMutators(getDepId(node), context),
+      ...createBaseContext(getId(node), context),
+      ...createMutators(getId(node), context),
     };
     return data;
   }
@@ -105,7 +160,7 @@ export function createRdxHooks(provider = DefaultContext) {
   ): [GModel, TNext<GModel>, DataContext<GModel>, RdxAtomNode<GModel>] {
     const rdxAtom = new RdxAtomNode(props);
     const dataContext = useRdxNodeBinding<GModel>(rdxAtom);
-    useStateUpdate(rdxAtom.getId(), StateUpdateType.ReactionStatus);
+    useStatusUpdate(rdxAtom.getId());
     return [dataContext.value, dataContext.next, dataContext, rdxAtom];
   }
 
@@ -132,21 +187,21 @@ export function createRdxHooks(provider = DefaultContext) {
       newProps.id = `${newProps.id}__watcher/${JSON.stringify(deps)}`;
     }
     const watcher = new RdxWatcherNode(newProps);
-    useStateUpdate(watcher.getId(), StateUpdateType.ReactionStatus);
+    useStatusUpdate(watcher.getId());
     const dataContext = useRdxNodeBinding<GModel>(watcher);
     return [dataContext.value, dataContext.next, dataContext];
   }
   function useRdxGlobalContext() {
-    const context = useRdxStateContext(provider);
-    useGlobalStateUpdate(context);
+    const context = useContext();
+    useGlobalStateUpdate();
     return {
       taskState: context.getAllTaskState(),
       virtualTaskState: context.getAllVirtualTaskState(),
     };
   }
   function useRdxGlboalState() {
-    const context = useRdxStateContext(provider);
-    useGlobalStateUpdate(context);
+    const context = useContext();
+    useGlobalStateUpdate();
     return context.getAllTaskState();
   }
   // =======================================基础hooks=========================================================
@@ -158,14 +213,14 @@ export function createRdxHooks(provider = DefaultContext) {
   }
 
   function useRdxSetter<GModel>(props: RdxNode<GModel> | string) {
-    const context = useRdxNodeBinding<GModel>(props);
+    const context = useRdxNodeBinding<GModel>(props, false);
     return context.next;
   }
   function useRdxStateLoader<GModel>(
     node: RdxNode<GModel> | string
   ): [Status, GModel, (v: GModel) => void] {
     const context = useRdxNodeBinding<GModel>(node);
-    useStateUpdate(getDepId(node), StateUpdateType.ReactionStatus);
+    useStatusUpdate(getId(node));
     return [context.status, context.value, context.next];
   }
 
@@ -176,7 +231,7 @@ export function createRdxHooks(provider = DefaultContext) {
 
   function useRdxValueLoader<GModel>(node: RdxNode<GModel>): [Status, any] {
     const context = useRdxNodeBinding(node);
-    useStateUpdate(getDepId(node), StateUpdateType.ReactionStatus);
+    useStatusUpdate(getId(node));
     return [context.status, context.value];
   }
 
@@ -201,6 +256,7 @@ export function createRdxHooks(provider = DefaultContext) {
     useRdxAtom,
     useRdxAtomLoader,
     useRdxWatcher,
+    useRdxNodeBinding,
     useRdxWatcherLoader,
     useRdxGlboalState,
     useRdxGlobalContext,
@@ -211,10 +267,11 @@ export function createRdxHooks(provider = DefaultContext) {
     useRdxValueLoader,
     useRdxValueByDependencies,
     useRdxSetter,
+    useRdxLoading,
   };
 }
 
-const defaultHooks = createRdxHooks();
+const defaultHooks = createRdxHooks(DefaultContext);
 export const useRdxAtom = defaultHooks.useRdxAtom;
 export const useRdxAtomLoader = defaultHooks.useRdxAtomLoader;
 export const useRdxWatcher = defaultHooks.useRdxWatcher;
@@ -227,3 +284,4 @@ export const useRdxStateLoader = defaultHooks.useRdxStateLoader;
 export const useRdxValueLoader = defaultHooks.useRdxValueLoader;
 export const useRdxValueByDependencies = defaultHooks.useRdxValueByDependencies;
 export const useRdxSetter = defaultHooks.useRdxSetter;
+export const useRdxNodeBinding = defaultHooks.useRdxNodeBinding;

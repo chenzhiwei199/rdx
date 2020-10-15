@@ -1,6 +1,6 @@
 import React from 'react';
 import { atom, RdxContext, watcher, useRdxState } from '@czwcode/rdx';
-import { Button, Input } from '@alifd/next';
+import { Button, NumberPicker } from '@alifd/next';
 const CounterA = atom({
   id: 'count111A',
   defaultValue: 0,
@@ -35,7 +35,7 @@ const BaseCounterView = ({ atom }) => {
       </Button>
       <span>
         {/* // @ts-ignore */}
-        <Input value={value} onChange={onChange}></Input>
+        <NumberPicker value={value} onChange={(v) => onChange(v)}></NumberPicker>
       </span>
       <Button
         onClick={() => {

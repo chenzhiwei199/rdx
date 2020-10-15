@@ -1,5 +1,10 @@
 {
-  "packages": ["packages/*", "examples/*", "libs/*"],
+  "packages": ["packages/*","libs/*", "examples/*"],
+  "nohoist": [
+    "**/html-minifier-terser",
+    "*/@docusaurus/*",
+    "docs/**"
+  ],
   "npmClient": "npm",
   "useWorkspaces": false,
   "version": "independent"

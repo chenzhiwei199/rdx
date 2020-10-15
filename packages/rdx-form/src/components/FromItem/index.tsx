@@ -8,19 +8,24 @@ import {
   LayoutType,
   LayoutContext,
   LayoutContextInstance,
+  LabelTextAlign,
+  createLayout,
 } from '../../hooks/formLayoutHoooks';
 import { isError } from '../../utils/validator';
 import {
   ErrorContextInstance,
   ErrorContextClass,
+  GlobalErrorContextInstance,
 } from '../../hooks/formStatus';
 import { FormContextInstance } from '../../hooks/formContext';
-import {
-  useRdxFormWatcherLoader,
-  useRdxFormAtomLoader,
-} from '../../hooks/rdxStateFormHooks';
+import { useRdxFormWatcherLoader } from '../../hooks/rdxStateFormHooks';
 import { getEmptyValue } from '../../utils/functions';
-import { IModel, IRdxFormWatcherGet, IRdxFormWatcherSet } from './types';
+import {
+  IModel,
+  IRdxFormWatcherGet,
+  IRdxFormWatcherSet,
+  RuleDetail,
+} from './types';
 import { Tooltip } from '../Tooltip';
 export * from './types';
 export enum DepsType {
@@ -32,7 +37,6 @@ export interface IAtom {
   dataSource?: any[];
 }
 
-export type RuleDetail = (value, context) => Promise<string | undefined>;
 export enum State {
   Loading = 'loading',
   Error = 'error',
@@ -42,21 +46,25 @@ export interface IFormBlock<T> {
   base: IFormBlockInner;
   formTypes: IFormTypes<BaseType>;
   componentProps: IPenetrate<T>;
+  layoutProps?: {
+    span?: number;
+  }
 }
 export interface IFormTypes<T extends BaseType> {
   // 组件类型
   xComponent?: string;
   // 数据类型
-  type?: T;
+  type: T;
 }
 // 组件消费属性
 export interface IPenetrate<T> {
+  
   // 是否可用
   disabled?: boolean;
   // 状态
   state: State;
   // 透传组件属性
-  xProps?: Partial<T>;
+  others?: Partial<T>;
   // 组件透传数据源
   dataSource?: any[];
   // 组件值
@@ -146,11 +154,11 @@ export function useVirtual(props: { virtual?: boolean }) {
   return virtual || props.virtual;
 }
 
-export const RdxFormItem = <ISource extends any>(
-  props: IRdxFormItem<ISource, BaseType>
-) => <BaseRdxFormItem<ISource, BaseType> {...props} />;
+// export const RdxFormItem = <ISource extends any>(
+//   props: IRdxFormItem<ISource, BaseType>
+// ) => <BaseRdxFormItem<ISource, BaseType> {...props} />;
 
-export const BaseRdxFormItem = <ISource, T extends BaseType>(
+export const RdxFormItem = <ISource, T extends BaseType>(
   props: IRdxFormItem<ISource, T>
 ) => {
   const {
@@ -171,7 +179,7 @@ export const BaseRdxFormItem = <ISource, T extends BaseType>(
   } = props;
   const { paths } = useContext(PathContextInstance);
   const currentVirtual = useVirtual(props);
-  const errorStore = useContext<ErrorContextClass>(ErrorContextInstance);
+  const errorStore = useContext<ErrorContextClass>(GlobalErrorContextInstance);
   const id = [...paths, name].join('.');
   // !
   const defaultValue = getDefaultValue(
@@ -182,10 +190,6 @@ export const BaseRdxFormItem = <ISource, T extends BaseType>(
     defaultVisible,
     componentProps
   );
-  // useRdxFormAtomLoader<IModel<SuspectType<T>>>({
-  //   id: id,
-  //   defaultValue: defaultValue,
-  // });
   const [value = defaultValue, next, context] = useRdxFormWatcherLoader<
     IModel<SuspectType<T>>
   >({
@@ -197,30 +201,13 @@ export const BaseRdxFormItem = <ISource, T extends BaseType>(
       : ({ value }) => {
           return value;
         },
-    // ? (({ id: innerId, get: innerGet}) => {
-    //   const decorateGet = (pathId) => {
-    //     if(pathId === id) {
-    //       return innerGet(pathId)
-    //     } else {
-    //       return innerGet(getWatcherId(pathId))
-    //     }
-    //   }
-    //   return get({ id, get: decorateGet})
-    // } ) as any
-    // : ({ get }) => {
-    //     if (currentVirtual) {
-    //       // TODO: 设置了virtual属性，不应该读取当前组件的信息
-    //     } else {
-    //       return get(id);
-    //     }
-    //   },
     set: set
       ? set
       : ({ set }, newValue) => {
           set(id, newValue);
         },
   });
-  const { status, errorMsg, refreshView } = context;
+  const { status, errorMsg } = context;
   async function validator(value, context) {
     let infos = [];
     for (let rule of rules) {
@@ -240,7 +227,9 @@ export const BaseRdxFormItem = <ISource, T extends BaseType>(
   // 如果父级是数组，则使用父级的name
   // 表格场景，强制不能嵌套，因为布局是由表格掌控的
   return (
-    <FormContextInstance.Provider value={{ name: name }}>
+    <FormContextInstance.Provider
+      value={{ name: name, virtual: currentVirtual }}
+    >
       <FormItem<T>
         base={{
           title,
@@ -262,12 +251,10 @@ export const BaseRdxFormItem = <ISource, T extends BaseType>(
           state,
           onChange: (v) => {
             const newValue = { ...value, value: v };
-            console.log("next set", newValue)
             next(newValue);
             validator(v, context)
               .then((errors) => {
                 errorStore.setErrors(id, errors);
-                refreshView();
               })
               .catch((error) => {
                 console.error('规则执行错误', error.toString());
@@ -294,7 +281,6 @@ function getDisplayType(props: LayoutContext) {
   return style;
 }
 const FormStyleItemLabel = styled.div<{
-  layoutType: LayoutType;
   require: boolean;
 }>`
   line-height: 28px;
@@ -312,7 +298,6 @@ const FormStyleItemLabel = styled.div<{
   }
 `;
 const FormStyleItemContent = styled.div<{
-  layoutType: LayoutType;
   col?: number;
 }>`
   line-height: 28px;
@@ -320,15 +305,16 @@ const FormStyleItemContent = styled.div<{
 `;
 const FormItemWrapper = styled.div<{
   useMargin: boolean;
-  isGrid?: boolean;
-  col?: number;
 }>`
-  margin-bottom: ${(props) => (props.useMargin ? 12 : 0)}px;
+  margin-bottom: ${(props) => {
+    console.log("props.useMargin", props.useMargin)
+    return (props.useMargin ? 12 : 0)
+  }}px;
 `;
 export const FormItem = <T extends Object>(
   props: IFormBlock<T> & { children?: React.ReactNode }
 ) => {
-  const { children, formTypes, base, componentProps } = props;
+  const { children, formTypes, base, componentProps, layoutProps } = props;
   const { type, xComponent } = formTypes;
   const {
     visible = true,
@@ -340,35 +326,21 @@ export const FormItem = <T extends Object>(
     errorMsg,
   } = base;
   const Cmp = getRegistry().fields[xComponent || type];
-  const layoutContext = useContext<LayoutContext>(LayoutContextInstance);
-  const { labelCol, wrapCol, layoutType, labelTextAlign } = layoutContext;
-  const isGrid = layoutType === LayoutType.Grid;
-  const gridStyle = {
-    display: 'flex',
-  };
-  const wrapInlineStyle = {
-    display: 'inline',
-  };
-
+  const { containerStyle, labelStyle, contentStyle} = createLayout(layoutProps && layoutProps.span)
   return (
     <>
       {visible && (
         <FormItemWrapper
           useMargin={type !== BaseType.Object}
-          isGrid={isGrid}
           style={
-            layoutType ? (isGrid ? gridStyle : wrapInlineStyle) : undefined
+            containerStyle
           }
           className='rdx-form-item'
         >
           {title && (
             <FormStyleItemLabel
-              style={{
-                flex: `0 0 ${getWidth(labelCol)}`,
-                textAlign: labelTextAlign,
-              }}
+              style={labelStyle}
               require={require}
-              layoutType={layoutType}
               className='rdx-form-item-label'
             >
               {title}
@@ -409,12 +381,7 @@ export const FormItem = <T extends Object>(
             </FormStyleItemLabel>
           )}
           <FormStyleItemContent
-            style={{
-              ...getDisplayType(layoutContext),
-              flex: `0 0 ${getWidth(wrapCol)}`,
-              overflow: 'auto',
-            }}
-            layoutType={layoutType}
+            style={contentStyle}
             className='rdx-form-item-content'
           >
             {Cmp && (
@@ -440,8 +407,4 @@ function filterVaild(v: { [key: string]: any }) {
     }
   });
   return newV;
-}
-function getWidth(col: number) {
-  const colspan = (col / 24) * 100;
-  return `${colspan}%`;
 }

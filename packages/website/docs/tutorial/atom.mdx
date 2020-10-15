@@ -1,0 +1,19 @@
+---
+id: Atom
+title: Atom
+---
+
+
+Atom 持有应用的实际状态。可以通过 Atom 来进行状态的共享。
+
+
+### 通过atom进行组件间状态的共享 
+import ExampleCustomizer from '../../src/components/ExampleCustomizer';
+import * as Atom from '../../src/stories/atom';
+import AtomSource from '!!raw-loader!../../src/stories/atom';
+
+<ExampleCustomizer code={AtomSource} Example={Atom}/>
+
+
+
+

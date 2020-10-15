@@ -14,7 +14,7 @@ import {
   RdxNextFormItem,
   FormRdxStateContext,
 } from '@czwcode/rdx-next-form';
-import { DevVisualTableTool } from '../../../packages/rdx-plugins/src';
+import { DevVisualTableTool } from '@czwcode/rdx-plugins';
 export default {
   title: '布局组件',
   parameters: {
@@ -113,6 +113,7 @@ const sexData = async () => {
   ];
 };
 const pause = (t: number) => new Promise((resolve) => setTimeout(resolve, t));
+
 export const 搜索列表 = () => {
   return (
     <div style={{ background: '#F5F5F5', padding: '12px' }}>
@@ -127,6 +128,13 @@ export const 搜索列表 = () => {
         <SearchListLayout cols={[8]}>
           <RdxNextFormItem
             name='usename'
+            rules={[
+              async (value) => {
+                if(!value) {
+                  return '不能为空'
+                }
+              }
+            ]}
             type='string'
             title={'用户名'}
             default={'张三'}
@@ -160,6 +168,13 @@ export const 搜索列表 = () => {
             name='career'
             type='string'
             title={'职业'}
+            rules={[
+              async (value) => {
+                if(!value) {
+                  return '职业不能为空'
+                }
+              }
+            ]}
           ></RdxNextFormItem>
           <RdxNextFormItem
             name='date'
@@ -198,6 +213,7 @@ export const 异步级联列表 = () => {
           <RdxNextFormItem
             name='单据日期'
             type='string'
+            
             get={async ({ value, get }) => {
               const data = await getDimension({
                 dimensions: '单据日期',
@@ -330,7 +346,7 @@ export const CascaderListSetDefault = () => {
           <RdxNextFormItem
             name='客户分类'
             type='string'
-            get={async ({ value, get }) => {
+            get={async ({ value, get, callbackMapWhenConflict }) => {
               const data = await getDimension({
                 dimensions: '客户分类',
                 filters: [
@@ -346,6 +362,9 @@ export const CascaderListSetDefault = () => {
                   },
                 ],
               });
+              callbackMapWhenConflict(() => {
+                console.log("我被取消啦")
+              })
               return {
                 ...(value as any),
                 value: data.data[0].value,

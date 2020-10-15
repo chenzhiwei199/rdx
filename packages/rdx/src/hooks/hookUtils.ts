@@ -1,6 +1,4 @@
 import { useRef, useEffect, useState } from "react";
-import { ShareContextClass } from "../RdxContext/shareContext";
-import { StateUpdateType } from "../global";
 
 export function useMount() {
   const mount = useRef(false);
@@ -28,14 +26,4 @@ export function createStore(): [() => any, (v: any) => void] {
   ];
 }
 
-export function useGlobalStateUpdate(context: ShareContextClass,) {
-  const forceUpdate = useForceUpdate();
-  useEffect(() => {
-    context.getEventEmitter().on(StateUpdateType.GlobalState, () => {
-      forceUpdate();
-    });
-    return () => {
-      context.getEventEmitter().off(StateUpdateType.GlobalState);
-    };
-  }, []);
-}
+

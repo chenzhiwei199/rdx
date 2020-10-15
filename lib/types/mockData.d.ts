@@ -1,0 +1,25 @@
+export declare const dimensions: string[];
+export declare const measures: string[];
+declare const _default: {
+    单据日期: string;
+    地区名称: string;
+    业务员名称: string;
+    客户分类: string;
+    存货编码: string;
+    客户名称: string;
+    业务员编码: string;
+    存货名称: string;
+    订单号: string;
+    客户编码: string;
+    部门名称: string;
+    部门编码: string;
+    存货分类: string;
+    税费: string;
+    不含税金额: string;
+    订单金额: string;
+    利润: string;
+    单价: string;
+    订单明细号: string;
+    数量: string;
+}[];
+export default _default;

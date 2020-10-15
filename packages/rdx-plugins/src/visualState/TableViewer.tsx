@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Table, Balloon, Tab } from '@alifd/next';
+import '@alifd/next/dist/next.css'
 import { PointWithWeight, union } from '@czwcode/rdx';
 import ReactJson from 'react-json-view';
 import { DataPersistence } from '.';
 import { GlobalDepsViewer } from './GraphViewer';
-import { getDefaultSnapShot } from '../../../rdx-plugin-base/src/utils';
+
 const { Column } = Table;
 
 const EventStatusComponent = ({
@@ -130,7 +131,6 @@ export default () => {
   const state = React.useContext(DataPersistence);
   const { allSnapShots = [], realTimeState } = state;
   const [activeIndex, setActiveIndex] = React.useState(0);
-
   const currentSnapShots = allSnapShots[activeIndex];
   if(!currentSnapShots) {
     return <div>none</div>

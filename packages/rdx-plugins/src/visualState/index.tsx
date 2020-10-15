@@ -27,7 +27,7 @@ const directionStyles = {
     left: 0,
   }
 };
-export default (props: { context?: React.Context<ShareContextClass> }) => {
+export const DevVisualTableTool = (props: { context?: React.Context<ShareContextClass> }) => {
   const [visible, setVisible] = useState(false);
   const [direction, setDirection] = useState(Direction.Right);
 
@@ -65,6 +65,9 @@ export default (props: { context?: React.Context<ShareContextClass> }) => {
                 }}
               >
                 下
+              </Button>
+              <Button onClick={() => state.clear()}>
+                Clear
               </Button>
             </div>
             {<TableViewer />}

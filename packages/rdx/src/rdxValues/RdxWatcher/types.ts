@@ -10,13 +10,20 @@ export interface IRdxWatcherOperate<GModel> {
   get: IRdxWatcherGet<GModel>;
   set?: IRdxWatcherSet<GModel>;
 }
-export type IRdxWatcherNode<GModel> = IRdxNode & IRdxWatcherOperate<GModel> & {
-  defaultValue?: GModel,
-  virtual?: boolean
-};
+export type IRdxWatcherNode<GModel> = IRdxNode &
+  IRdxWatcherOperate<GModel> & {
+    defaultValue?: GModel;
+    virtual?: boolean;
+  };
 
 export type IRdxWatcherGet<GModel> = (config: {
   id: string;
+  /**
+   * 当事件冲突时触发时候的回调
+   *
+   * @memberof ReactionContext
+   */
+  callbackMapWhenConflict: (callback: () => void) => void;
   value: GModel;
   get: RdxGet;
 }) => DataModel<GModel>;

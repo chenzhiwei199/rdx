@@ -1,3 +1,4 @@
+import uuid from 'uuid'
 export interface Data {
   id: string;
   deps?: string[];
@@ -50,10 +51,12 @@ export default class ScheduledCore {
     const canReusePoints = currentStartPoints.filter((id) => {
       return canReuse && canReuse(id);
     });
-
+    
+    console.log('canReusePoints: ', currentStartPoints, canReusePoints, Array.from(this.taskQueue.keys()));
     // 关闭不可复用的任务
     for (let key of Array.from(this.taskQueue.keys())) {
       if (!canReusePoints.includes(key)) {
+        console.log('canReusePoints: closeTask',key)
         this.closeTask(key);
       }
     }
@@ -66,7 +69,12 @@ export default class ScheduledCore {
    * @memberof ScheduledCore
    */
   closeTask(key: string) {
-    this.taskQueue.get(key) && this.taskQueue.get(key).pause();
+    if(this.taskQueue.has(key)) {
+      const task = this.taskQueue.get(key)
+      task.pause();
+      (task as any).c = 1
+    }
+
     this.taskQueue.delete(key);
   }
   /**
@@ -148,7 +156,7 @@ export default class ScheduledCore {
       task = new ScheduledTask({
         id,
         next,
-        callback,
+        executeCallback: callback,
         close,
       });
     }
@@ -161,23 +169,29 @@ export default class ScheduledCore {
 export class ScheduledTask {
   pauseSignal: boolean = false;
   finishSignal: boolean = false;
-  callback: Callback;
+  executeCallback: Callback;
   id: string;
   next: () => void;
   close: () => void;
   promise: Promise<any>;
   resolvePersist: () => void;
+  // 暂停调用时的回调，当任务是fork出来的时候，需要关闭原来的task
+  pauseCallback?: () => void
+  uniqId: string;
   constructor(config: {
     id: string;
     next: () => void;
     close: () => void;
-    callback: Callback;
+    executeCallback: Callback;
+    pauseCallback?: () => void
   }) {
-    const { id, next, close, callback } = config;
+    const { id, next, close, executeCallback, pauseCallback } = config;
+    this.uniqId = uuid()
     this.id = id;
     this.next = next;
     this.close = close;
-    this.callback = callback;
+    this.executeCallback = executeCallback;
+    this.pauseCallback = pauseCallback;
     this.promise = new Promise((resove, reject) => {
       this.resolvePersist = resove as any;
     });
@@ -186,6 +200,8 @@ export class ScheduledTask {
     return this.pauseSignal;
   }
   pause() {
+    console.log('isPause: calll-' + this.id, '-',this.uniqId);
+    this.pauseCallback && this.pauseCallback()
     this.pauseSignal = true;
   }
   /**
@@ -194,7 +210,7 @@ export class ScheduledTask {
    * @memberof ScheduledTask
    */
   execute() {
-    this.callback(this.id, {
+    this.executeCallback(this.id, {
       next: () => {
         if (!this.isPause()) {
           this.finishSignal = true
@@ -212,11 +228,15 @@ export class ScheduledTask {
 
   fork(config: { next: () => void, close: () => void}) {
     const { next, close} = config
-    return new ScheduledTask({
+    const task = new ScheduledTask({
       id: this.id,
       next,
       close,
-      callback: (id, options) => {
+      pauseCallback: () => {
+        // fork出来的task被暂停的时候，需要暂停依赖的节点
+        this.pause()
+      },
+      executeCallback: (id, options) => {
         // 构造callback
         const { next } = options;
         if(this.finishSignal) {
@@ -231,6 +251,8 @@ export class ScheduledTask {
         
       }
     });
+    task.uniqId = 'fork' + task.uniqId
+    return task
   }
 }
 

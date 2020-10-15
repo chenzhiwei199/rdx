@@ -1,5 +1,5 @@
 import { RdxNode, RdxNodeType } from '../base';
-import { getDepId } from '../../utils';
+import { getId } from '../../utils';
 import logger from '../../utils/log';
 import { ShareContextClass } from '../../RdxContext/shareContext';
 import { IRdxDeps, IRdxTask } from '../../global';
@@ -9,9 +9,16 @@ import {
   IRdxWatcherOperate,
   IRdxWatcherSet,
 } from './types';
-import { createWatcherMutators, detectValueAndDeps, isNullTag, uniqBy, WatcherErrorType } from './utils';
+import {
+  createWatcherMutators,
+  detectValueAndDeps,
+  isNullTag,
+  uniqBy,
+  WatcherErrorType,
+} from './utils';
 import { checkValueIsSync, getSyncValue } from '../core';
-import { TaskEventTriggerType } from '@czwcode/task-queue';
+import { TaskEventTriggerType, TaskEventType } from '@czwcode/task-queue';
+import { rdxNodeOperates } from '../rdxAtom';
 
 export class RdxWatcherNode<GModel> extends RdxNode<GModel>
   implements IRdxWatcherOperate<GModel> {
@@ -28,6 +35,7 @@ export class RdxWatcherNode<GModel> extends RdxNode<GModel>
     this.virtual = virtual;
   }
   fireGetFuncCount = 0;
+  reactionCount = 0;
   /**
    * get调用标记
    */
@@ -46,7 +54,7 @@ export class RdxWatcherNode<GModel> extends RdxNode<GModel>
     return {
       type: RdxNodeType.Watcher,
       id: this.getId(),
-      deps: [],
+      deps: mutators.getCache().deps,
       fireWhenDepsUpdate: (id) => {
         // 动态依赖监测,获取每次依赖完成的时机，在这个时机需要去更新依赖内容
         logger.info(`fireWhenDepsUpdate depId-${id}, selfId-${this.getId()}`);
@@ -63,20 +71,15 @@ export class RdxWatcherNode<GModel> extends RdxNode<GModel>
           }-currentId:${this.getId()}-depsId: ${id}` as any
         );
       },
-      getValue: this.virtual ? (id) => {
-        return context.getVirtualTaskState(id);
-      }: undefined,
-      setValue: this.virtual ? (id, value) => {
-        return context.setVirtualTaskState(id, value);
-      }: undefined,
+      ...rdxNodeOperates(context, this.virtual),
       reset: (context) => {
         this.reset(context);
       },
-      next: (context, id, value) => {
-        let collectDirtys = [id];
+      next: (context, id, value, options) => {
+        let collectDirtys = [];
         if (this.set) {
           function collect(atom: IRdxDeps<any>) {
-            collectDirtys.push(getDepId(atom));
+            collectDirtys.push(getId(atom));
           }
           try {
             this.set(
@@ -100,17 +103,23 @@ export class RdxWatcherNode<GModel> extends RdxNode<GModel>
             throw new Error(id + '节点数据设置错误' + error);
           }
         }
-        context.notifyDownStreamPoints(
-          uniqBy(collectDirtys, a => a).map((item) => ({ key: item, downStreamOnly: true }))
-        );
+        context.notifyDownStreamPoints([
+          { key: id, downStreamOnly: !options.refresh },
+          ...uniqBy(collectDirtys, (a) => a).map((item) => ({
+            key: item,
+            downStreamOnly: true,
+          })),
+        ]);
       },
       reaction: !this.isSync(context)
         ? async (reactionContext) => {
+            console.log('reactionContext: ');
             const { updateState, close } = reactionContext;
             try {
               if (!mutators.hasCache()) {
                 mutators.checkAndUpdateDeps();
               }
+
               // 通过cache中的数据获取结果
               const value = await mutators.getCache().value;
               updateState(value);
@@ -165,11 +174,12 @@ export class RdxWatcherNode<GModel> extends RdxNode<GModel>
           key: this.getId(),
           downStreamOnly: false,
         },
-        (TaskEventTriggerType.AddTask + '-' + this.getId()) as any
+        (TaskEventTriggerType.TriggerByTaskInit + '-' + this.getId()) as any
       );
     }
   }
   load(context: ShareContextClass) {
+    context.emitBase(`${TaskEventType.TaskLoad}-${this.getId()}`);
     detectValueAndDeps(this, context, true);
     context.addOrUpdateTask(this.getId(), this.getTaskInfo(context));
     // 设置默认值

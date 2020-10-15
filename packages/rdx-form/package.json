@@ -3,14 +3,14 @@
   "version": "0.0.8",
   "description": "",
   "sideEffects": false,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "test": "jest",
     "test-watch": "jest --watch",
     "prettier": "prettier",
     "coverage": "jest --coverage",
-    "build": "tsc -p ./tsconfig.build.json",
+    "build-lib": "tsc -p ./tsconfig.build.json",
     "watch": "tsc --watch -p ./tsconfig.build.json",
     "dev": "start-storybook -p 6008 ",
     "pub": "tsc && npm run publish"
@@ -32,7 +32,7 @@
     "ts-jest": "^24.1.0",
     "ts-lint": "^4.5.1",
     "tslint-config-prettier": "^1.18.0",
-    "typescript": "^4.1.0-dev.20201009"
+    "typescript": "^4.1.0-beta"
   },
   "dependencies": {
     "@czwcode/rdx": "^0.0.4",

@@ -1,4 +1,9 @@
-import { RdxFormItem, IRdxFormItem, registryRdxFormComponents, BaseType } from '@czwcode/rdx-form';
+import {
+  RdxFormItem,
+  IRdxFormItem,
+  registryRdxFormComponents,
+  BaseType,
+} from '@czwcode/rdx-form';
 import React from 'react';
 export * from '@czwcode/rdx-form';
 export * from './components';
@@ -13,8 +18,8 @@ import {
   Checkbox,
   DatePicker,
 } from '@alifd/next';
-export * from './components/SearchList'
-export * from './components/FormItemGrid'
+export * from './components/SearchList';
+export * from './components/FormItemGrid';
 import EditorWithInAndOut from './components/EditorWithInAndOut';
 import JsonEditor from './components/JsonEditor';
 import TreeField from './components/TreeField';
@@ -22,6 +27,10 @@ import ColorPicker from './components/ColorPicker';
 import { InputProps } from '@alifd/next/types/input';
 import { NumberPickerProps } from '@alifd/next/types/number-picker';
 import { SwitchProps } from '@alifd/next/types/switch';
+import { SelectProps } from '@alifd/next/types/select';
+import { RadioProps } from '@alifd/next/types/radio';
+import { CheckboxProps } from '@alifd/next/types/checkbox';
+import { DatePickerProps } from '@alifd/next/types/date-picker';
 export function setup() {
   registryRdxFormComponents({
     string: Input,
@@ -43,19 +52,56 @@ export function setup() {
   });
 }
 
-export interface IRdxNextFormItem<ISource , T extends BaseType> extends IRdxFormItem<ISource, T> {
-  componentProps?: NextTypes[T]
+export interface IRdxNextFormItem<
+  ISource,
+  GBaseType extends BaseType,
+  GXComponentType extends XComponentType
+> extends IRdxFormItem<ISource, GBaseType> {
+  xComponent?: GXComponentType;
+  componentProps?: inferComponentProps<GBaseType, GXComponentType>;
 }
-export const RdxNextFormItem  = <ISource, GBaseType extends BaseType>(props: IRdxNextFormItem<ISource , GBaseType>) => {
-  return <RdxFormItem {...props} />
-} 
-export interface NextTypes  {
-  string: InputProps,
-  number: NumberPickerProps,
-  boolean: SwitchProps,
-  [key: string]: any
+type inferComponentProps<GBaseType, GXComponentType> = GXComponentType extends keyof NextComponentProps
+? NextComponentProps[GXComponentType]
+: GBaseType extends keyof BaseNextProps
+? BaseNextProps[GBaseType]
+: any
+
+export const RdxNextFormItem = <
+  ISource,
+  GBaseType extends BaseType,
+  GXComponentType extends XComponentType
+>(
+  props: IRdxNextFormItem<ISource, GBaseType, GXComponentType>
+) => {
+  return <RdxFormItem {...props} />;
+};
+export interface BaseNextProps {
+  string: InputProps;
+  number: NumberPickerProps;
+  boolean: SwitchProps;
 }
-export enum XComponentType {
+
+export interface NextComponentProps {
+  select: SelectProps;
+  radio: RadioProps
+  checkbox: CheckboxProps
+  time: DatePickerProps
+}
+
+interface XComponentTypeMap {
+  select: 'string';
+  radio: 'string';
+  checkbox: 'string';
+  color: 'string';
+  json: 'string';
+  jsonEditor: 'string';
+  code: 'string';
+  arrayTable: 'string';
+  tree: 'string';
+  time: 'string';
+}
+export type XComponentType = keyof XComponentTypeMap;
+export enum XComponentType2 {
   Select = 'select',
   Radio = 'radio',
   Checkbox = 'checkbox',

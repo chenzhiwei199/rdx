@@ -76,14 +76,16 @@ export interface IDataPersistenData {
 const DataPersistenceHook = (
   shareContext?: React.Context<ShareContextClass>
 ) => {
+  const defaultData = {
+    snapShots: [],
+    temporarySnapShots: null,
+  }
   const context = useRdxStateContext(shareContext);
   const [state, setState] = React.useState<{
     snapShots: DataPersistSnapShot[];
     temporarySnapShots: DataPersistSnapShot;
-  }>({
-    snapShots: [],
-    temporarySnapShots: null,
-  });
+  }>(defaultData);
+  
   const setStateProxy = (
     callback: (state) => Partial<DataPersistenceHookState>
   ) => {
@@ -109,24 +111,15 @@ const DataPersistenceHook = (
       temporarySnapShots: null,
     }));
   }, []);
+
   const deleteEvent = React.useMemo(() => {
-    const startTypes = [
-      TaskEventType.Init,
-      TaskEventType.UserAction,
-    ];
-    for (let type of startTypes) {
-      context.getSubject().on(type, () => {
-        initSnapShot(type);
-      });
-    }
-    const runningTypes = [TaskEventType.Initializing];
-    for (let type of runningTypes) {
-      context.getSubject().on(type, (process) => {
-        setStateProxy((state) => ({
-          temporarySnapShots: { ...state.temporarySnapShots, ...process },
-        }));
-      });
-    }
+    context.getSubject().on(TaskEventType.UserAction, () => {
+      initSnapShot(TaskEventType.UserAction);
+    });
+
+    context.getSubject().on(TaskEventType.TaskLoad, (type) => {
+      initSnapShot(type);
+    });
     context.getSubject().on(TaskEventType.Trigger, ({ type, process}) => {
       initSnapShot(type);
       setStateProxy((state) => ({
@@ -159,26 +152,9 @@ const DataPersistenceHook = (
           },
         }));
       });
-    // context
-    //   .getSubject()
-    //   .on(TaskEventType.StatusChange, (process: IStatusInfo) => {
-    //     setStateProxy((state) => {
-    //       return {
-    //         temporarySnapShots: {
-    //           ...state.temporarySnapShots,
-    //           status: [
-    //             ...(state.temporarySnapShots
-    //               ? state.temporarySnapShots.status
-    //               : []),
-    //             process,
-    //           ],
-    //         },
-    //       }
-    //     });
-    //   });
     return () => {
       const ee = context.getSubject();
-      ee.removeAllListeners(TaskEventType.Init);
+      ee.removeAllListeners(TaskEventType.TaskLoad);
       ee.removeAllListeners(TaskEventType.RdxContextInit);
     };
   }, []);
@@ -187,8 +163,10 @@ const DataPersistenceHook = (
       deleteEvent();
     };
   }, []);
-  console.log('TaskEventType...', state);
   return {
+    clear: () => {
+      setState(defaultData)
+    },
     ...state,
     realTimeState: context.getAllTaskState(),
     allSnapShots: [...state.snapShots, state.temporarySnapShots].filter(

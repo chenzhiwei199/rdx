@@ -5,7 +5,6 @@ import {
   XComponentType,
   BaseType,
 } from '@czwcode/rdx-next-form';
-import { DevVisualGraphTool } from '../../../packages/rdx-plugins/src';
 export default {
   title: '基础属性分类',
   parameters: {

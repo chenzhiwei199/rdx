@@ -2,7 +2,6 @@ import mockData, { dimensions, measures } from './mockData';
 import { AggregateType, aggregateData, ICube } from './aggregateCore';
 import { Filter, Filters, IQueryConfig } from './types';
 import { dataFilter } from './utils';
-
 function mockRequest(data): Promise<{ success: boolean; data: any }> {
   return new Promise((resolve, reject) => {
     if (false) {
@@ -31,6 +30,25 @@ export function getDimensionTable(key: string) {
     })
   );
 }
+class Source {
+  cancelFlag: boolean = false;
+  token = () =>{
+    return this.cancelFlag
+  }
+  cancel = () => {
+    this.cancelFlag = true
+  }
+}
+class _CancelToken {
+  source() {
+    return new Source()
+  }
+}
+const CancelFlag = 'CancelFlag'
+export const isErrorCancel =  (error) => {
+  return error.message === CancelFlag
+}
+export const CancelToken = new _CancelToken()
 /**
  *
  * dimensions 单据日期,地区名称,业务员名称,客户分类,客户名称,存货名称,部门名称,存货分类,存货编码,业务员编码,订单号,客户编码,部门编码,订单明细号
@@ -39,14 +57,21 @@ export function getDimensionTable(key: string) {
  * @param {IQueryConfig} config
  * @returns
  */
-export function getData(config: IQueryConfig) {
+export function getData(config: IQueryConfig, token?: () => boolean) {
   const { filters, orders, ...rest } = config;
-  return mockRequest(
-    aggregateData({
-      factTable: dataFilter(mockData, filters),
-      ...rest,
-    })
+  const fetchData =aggregateData({
+    factTable: dataFilter(mockData, filters),
+    ...rest,
+  })
+  const data =mockRequest(
+    fetchData
   );
+  console.log("searchData getData", JSON.stringify(config), fetchData)
+  if(token && token()) {
+    console.warn("Cancel 啦啦啦")
+    throw new Error(CancelFlag)
+  }
+  return data
 }
 export function getDimension(config: { dimensions: string; filters?: Filters }) {
   console.log('getDimension config: ', config);

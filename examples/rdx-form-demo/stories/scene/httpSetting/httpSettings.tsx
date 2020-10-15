@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { FC } from 'react';
 import { RequestType, REQUEST_TYPE, IHttpSettingValue } from './types';
 import {
   RdxFormContext,
@@ -8,19 +8,25 @@ import {
   BaseType,
   IRdxFormItem,
   IRdxFormWatcherGet,
-} from '@czwcode/rdx-next-form';
-import { RdxContext } from '@czwcode/rdx';
-import { Input, Button, Notification } from '@alifd/next';
-import { parseGetParams, mockResult, jsonParse, parseParams } from './utils';
-import { fetchData, parseResult } from './dataUtils';
-import {
   useRdxFormGlboalState,
   useRdxFormAtomLoader,
-} from '../../../../../packages/rdx-form/src/hooks/rdxStateFormHooks';
+  FormRdxStateContext,
+  useRdxFormState,
+} from '@czwcode/rdx-next-form';
+import { RdxContext } from '@czwcode/rdx';
+import { Button, Notification } from '@alifd/next';
+import { parseGetParams, mockResult, jsonParse } from './utils';
+import { fetchData } from './dataUtils';
+import { DevVisualTableTool } from '../../../../../packages/rdx-plugins/src';
+import JsonView from 'react-json-view';
 
-const RdxFormItem = <GBaseType extends BaseType>(props: IRdxFormItem<HttpSettingState & { data: unknown }, GBaseType>) => {
-  return <UnDefinedRdxFormItem {...props}/>
-}
+const RdxFormItem =  <GBaseType extends BaseType>(
+  props: IRdxFormItem<HttpSettingState & { data: unknown }, GBaseType>
+) => {
+  return <UnDefinedRdxFormItem {...props} />;
+};
+
+
 export interface IHttpSetting {
   value: IHttpSettingValue;
   onChange?: (value: IHttpSettingValue) => void;
@@ -46,7 +52,6 @@ export function createNewUrl(
 }
 export function updateUrl(
   url: string,
-  type: UrlParmasType,
   key: string,
   index: string,
   value: string
@@ -64,10 +69,19 @@ export function updateUrl(
 
   return createNewUrl(url, params);
 }
+function Preview() {
+  const [v] = useRdxFormState<any>('data');
+  return (
+    <JsonView
+      src={v.value || { message: '请点击查询按钮获取数据结果' }}
+    ></JsonView>
+  );
+}
 function FetchComponent() {
   const globalState = useRdxFormGlboalState();
   const [state, setState] = useRdxFormAtomLoader({
     id: 'data',
+    virtual: true,
     defaultValue: { value: null, visible: true, disabled: false },
   });
   return (
@@ -127,7 +141,6 @@ const RequestInfo = () => {
     const urlInstance = get('requestInfo.url');
     const newUrl = updateUrl(
       urlInstance.value,
-      UrlParmasType.Key,
       currentKey,
       currentIndex,
       newValue.value
@@ -137,7 +150,10 @@ const RequestInfo = () => {
       value: newUrl,
     });
   };
-  const get: IRdxFormWatcherGet<any, HttpSettingState & { data: unknown}> = ({ id, get }) => {
+  const get: IRdxFormWatcherGet<any, HttpSettingState & { data: unknown }> = ({
+    id,
+    get,
+  }) => {
     const ids = id.split('.');
     const currentIndex = ids[ids.length - 2];
     const currentKey = ids[ids.length - 1];
@@ -160,12 +176,11 @@ const RequestInfo = () => {
               dataSource: REQUEST_TYPE.map((item) => ({
                 label: item,
                 value: item,
-              }))
+              })),
             }}
-            
             default={REQUEST_TYPE[0]}
             xComponent={XComponentType.Select}
-          />
+          ></RdxFormItem>
           <RdxFormItem
             name='url'
             type={BaseType.String}
@@ -190,8 +205,7 @@ const RequestInfo = () => {
           virtual={true}
           xComponent={XComponentType.ArrayTable}
           type={BaseType.Array}
-          get={({ get }) => {
-            const value = get('params' as any)
+          get={({ get, value }) => {
             const url = get('requestInfo.url').value;
             try {
               new URL(url);
@@ -227,8 +241,8 @@ const RequestInfo = () => {
             default={{ key: '1', value: '2' }}
           >
             <RdxFormItem
-              set={compute}
               get={get}
+              set={compute}
               title='key'
               name='key'
               type={BaseType.String}
@@ -258,8 +272,7 @@ const RequestInfo = () => {
             },
           ]}
           xComponent={XComponentType.JsonEditor}
-          get={async ({ get }) => {
-            const value = get('params'as any)as any
+          get={async ({ value, get }) => {
             const requestType = get('requestInfo.requestType').value;
             return {
               ...value,
@@ -298,6 +311,9 @@ export default function HttpSetting(props: IHttpSetting) {
       <RdxFormContext
         state={value}
         onChange={onChange}
+        visualStatePlugins={
+          <DevVisualTableTool context={FormRdxStateContext} />
+        }
         typescriptGenerateOptions={{ rootName: 'HttpSettingState' }}
         enabledStatePreview={true}
         enabledTypescriptGenerte={true}
@@ -342,14 +358,13 @@ export default function HttpSetting(props: IHttpSetting) {
               <RdxFormItem
                 name={'filter'}
                 defaultVisible={false}
-                get={({ get }) => {
+                get={({ get, value }) => {
                   const data = get('data').value;
                   const useFilter = get('resultProcess.useFilter').value;
                   const requestType = get('requestInfo.requestType');
                   const urlInstance = get('requestInfo.url');
                   const body = get('requestInfo.body');
 
-                  const filter = get('resultProcess.filter');
                   const baseValue = {
                     ...value,
                     visible: useFilter === true,
@@ -357,7 +372,7 @@ export default function HttpSetting(props: IHttpSetting) {
                   try {
                     const result = mockResult(
                       data,
-                      get('params' as any).value,
+                      value.value,
                       requestType as any,
                       urlInstance.value,
                       body.value
@@ -365,7 +380,7 @@ export default function HttpSetting(props: IHttpSetting) {
                     return {
                       ...baseValue,
                       componentProps: {
-                        ...filter.componentProps,
+                        ...value.componentProps,
                         src: result,
                       },
                     };
@@ -375,7 +390,7 @@ export default function HttpSetting(props: IHttpSetting) {
                 }}
                 componentProps={{
                   isDialog: true,
-                  trigger: <Button type='primary'>打开过滤器编辑器</Button>,
+                  // trigger: <Button type='primary'>打开过滤器编辑器</Button>,
                 }}
                 title='数据过滤器'
                 type={'string'}
@@ -383,6 +398,9 @@ export default function HttpSetting(props: IHttpSetting) {
               ></RdxFormItem>
             </FormLayout>
           </RdxFormItem>
+        </InfoWrapper>
+        <InfoWrapper title='数据预览'>
+          <Preview />
         </InfoWrapper>
       </RdxFormContext>
     </RdxContext>

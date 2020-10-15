@@ -24,6 +24,7 @@ export interface IRdxNodeLifeCycle {
 export class RdxNode<GModel> implements IRdxNodeLifeCycle {
   load(context: ShareContextClass): void {}
   public id: string;
+  public virtual?: boolean;
   public type: RdxNodeType = RdxNodeType.Atom;
   constructor(config: IRdxNode) {
     this.id = config.id;

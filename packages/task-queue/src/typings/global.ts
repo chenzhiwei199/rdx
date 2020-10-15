@@ -1,5 +1,4 @@
 import {
-  RunningPoint,
   NodeStatus,
   BasePoint,
   Point,
@@ -54,7 +53,7 @@ export enum TASK_PROCESS_TYPE {
 }
 
 export enum TaskEventTriggerType {
-  AddTask = 'AddTask',
+  TriggerByTaskInit = 'TriggerByTaskInit',
   DepsUpdate = 'DepsUpdate',
   BatchEventTrigger = 'BatchEventTrigger',
   BatchReactionOnMount = 'BatchReactionOnMount',
@@ -65,7 +64,7 @@ export enum TaskEventTriggerType {
 }
 export enum TaskEventType {
   Trigger = 'Trigger',
-  Init = 'Init',
+  TaskLoad = 'TaskLoad',
   Initializing = 'Initializing',
   InitEnd = 'InitEnd',
   UserAction = 'UserAction',

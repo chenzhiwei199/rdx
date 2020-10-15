@@ -1,11 +1,11 @@
-import { NodeStatus, BasePoint } from '@czwcode/graph-core';
+import { NodeStatus } from '@czwcode/graph-core';
+import { ISnapShotTrigger} from '@czwcode/task-queue'
 import {
   ShareContextClass,
   DeliverOptions,
 } from './RdxContext/shareContext';
 import { ActionType, TargetType } from './RdxContext/interface';
 import { RdxNode, RdxNodeType } from './RdxValues';
-import { ISnapShotTrigger } from '../../task-queue/src';
 export * from '@czwcode/task-queue';
 export * from '@czwcode/graph-core';
 
@@ -64,25 +64,9 @@ export interface BaseContext<GModel> extends IDataStatus {
    */
   id: string;
   /**
-   * 全局状态
-   */
-  state: any;
-  /**
    * 当前模块的数据
    */
   value: GModel;
-  /**
-   * 依赖的模块上次的值
-   */
-  // lastDepsValue: IRelyModel;
-  // /**
-  //  * 当前模块依赖的模块id
-  //  */
-  // deps?: IRdxAnyDeps[];
-  // /**
-  //  * 当前模块依赖的模块数据
-  //  */
-  // depsValues: IRelyModel;
 }
 
 export interface IDataStatus {
@@ -107,10 +91,6 @@ export type TNext<GModel> = (
   options?: DeliverOptions
 ) => void;
 export interface IMutators<GModel> {
-  /**
-   * 刷新视图
-   */
-  refreshView: () => void;
   /**
    * 更新当前模块的数据，并调用当前模块以及下游模块的响应函数
    */
@@ -206,6 +186,7 @@ export enum StateUpdateType {
   ReactionStatus = 'ReactionStatus',
   GlobalState = 'GlobalState',
   State = 'State',
+  TriggerTaskSchedule = 'TriggerTaskSchedule'
 }
 export interface IStateInfo {
   actionType: ActionType;

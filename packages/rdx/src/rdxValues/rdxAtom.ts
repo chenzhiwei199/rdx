@@ -1,6 +1,6 @@
 import { IRdxDeps, IRdxTask } from '../global';
 import { IRdxNode, RdxNode, IRdxNodeLifeCycle, RdxNodeType } from './base';
-import { isPromise } from '../utils';
+import { TaskEventType, TaskEventTriggerType} from '@czwcode/task-queue'
 import { ShareContextClass } from '../RdxContext/shareContext';
 import { DataModel } from './types';
 import { checkValueIsSync, getSyncValue } from './core';
@@ -11,7 +11,18 @@ export function atom<GModel>(config: IRdxAtomNode<GModel>): RdxNode<GModel> {
 }
 
 export interface IRdxAtomNode<GModel> extends IRdxNode {
+  virtual?: boolean
   defaultValue: GModel | Promise<GModel> | RdxNode<GModel>;
+}
+export function rdxNodeOperates(context, virtual) {
+  return {
+    getValue: virtual ? (id) => {
+      return context.getVirtualTaskState(id);
+    }: undefined,
+    setValue: virtual ? (id, value) => {
+      return context.setVirtualTaskState(id, value);
+    }: undefined,
+  }
 }
 export class RdxAtomNode<GModel> extends RdxNode<GModel>
   implements IRdxNodeLifeCycle {
@@ -19,6 +30,7 @@ export class RdxAtomNode<GModel> extends RdxNode<GModel>
   constructor(config: IRdxAtomNode<GModel>) {
     super(config);
     this.defaultValue = config.defaultValue;
+    this.virtual = config.virtual
   }
   getTaskInfo(context: ShareContextClass) {
     const taskInfos: IRdxTask<GModel> = {
@@ -28,6 +40,7 @@ export class RdxAtomNode<GModel> extends RdxNode<GModel>
       reset: (context: ShareContextClass) => {
         this.reset(context);
       },
+      ...rdxNodeOperates(context, this.virtual),
       reaction: checkValueIsSync(context, this.defaultValue)
         ? (context) => {}
         : async (context) => {
@@ -51,16 +64,17 @@ export class RdxAtomNode<GModel> extends RdxNode<GModel>
       context.markIDeal(this.getId());
     } else {
       context.markWaiting(this.getId());
-      context.batchTriggerSchedule({
+      context.executeTask({
         key: this.getId(),
         downStreamOnly: false,
-      });
+      },TaskEventTriggerType.TriggerByTaskInit + '-' + this.getId());
     }
   }
   reset(context: ShareContextClass) {
     this.init(context, true);
   }
   load(context: ShareContextClass) {
+    context.emitBase(`${TaskEventType.TaskLoad}-${this.getId()}` )
     context.addOrUpdateTask(this.getId(), this.getTaskInfo(context));
     this.init(context);
   }

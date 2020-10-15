@@ -1,6 +1,8 @@
 import { createContext } from "react";
+import { RuleDetail } from "../components";
 
 export interface ErrorContext {
+ rules?: { [key: string]: RuleDetail[]}
  errors?: { [key: string]: string[]}
 }
 
@@ -14,3 +16,4 @@ export class ErrorContextClass implements ErrorContext {
   }
 }
 export  const ErrorContextInstance = createContext<ErrorContextClass>(new ErrorContextClass());
+export  const GlobalErrorContextInstance = createContext<ErrorContextClass>(new ErrorContextClass());

@@ -11,9 +11,9 @@ import {
   NodeStatus,
   graphLibAdapter,
   arr2Map,
+  useForceUpdate,
 } from '@czwcode/rdx';
 import Tab from '../graph/Tab';
-import { useForceUpdate } from '../../../rdx/src/hooks/hookUtils';
 
 function drawGraph(
   ref: any,

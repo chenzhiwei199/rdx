@@ -25,3 +25,27 @@
 
 ### 树编辑器
 ### 颜色选择器
+
+### feature 考虑下怎么支持rangePicker
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom'
+import {
+  SchemaForm,
+  SchemaMarkupField as Field,
+  createFormActions
+} from '@formily/next'
+import { DatePicker } from '@formily/next-components'
+import '@alifd/next/dist/next.css'
+
+const App = () => {
+  return (
+    <SchemaForm components={{ RangePicker: DatePicker.RangePicker }}>
+      <Field x-component="RangePicker" title="RangePicker" name="[start,end]" />
+    </SchemaForm>
+  )
+}
+
+ReactDOM.render(<App />, document.getElementById('root'))
+```
+

@@ -1,11 +1,12 @@
 import React, { useRef, useEffect } from 'react';
-import { ShareContextClass, Base, RdxContext } from '@czwcode/rdx';
+import { ShareContextClass, Base, RdxContext, RdxContextProps } from '@czwcode/rdx';
 import { RdxFormItem } from '../FromItem';
 import { set, get } from '../../utils';
 import { produce } from 'immer';
 import {
   ErrorContextInstance,
   ErrorContextClass,
+  GlobalErrorContextInstance,
 } from '../../hooks/formStatus';
 import { FormRdxStateContext } from '../../hooks/rdxStateFormHooks';
 import { isFunction } from '../../utils/base';
@@ -13,7 +14,7 @@ import { BaseType } from '../../global';
 import JsonToTS from 'json-to-ts';
 import Preview from '../Preview';
 import { IModel } from '../FromItem/types';
-export interface IRdxFormContext {
+export interface IRdxFormContext extends RdxContextProps<any> {
   children: React.ReactNode;
   state?: any;
   initializeState?: any;
@@ -49,7 +50,9 @@ class FormStore<T> implements Base<IModel<T>> {
     });
   }
   update(key: string, value: IModel<T>, scope?: string): void {
-    console.log('1111update: ' + key, value);
+    if(!value) {
+      return 
+    }
     let { value: currentV, ...rest } = value;
     this.store = produce(this.store, (store) => {
       set(store.state, key, value.value);
@@ -90,6 +93,13 @@ export function getEmptyValue(type) {
   }
 }
 
+function isRdxFormItem(obj) {
+  try {
+    return obj  === RdxFormItem;
+  } catch (e) {
+    return false; //
+  }
+}
 // ReactChild | ReactFragment | ReactPortal | boolean | null | undefined
 function children2Json(children: React.ReactNode, useVirtual: boolean = false) {
   const root = {};
@@ -111,7 +121,8 @@ function children2Json(children: React.ReactNode, useVirtual: boolean = false) {
       if (!child || !child.props) {
         return;
       }
-      if (child.type === RdxFormItem) {
+      console.log(2222, RdxFormItem)
+      if (isRdxFormItem(child.type)) {
         if (!child.props.virtual || useVirtual) {
           set(
             root,
@@ -128,13 +139,9 @@ function children2Json(children: React.ReactNode, useVirtual: boolean = false) {
               getEmptyValue(child.props.type)
             );
             travserArray([...paths, child.props.name], currentChildren);
-            console.log('child.props.children', child.props.children);
           }
         }
       } else if (isFunction(child.type)) {
-        if(child.props.children) {
-          travser(paths, child.props.children);
-        } else 
         if (
           child.type.prototype &&
           (child.type.prototype.render ||
@@ -143,7 +150,7 @@ function children2Json(children: React.ReactNode, useVirtual: boolean = false) {
           try {
             travser(paths, new child.type(child.props).render());
           } catch (error) {
-            console.warn(error);
+            travser(paths, child.props.children);
           }
         } else {
           travser(paths, child.type(child.props));
@@ -167,6 +174,7 @@ const RdxFormContext = <T extends Object>(props: IRdxFormContext) => {
     enabledTypescriptGenerte,
     visualStatePlugins,
     typescriptGenerateOptions = { rootName: 'RootObject' },
+    ...rest
   } = props;
   const innerStateRef = useRef<FormStore<T>>(
     new FormStore({ state: {}, runningState: {} })
@@ -177,6 +185,7 @@ const RdxFormContext = <T extends Object>(props: IRdxFormContext) => {
 
   return (
     <RdxContext
+      {...rest}
       visualStatePlugins={visualStatePlugins}
       context={FormRdxStateContext}
       withRef={contextRef}
@@ -195,7 +204,7 @@ const RdxFormContext = <T extends Object>(props: IRdxFormContext) => {
         onChange && onChange(state.state);
       }}
     >
-      <ErrorContextInstance.Provider value={errorContextRef.current}>
+      <GlobalErrorContextInstance.Provider value={errorContextRef.current}>
         <div ref={formContextRef}>{children}</div>
         {enabledStatePreview && <Preview />}
         {enabledTypescriptGenerte && (
@@ -210,7 +219,7 @@ const RdxFormContext = <T extends Object>(props: IRdxFormContext) => {
             </pre>
           </div>
         )}
-      </ErrorContextInstance.Provider>
+      </GlobalErrorContextInstance.Provider>
     </RdxContext>
   );
 };

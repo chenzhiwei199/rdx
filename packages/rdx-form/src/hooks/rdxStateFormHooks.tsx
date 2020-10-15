@@ -17,6 +17,7 @@ export const useRdxFormState = defaultHooks.useRdxState;
 export const useRdxFormValue = defaultHooks.useRdxValue;
 export const useRdxFormStateLoader = defaultHooks.useRdxStateLoader;
 export const useRdxFormValueLoader = defaultHooks.useRdxValueLoader;
+export const useRdxFormLoading = defaultHooks.useRdxLoading;
 export const useRdxFormValueByDependencies =
   defaultHooks.useRdxValueByDependencies;
 export const useRdxFormSetter = defaultHooks.useRdxSetter;

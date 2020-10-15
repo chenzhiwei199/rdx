@@ -1,6 +1,7 @@
 {
+  // "extends": "@tsconfig/docusaurus/tsconfig.json",
   "compilerOptions": {
-    // "declarationDir": "lib/types",
+    "declarationDir": "./dist",
     "declaration": true,
     "strict": true,
     "allowJs": true,
@@ -12,7 +13,8 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "noImplicitAny": false,
-    "noImplicitThis": false,                
+    "noImplicitThis": false,             
+    "importHelpers": true,   
     "noStrictGenericChecks": true,
     // leave JSX as it is
     "jsx": "react",
@@ -22,6 +24,5 @@
     "module": "esnext",
     // do not transpile stuff like classes, async/await, ...
     "target": "es2016",
-  },
-  "include": ["src/**/*"]
+  }
 }

@@ -1,19 +1,20 @@
 import * as React from 'react';
 import { initValue, ShareContextClass } from './shareContext';
-import { TaskEventTriggerType, TaskEventType } from '@czwcode/task-queue';
+import { TaskEventTriggerType } from '@czwcode/task-queue';
 import { RdxContextProps } from './interface';
 import { ScopeObject } from './core';
-import UiBatcher from './UiBatcher';
 import { StateUpdateType } from '../global';
-import { DefaultContext } from '..';
+import { DefaultContext } from '../hooks/stateHooks';
 export * from './core';
+export * from './interface';
 const Rdx = (props: RdxContextProps<any>) => {
   const {
     initializeState = {},
     onChange = () => {},
+    onLoading = () => {},
     name,
     withRef,
-    context = DefaultContext,
+    context = DefaultContext ,
     createStore,
     visualStatePlugins,
   } = props;
@@ -40,14 +41,9 @@ const Rdx = (props: RdxContextProps<any>) => {
     store.current.getEventEmitter().emit(StateUpdateType.GlobalState);
     onChange(v);
   });
-  const uiNotifyBatcherOfChange = React.useRef<any>(null);
-  const setUiNotifyBatcherOfChange = (x: any) => {
-    uiNotifyBatcherOfChange.current = x;
-  };
-
-  store.current.batchUiChange = () => {
-    uiNotifyBatcherOfChange.current && uiNotifyBatcherOfChange.current();
-  };
+  store.current.setLoadingCallback(() => {
+    onLoading()
+  })
 
   withRef && (withRef.current = store.current);
   let copyState = store.current.getAllTaskState();
@@ -61,34 +57,16 @@ const Rdx = (props: RdxContextProps<any>) => {
     store.current.getNotifyQueue().clear();
 
     // 初始化状态和后续状态不一样，则触发onChange
-    if (copyState !== store.current.getAllTaskState()) {
+    if (copyState !== store.current.getAllTaskState() && !store.current.taskScheduler.isRunning()) {
       onChange(store.current.getAllTaskState());
     }
   }, []);
   return (
     <context.Provider value={store.current}>
       {visualStatePlugins}
-      <FirstCycleCompnent store={store.current} />
       {props.children}
-      <UiBatcher
-        context={context}
-        setNotifyBatcherOfChange={setUiNotifyBatcherOfChange}
-      />
-      {/* <ScheduleBatcher
-        context={context}
-        setNotifyBatcherOfChange={setScheduleNotifyBatcherOfChange}
-      /> */}
     </context.Provider>
   );
-};
-const FirstCycleCompnent = (props: { store: ShareContextClass }) => {
-  React.useMemo(() => {
-    props.store.emitBase(TaskEventType.Init);
-  }, []);
-  React.useEffect(() => {
-    props.store.emitBase(TaskEventType.Initializing);
-  }, []);
-  return <></>;
 };
 
 export const RdxContext = Rdx;

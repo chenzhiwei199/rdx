@@ -4,13 +4,13 @@ import { Grid } from '@alifd/next';
 const { Row, Col } = Grid;
 export interface IFormItemGrid {
   cols: ({ span: number; offset: number } | number)[];
-  children: React.ReactNode[];
+  children: React.ReactNode | React.ReactNode[];
 }
 export function FormItemGrid(props: IFormItemGrid) {
   let { cols = [], children } = props;
   const normalizerCols = toArr(cols).map((item) => normalizeCol(item));
-  children = toArr(children);
-  const childNum = children.length;
+  const newChildren = toArr(children);
+  const childNum = newChildren.length;
   if (normalizerCols.length <= childNum) {
     let offset: number = childNum - cols.length;
     let lastSpan: number =
@@ -27,7 +27,7 @@ export function FormItemGrid(props: IFormItemGrid) {
     }
     const grids = (
       <Row>
-        {children.reduce((buf: React.ReactNode[], child, key) => {
+        {newChildren.reduce((buf: React.ReactNode[], child, key) => {
           return child
             ? buf.concat(
                 <Col key={key} {...cols[key]}>
@@ -38,7 +38,6 @@ export function FormItemGrid(props: IFormItemGrid) {
         }, [])}
       </Row>
     );
-    console.log('grids: ', grids);
     return <Fragment>{grids}</Fragment>;
   } else {
     return <div>暂不支持children数量大于cols配置的情况</div>;

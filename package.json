@@ -2,28 +2,31 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "watch:form": "yarn workspace rdx-form-demo start",
-    "watch:rdx": "yarn workspace rdx-demo start",
-    "watch:portal": "yarn workspace portal-layout-demo start",
+    "start": "yarn workspace website start",
+    "start:form": "yarn workspace rdx-form-demo start",
+    "start:rdx": "yarn workspace rdx-demo start",
     "bootstrap": "lerna bootstrap",
     "clean": " lerna exec -- rm -rf node_modules",
     "doc": "lerna run doc",
-    "build": "lerna run build",
-    "pub": "npm run build && lerna publish ",
+    "lerna-build": "lerna run build",
+    "pub": "lerna run build && lerna publish ",
     "publish": "lerna exec -- npm publish . --parallel "
   },
   "workspaces": [
     "packages/*",
-    "examples/*",
-    "libs/*"
+    "libs/*",
+    "examples/*"
   ],
   "devDependencies": {
     "@types/jest": "^24.0.23",
+    "@types/react": "^16.9.52",
+    "@types/react-helmet": "^6.1.0",
+    "@types/react-router-dom": "^5.1.6",
     "awesome-typescript-loader": "^5.2.1",
     "jest": "^24.9.0",
     "lerna": "1.0.1",
     "react-docgen-typescript-loader": "^3.6.0",
-    "typescript": "^4.1.0-dev.20201009"
+    "typescript": "^4.1.0-beta"
   },
   "dependencies": {}
 }

@@ -12,9 +12,8 @@ import {
   FormRdxStateContext,
 } from '@czwcode/rdx-next-form';
 import { Button } from '@alifd/next';
-import { PreviewTaskState } from '../../../packages/rdx-form/src/components/Preview';
 export default {
-  title: '表单组件',
+  title: 'rdx-form/表单组件',
   parameters: {
     info: { inline: true },
   },
@@ -34,13 +33,12 @@ export const 基础表单 = () => {
           name='B'
           title='下拉框'
           type={'string'}
+          xComponent={'select'}
           dataSource={[
             { label: '测试1', value: '测试1' },
             { label: '测试2', value: '测试2' },
           ]}
-          xComponent={'select'}
         />
-        <Preview />
       </RdxFormContext>
     </div>
   );
@@ -172,10 +170,12 @@ export const 展示隐藏 = () => {
         title='111'
         type={'string'}
         xComponent={'radio'}
-        dataSource={[
-          { label: '展示', value: 'show' },
-          { label: '隐藏', value: 'hidden' },
-        ]}
+        componentProps={{
+          dataSource: [
+            { label: '展示', value: 'show' },
+            { label: '隐藏', value: 'hidden' },
+          ],
+        }}
       />
       <RdxFormItem<RootObject>
         name='b'
@@ -259,7 +259,6 @@ export const 数组对象_ArrayTable = () => {
           </RdxFormItem>
         </RdxFormItem>
       </RdxFormItem>
-      <Preview />
     </RdxFormContext>
   );
 };
@@ -270,7 +269,6 @@ export const 字符串数组 = () => {
       <RdxFormItem name='arr' title='arr' type={'array'}>
         <RdxFormItem type='string'></RdxFormItem>
       </RdxFormItem>
-      <Preview />
     </RdxFormContext>
   );
 };
@@ -283,8 +281,6 @@ export const 字符串嵌套数组 = () => {
           <RdxFormItem type='string'></RdxFormItem>
         </RdxFormItem>
       </RdxFormItem>
-      <Preview />
-      <PreviewTaskState />
     </RdxFormContext>
   );
 };
@@ -299,7 +295,6 @@ export const 字符串多层嵌套数组 = () => {
           </RdxFormItem>
         </RdxFormItem>
       </RdxFormItem>
-      <Preview />
     </RdxFormContext>
   );
 };
@@ -362,7 +357,9 @@ export const 基础表单_校验 = () => {
         name='B'
         title='下拉框'
         type={'string'}
-        dataSource={[{ label: '测试1', value: '测试2' }]}
+        componentProps={{
+          dataSource: [{ label: '测试1', value: '测试2' }],
+        }}
         xComponent={'select'}
       />
     </RdxFormContext>

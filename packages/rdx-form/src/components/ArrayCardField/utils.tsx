@@ -8,31 +8,34 @@ export function createArrayMutators(onChange: any, children) {
   const id = useFormId();
   const context = useRdxFormStateContext();
   const getValue = () => {
-    return (
-      (context.getTaskStateById(id) || ({} as any)).value || []
-    );
-  };
-  const getAtomValue = () => {
     return (context.getTaskStateById(id) || ({} as any)).value || [];
   };
   const fieldDefine = getChlidFieldInfo(children);
 
-  const switchState = (preIndex, nextIndex) => {
+  function getRule(index) {
     const isObject = fieldDefine.type === BaseType.Object;
     const rule = isObject
-      ? new RegExp(`^${id}.${preIndex}\.(.+)`)
-      : new RegExp(`^${id}.${preIndex}$`);
+      ? new RegExp(`^${id}.${index}\.(.+)`)
+      : new RegExp(`^${id}.${index}$`);
+      return rule
+  }
+  function getValidKeys(index) {
+    const rule = getRule(index)
     const vaildKeys = Array.from(context.getTasks().keys()).filter((key) =>
       rule.test(key)
     );
+    return vaildKeys;
+  }
+  const switchState = (preIndex, nextIndex) => {
+    const isObject = fieldDefine.type === BaseType.Object;
+    const rule = getRule(preIndex)
+    const vaildKeys = getValidKeys(preIndex)
     let effectKeys = new Set<string>();
     vaildKeys.forEach((key) => {
       const preKey = key;
       const nextKey = isObject
         ? [id, nextIndex, key.match(rule)[1]].join('.')
         : [id, nextIndex].join('.');
-      console.log('preKey: ', preKey);
-      console.log('nextKey: ', nextKey);
       let temp = context.getTaskStateById(preKey);
       context.setTaskState(preKey, context.getTaskStateById(nextKey));
       context.setTaskState(nextKey, temp);
@@ -46,7 +49,7 @@ export function createArrayMutators(onChange: any, children) {
       key: key,
       downStreamOnly: true,
     }));
-    context.batchTriggerSchedule(effectKeys);
+    context.executeTask(effectKeys, "Array Switch-" + id as any);
   };
   const remove = (index) => {
     let effectKeys = [];
@@ -57,13 +60,17 @@ export function createArrayMutators(onChange: any, children) {
     ) {
       effectKeys = effectKeys.concat(switchState(tempIndex, tempIndex + 1));
     }
-    context.batchTriggerSchedule(
+    getValidKeys(getValue().length - 1).forEach((key) => {
+      context.removeTask(key);
+    })
+    context.executeTask(
       effectKeys.map((key) => ({
         key: key,
         downStreamOnly: true,
-      }))
+      })),
+      'Array' as any
     );
-    onChange(getAtomValue().slice(0, getAtomValue().length - 1));
+    onChange(getValue().slice(0, getValue().length - 1));
 
     // 什么时机，缩减数组的个数
   };

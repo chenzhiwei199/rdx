@@ -7,9 +7,9 @@ function equal(target, current, op: Operator): boolean {
     case Operator.notEquals:
       return target !== current;
       case Operator.contains:
-        return current.includes(target) ;
+        return target.includes(current) ;
       case Operator.notContains:
-        return !current.includes(target) ;
+        return !target.includes(current) ;
     default:
       throw new Error('暂不支持操作符');
   }

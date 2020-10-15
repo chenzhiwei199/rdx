@@ -1,4 +1,4 @@
-import React, { memo, useContext, useEffect, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo } from 'react';
 import {
   PathContextInstance,
   getChlidFieldInfo,
@@ -50,13 +50,12 @@ const ArrayTableField = (props: IArray) => {
   const id = [...paths, name].join('.');
   const context = useRdxFormStateContext();
   const getValue = () => {
-    return (
-      (context.getTaskStateById(id) || ({} as any)).value || []
-    );
+    return (context.getTaskStateById(id) || ({} as any)).value || [];
   };
   const { remove, moveDown, moveUp, add } = createArrayMutators((v) => {
     onChange(v);
   }, children);
+  console.log('getValue: ', getValue());
   const operateColumn = {
     dataIndex: '____operation',
     title: '操作',

@@ -1,7 +1,7 @@
 import {
   createMutators,
   DataModel,
-  getDepId,
+  getId,
   IRdxAnyDeps,
   IRdxDeps,
   isPromise,
@@ -48,13 +48,13 @@ export function detectValueAndDeps<GModel>(
   loggerInfo?: string
 ): void {
   const mutators = createWatcherMutators(context, watcher);
-  if(!force && mutators.hasCache()) {
+  if (!force && mutators.hasCache()) {
     return;
   }
   const deps: IRdxAnyDeps[] = [];
   const depsIdSets = new Set();
   const get = (atom) => {
-    const id = getDepId(atom);
+    const id = getId(atom);
     if (!depsIdSets.has(id)) {
       deps.push(atom);
       depsIdSets.add(id);
@@ -79,9 +79,11 @@ export function detectValueAndDeps<GModel>(
     watcher.fireGet();
     let value = watcher.get({
       id: watcher.getId(),
-      value: context.hasTask(watcher.getId()) && context.isTaskReady(watcher.getId())
-        ? context.getTaskStateById(watcher.getId())
-        : watcher.defaultValue,
+      callbackMapWhenConflict: context.createConflictCallback(watcher.getId()),
+      value:
+        context.hasTask(watcher.getId()) && context.isTaskReady(watcher.getId())
+          ? context.getTaskStateById(watcher.getId())
+          : watcher.defaultValue,
       get: get,
     });
     // DataModel<GModel> = GModel | Promise<GModel> | RdxNode<GModel>;
@@ -114,16 +116,16 @@ export const createWatcherMutators = (
     id: id,
     set: (atom, value) => {
       // !处理数据还没有回来的情况
-      context.set(getDepId(atom), value);
+      context.set(getId(atom), value);
     },
     get: (atom) => {
-      if (context.getTaskStatus(getDepId(atom)).value !== Status.IDeal) {
-        throw new Error(getDepId(atom) + '数据还未准备好');
+      if (context.getTaskStatusById(getId(atom)).value !== Status.IDeal) {
+        throw new Error(getId(atom) + '数据还未准备好');
       }
-      return context.getTaskStateById(getDepId(atom));
+      return context.getTaskStateById(getId(atom));
     },
     reset: (atom) => {
-      context.resetById(getDepId(atom));
+      context.resetById(getId(atom));
     },
     hasCache: () => {
       return context.hasCache(id);
@@ -138,24 +140,23 @@ export const createWatcherMutators = (
       return context.getCache(id);
     },
     checkAndUpdateDeps: () => {
-      detectValueAndDeps(watcher, context, true,  'checkAndUpdateDeps');
-      const mutators = createWatcherMutators(context, watcher);
-      const value = mutators.getCache();
-      context.setCache(id, value);
+      detectValueAndDeps(watcher, context, true, 'checkAndUpdateDeps');
+      // const mutators = createWatcherMutators(context, watcher);
+      // const value = mutators.getCache();
+      // context.setCache(id, value);
     },
   };
 };
 
-
-export function uniqBy<T>(arr: T[], getValue: (pre:T) => any) {
-  let newArr = [] as T[]
-  const set = new Set()
+export function uniqBy<T>(arr: T[], getValue: (pre: T) => any) {
+  let newArr = [] as T[];
+  const set = new Set();
   arr.forEach((arrItem) => {
-    const v = getValue(arrItem)
-    if(!set.has(v)) {
-      set.add(v)
-      newArr.push(arrItem)
+    const v = getValue(arrItem);
+    if (!set.has(v)) {
+      set.add(v);
+      newArr.push(arrItem);
     }
-  })
-  return newArr
+  });
+  return newArr;
 }
