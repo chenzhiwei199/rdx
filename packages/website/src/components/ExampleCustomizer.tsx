@@ -3,22 +3,11 @@ import { useCallback } from 'react';
 import { Box, Code, Database } from 'react-feather';
 import { getParameters } from 'codesandbox/lib/api/define';
 
-const LinkToCodeSandBox = () => {
+const LinkToCodeSandBox = ({ code} :{code: string}) => {
   const params = getParameters({
     files: {
       'App.tsx': {
-        content: `
-import * as React from "react";
-
-export default function App() {
-  return (
-    <div className="App">
-      <h1>Hello CodeSandbox</h1>
-      <h2>Start editing to see some magic happen!</h2>
-    </div>
-  );
-}
-        `,
+        content: code,
         isBinary: false,
       },
       'index.tsx': {
@@ -60,13 +49,16 @@ render(<App />, rootElement);`,
           ],
           "main": "src/index.tsx",
           "dependencies": {
+            "@czwcode/rdx": "*",
             "react": "^16.12.0",
             "react-dom": "^16.12.0",
+            "react-color": "^2.17.0",
             "react-scripts": "3.3.0"
           },
           "devDependencies": {
             "@types/react": "16.9.19",
             "@types/react-dom": "16.9.5",
+            
             "typescript": "^4.1.0-beta"
           },
           "scripts": {
@@ -97,13 +89,12 @@ const toggles = [
 ];
 
 export type ExampleCustomizerProps = {
-  code: { default: string };
+  code: string;
   Example: ComponentType;
-  schema: { default: string };
 };
 
 export default function ExampleCustomizer(props: ExampleCustomizerProps) {
-  const { code, Example, schema } = props;
+  const { code, Example } = props;
 
   const View = useCallback(function View({ name }) {
     switch (name) {
@@ -139,8 +130,6 @@ export default function ExampleCustomizer(props: ExampleCustomizerProps) {
           </>
         );
 
-      case 'Schema':
-        return <CodeSection language='js' source={schema} />;
       default:
         return null;
     }
@@ -155,7 +144,7 @@ export default function ExampleCustomizer(props: ExampleCustomizerProps) {
         }}
         items={toggles}
       />
-      <LinkToCodeSandBox></LinkToCodeSandBox>
+      <LinkToCodeSandBox code={code}></LinkToCodeSandBox>
       <View name={toggles[acticv].name} />
     </div>
   );
