@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/graph-core",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -44,5 +44,5 @@
     "tslint-plugin-prettier": "^2.0.1",
     "typescript": "^4.1.0-beta"
   },
-  "gitHead": "5a9ad612190b17499fffd889d4447a1ca87f4532"
+  "gitHead": "f2a174f65008af73e48fb11ec74a5d6882a64e69"
 }
