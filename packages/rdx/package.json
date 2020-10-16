@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/rdx",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -51,8 +51,8 @@
     "typescript": "^4.1.0-beta"
   },
   "dependencies": {
-    "@czwcode/graph-core": "^0.x",
-    "@czwcode/task-queue": "^0.x",
+    "@czwcode/graph-core": "^0.0.13",
+    "@czwcode/task-queue": "^0.0.12",
     "eventemitter3": "^4.0.4",
     "react": "^16.12.0",
     "react-dom": "^16.12.0"

@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/graph-core",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "",
   "sideEffects": false,
   "main": "./dist/index.js",
