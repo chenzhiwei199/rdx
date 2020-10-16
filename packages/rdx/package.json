@@ -51,11 +51,11 @@
     "typescript": "^4.1.0-beta"
   },
   "dependencies": {
-    "@czwcode/graph-core": "^0.0.6",
-    "@czwcode/task-queue": "^0.0.5",
+    "@czwcode/graph-core": "^0.x",
+    "@czwcode/task-queue": "^0.x",
     "eventemitter3": "^4.0.4",
     "react": "^16.12.0",
     "react-dom": "^16.12.0"
   },
-  "gitHead": "f2a174f65008af73e48fb11ec74a5d6882a64e69"
+  "gitHead": "d422e89e96e7c265b834fd5238aced7a5cb6c250"
 }
