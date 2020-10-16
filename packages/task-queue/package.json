@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/task-queue",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "",
   "sideEffects": false,
   "main": "dist/index.js",
@@ -50,7 +50,8 @@
     "typescript": "^4.1.0-beta"
   },
   "dependencies": {
-    "@czwcode/graph-core": "^0.0.13"
+    "@czwcode/graph-core": "^0.0.13",
+    "eventemitter3": "^4.0.4"
   },
   "gitHead": "fc1b1073a737bd0515b32ea53f3825b0f9329c4b"
 }
