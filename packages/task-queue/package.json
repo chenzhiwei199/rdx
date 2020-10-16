@@ -1,6 +1,6 @@
 {
   "name": "@czwcode/task-queue",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "",
   "sideEffects": false,
   "main": "dist/index.js",
@@ -52,5 +52,5 @@
   "dependencies": {
     "@czwcode/graph-core": "^0.0.13"
   },
-  "gitHead": "d422e89e96e7c265b834fd5238aced7a5cb6c250"
+  "gitHead": "fc1b1073a737bd0515b32ea53f3825b0f9329c4b"
 }
