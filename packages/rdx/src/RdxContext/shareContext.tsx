@@ -301,7 +301,7 @@ export class ShareContextClass {
       const success = () => {
         onSuccess();
       };
-      function fail(error) {
+      const fail = (error) => {
         onError(error);
       }
       if (currentTask.reaction) {

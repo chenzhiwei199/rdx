@@ -78,7 +78,7 @@ export class RdxWatcherNode<GModel> extends RdxNode<GModel>
       next: (context, id, value, options) => {
         let collectDirtys = [];
         if (this.set) {
-          function collect(atom: IRdxDeps<any>) {
+          const collect = (atom: IRdxDeps<any>) => {
             collectDirtys.push(getId(atom));
           }
           try {

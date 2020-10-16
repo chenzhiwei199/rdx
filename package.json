@@ -9,7 +9,7 @@
     "clean": " lerna exec -- rm -rf node_modules",
     "doc": "lerna run doc",
     "lerna-build": "lerna run build",
-    "pub": "lerna run build && lerna publish ",
+    "pub": "lerna run build-lib && lerna publish ",
     "publish": "lerna exec -- npm publish . --parallel "
   },
   "workspaces": [
