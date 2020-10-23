@@ -146,3 +146,68 @@ export const 树形数据配置 = () => {
     </RdxFormContext>
   );
 };
+
+
+
+// export const Form = () => {
+//   const [color, setColor] = useRdxState(ColorAtom);
+//   return (
+//     <RdxFormContext enabledStatePreview={true}>
+//       <RdxNextFormItem type='object' name={'useInfo'} title={'用户信息'}>
+//         <RdxNextFormItem
+//           name='username'
+//           type='string'
+//           title='姓名'
+//         ></RdxNextFormItem>
+//         <RdxNextFormItem
+//           name='age'
+//           type='string'
+//           title='年龄'
+//           default={30}
+//         ></RdxNextFormItem>
+//         <RdxNextFormItem type='object' name={'extra'}>
+//           <RdxNextFormItem
+//             name='visible'
+//             type='string'
+//             title='visible'
+//             xComponent={'select'}
+//             componentProps={{
+//               dataSource: [
+//                 {
+//                   label: '显示',
+//                   value: 'show',
+//                 },
+//                 {
+//                   label: '隐藏',
+//                   value: 'hidden',
+//                 },
+//               ],
+//             }}
+            
+//             default={'show'}
+//           ></RdxNextFormItem>
+//           <RdxNextFormItem
+//             name='password'
+//             type='string'
+//             title='password'
+//             xComponent={'select'}
+//             default={30}
+//           ></RdxNextFormItem>
+//           <RdxNextFormItem
+//             name='passwordCheck'
+//             get={({ value, get }) => {
+//               console.log('passwordCheck: ');
+//               return {
+//                 ...value,
+//                 visible: get('useInfo.extra.visible').value === 'show',
+//               };
+//             }}
+//             type='string'
+//             title='password'
+//             default={30}
+//           ></RdxNextFormItem>
+//         </RdxNextFormItem>
+//       </RdxNextFormItem>
+//     </RdxFormContext>
+//   );
+// };

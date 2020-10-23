@@ -86,6 +86,7 @@ export interface NextComponentProps {
   radio: RadioProps
   checkbox: CheckboxProps
   time: DatePickerProps
+  [key: string]: any
 }
 
 interface XComponentTypeMap {
@@ -100,8 +101,9 @@ interface XComponentTypeMap {
   tree: 'string';
   time: 'string';
 }
-export type XComponentType = keyof XComponentTypeMap;
-export enum XComponentType2 {
+
+
+export enum XComponentType {
   Select = 'select',
   Radio = 'radio',
   Checkbox = 'checkbox',

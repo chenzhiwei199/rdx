@@ -91,7 +91,7 @@
 
 #### 思考
 1. 响应式函数、状态组件、管道
-2. reset一个watcher， 用户需要感知到上层是在执行reset
+2. reset一个compute， 用户需要感知到上层是在执行reset
 3. (局部状态怎么融合， 怎么合并)[https://img.alicdn.com/tfs/TB1TAoIh_M11u4jSZPxXXahcXXa-974-520.png]
   - 可以通过定义新的rdxNode类型来达到目的
 4. 和reducer怎么融合
@@ -123,9 +123,9 @@
 - 控制onChange回调的时机
 
 ### 冒烟逻辑测试
-1. atom， watcher， reaction 单独的用例
-2. reaction、watcher使用atom，的get 链路
-3. reaction、watcher使用atom，的set 链路 和reset链路
+1. atom， compute， reaction 单独的用例
+2. reaction、compute使用atom，的get 链路
+3. reaction、compute使用atom，的set 链路 和reset链路
 
 ### 理论依据
 1. 主观输入(用户主动触发的场景)
@@ -144,7 +144,7 @@
   一种是被观察这比观察者捕获依赖的顺序要快，这个时候不需要额外的处理，因为依赖检测可以在被观察者数据生成之前完成
   第二种是被观察者比观察者执行的要慢，那么观察者显然会先执行完，这个时候可以捕获到依赖，但是结果值不可以信任，需要重新获取这次的数据，并停止之前的依赖
 
-- (完成)watcher的值是一个虚拟的属性，不应该存储在全局的store中
+- (完成)compute的值是一个虚拟的属性，不应该存储在全局的store中
 - (完成)rdxstore的数据如何序列化，并在下次使用，rdxstore应该是一个完全非受控的状态，只应该有默认的state设置，不应该有value和onChange
 - (完成)可以构造一个操作符，可以观察全局节点的执行情况，这样可以方便表单实现数据预览状态，也可以提供给提交的组件一个获取全局数据的机会
 - 作用域的概念该怎么来营造，因为并不是所有东西都是立即执行，思路1： 可以通过另外一个rdx来构造
@@ -154,7 +154,7 @@
   - 2. 任务初始化的时候 addOrUpdateTask
   - 3. 数据变更的时候，如果没有下游任务，则触发，如果有则等待下游任务触发。
 
-- (完成)造一个监听所有数据的Watcher
+- (完成)造一个监听所有数据的Compute
 - atom原子设置数据时的问题， 设置数据也可能是闭环，
 - (改造后的)状态管理和分析
 

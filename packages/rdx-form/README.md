@@ -1,35 +1,39 @@
-
 ### 数组数据能力建设
+
 - 数组数据的操作能力，新增，删除，交换位置，更新数据，
+
 ### 树数据能力建设
+
 - 交换数据的逻辑比较恶心，需要看看怎么做
+
 ### 表单生成器
+
 - 组件注册
 - 组件渲染
 - 布局渲染
 
-
 ### 问题
-- (已解决，通过context)path如何在父子组件中传递
+
+- (已解决，通过 context)path 如何在父子组件中传递
 - 异步方法如何序列化？async ?
 - 数据格式的转化，内外维护的状态不一样，需要转化为外部的
 - (已解决)数组形式不好实现
-- **表单的Watcher实现，需要升级，表单比较特殊，如果引用非原子元素，需要重新构造依赖关系** 
-
-
+- **表单的 Compute 实现，需要升级，表单比较特殊，如果引用非原子元素，需要重新构造依赖关系**
 
 ### feature
+
 - (完成)json to ts
 - json to View
 - 丰富校验能力，包含时间的校验等等
 - 多个数据的校验能力
-- (完成)ArrayCard、ArrayTable、Tree 都必须紧跟着 RdxFormItem定义
-  - ArrayTable 如果children的类型为object，那么还需要跟着RdxFormItem
-  - ArrayCard、Tree的子节点可以间隔多层，中间可以嵌套布局或者其他的React代码
+- (完成)ArrayCard、ArrayTable、Tree 都必须紧跟着 RdxFormItem 定义
+  - ArrayTable 如果 children 的类型为 object，那么还需要跟着 RdxFormItem
+  - ArrayCard、Tree 的子节点可以间隔多层，中间可以嵌套布局或者其他的 React 代码
 
 ### 例子
+
 - 布局方式
-  - single column布局
+  - single column 布局
 - 表单类型
 - 联动能力
 - 受控状态
@@ -39,10 +43,10 @@
     - 时间最近几天？
     - 选中时间的范围？小于一周？
 - 数组配置
-- visible 和disabled能力
-
+- visible 和 disabled 能力
 
 ### 核心目标
+
 1. 解决表单的性能问题
 2. 表单研发效率的问题
 3. 后端数据驱动的问题

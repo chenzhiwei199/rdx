@@ -1,9 +1,9 @@
 import { ShareContextClass, DeliverOptions } from '../RdxContext/shareContext';
 import { BaseContext, Status, IRdxTask, IRdxAnyDeps } from '../global';
-import { RdxNode } from '../RdxValues';
+import { RdxState } from '../RdxValues';
 
 export function getId(dep: IRdxAnyDeps) {
-  if (dep instanceof RdxNode) {
+  if (dep instanceof RdxState) {
     return dep.getId();
   } else {
     return dep;

@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import {
   RdxContext,
-  useRdxWatcher,
-  rdxWatcherFamily,
+  useRdxCompute,
+  rdxComputeFamily,
   useRdxState,
 } from '@czwcode/rdx';
-import { DevVisualTableTool } from '@czwcode/rdx-plugins';
-const watcherFamily = rdxWatcherFamily({
+
+const computeFamily = rdxComputeFamily({
   id: 'dynamic',
   get: (param: number) => () => {
     return param;
   },
 });
 const CounterView = (props: { id: number }) => {
-  const [dynamic] = useRdxWatcher(
+  const [dynamic] = useRdxCompute(
     {
       id: 'dynamic',
       get: () => {
@@ -22,8 +22,8 @@ const CounterView = (props: { id: number }) => {
     },
     [props.id]
   );
-  const [watcherFamilyDynamic] = useRdxState(watcherFamily(props.id));
-  const [staticV] = useRdxWatcher({
+  const [computeFamilyDynamic] = useRdxState(computeFamily(props.id));
+  const [staticV] = useRdxCompute({
     id: 'static',
     get: () => {
       return props.id;
@@ -33,16 +33,16 @@ const CounterView = (props: { id: number }) => {
   return (
     <div>
       <div>dynamic： {dynamic}</div>
-      <div>watcherFamilyDynamic： {watcherFamilyDynamic}</div>
+      <div>computeFamilyDynamic： {computeFamilyDynamic}</div>
       <div>staticV： {staticV}</div>
     </div>
   );
 };
 
-export const WatcherFamily用法2 = () => {
+export const ComputeFamily用法2 = () => {
   const [state, setState] = useState(1);
   return (
-    <RdxContext visualStatePlugins={<DevVisualTableTool />}>
+    <RdxContext>
       <CounterView id={state} />
       <div onClick={() => setState(state + 1)}>id++</div>
     </RdxContext>

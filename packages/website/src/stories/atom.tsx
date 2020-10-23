@@ -1,17 +1,22 @@
 import React from 'react';
-import { atom, RdxContext, useRdxSetter, useRdxState, useRdxValue } from '@czwcode/rdx';
+import {
+  atom,
+  RdxContext,
+  useRdxSetter,
+  useRdxState,
+  useRdxValue,
+} from '@czwcode/rdx';
 import { SketchPicker } from 'react-color';
-import { setup, RdxFormContext, RdxNextFormItem } from '@czwcode/rdx-next-form';
-import '@alifd/next/dist/next.css';
-setup();
+import { DevVisualTableTool } from '../../../rdx-plugins/src';
 const ColorAtom = atom({
   id: 'color',
   defaultValue: 'white',
 });
 
-export const AtomBgControl = () => {
+export const AtomBgControlSample = () => {
   return (
-    <RdxContext>
+    <RdxContext >
+      <div>点击像devtools发送消息</div>
       <div style={{ display: 'flex' }}>
         <Canvas />
         <ColorEditor />
@@ -48,6 +53,7 @@ const ThemeEditor = () => {
       <div style={{ display: 'flex' }}>
         {dataSource.map((item) => (
           <div
+            key={item}
             onClick={() => {
               setColor(item);
             }}
@@ -79,66 +85,3 @@ const ColorEditor = () => {
     />
   );
 };
-
-// export const Form = () => {
-//   const [color, setColor] = useRdxState(ColorAtom);
-//   return (
-//     <RdxFormContext enabledStatePreview={true}>
-//       <RdxNextFormItem type='object' name={'useInfo'} title={'用户信息'}>
-//         <RdxNextFormItem
-//           name='username'
-//           type='string'
-//           title='姓名'
-//         ></RdxNextFormItem>
-//         <RdxNextFormItem
-//           name='age'
-//           type='string'
-//           title='年龄'
-//           default={30}
-//         ></RdxNextFormItem>
-//         <RdxNextFormItem type='object' name={'extra'}>
-//           <RdxNextFormItem
-//             name='visible'
-//             type='string'
-//             title='visible'
-//             xComponent={'select'}
-//             componentProps={{
-//               dataSource: [
-//                 {
-//                   label: '显示',
-//                   value: 'show',
-//                 },
-//                 {
-//                   label: '隐藏',
-//                   value: 'hidden',
-//                 },
-//               ],
-//             }}
-            
-//             default={'show'}
-//           ></RdxNextFormItem>
-//           <RdxNextFormItem
-//             name='password'
-//             type='string'
-//             title='password'
-//             xComponent={'select'}
-//             default={30}
-//           ></RdxNextFormItem>
-//           <RdxNextFormItem
-//             name='passwordCheck'
-//             get={({ value, get }) => {
-//               console.log('passwordCheck: ');
-//               return {
-//                 ...value,
-//                 visible: get('useInfo.extra.visible').value === 'show',
-//               };
-//             }}
-//             type='string'
-//             title='password'
-//             default={30}
-//           ></RdxNextFormItem>
-//         </RdxNextFormItem>
-//       </RdxNextFormItem>
-//     </RdxFormContext>
-//   );
-// };

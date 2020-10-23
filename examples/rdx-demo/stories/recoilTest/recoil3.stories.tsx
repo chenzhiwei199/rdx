@@ -20,8 +20,8 @@
 //   },
 // });
 // const pause = (t: number) => new Promise((resolve) => setTimeout(resolve, t));
-// const asyncWatcherDepsAsyncAtom = selector({
-//   key: 'asyncWatcherDepsAsyncAtom',
+// const asyncComputeDepsAsyncAtom = selector({
+//   key: 'asyncComputeDepsAsyncAtom',
 //   get: async ({ get }) => {
 //     console.log(22222, new Date());
 //     console.log(222222);
@@ -31,18 +31,18 @@
 //     return get(asyncAtom) + 1;
 //   },
 // });
-// const asyncWatcherDepsAsyncAtom2 = selector({
-//   key: 'asyncWatcherDepsAsyncAtom2',
+// const asyncComputeDepsAsyncAtom2 = selector({
+//   key: 'asyncComputeDepsAsyncAtom2',
 //   get: async ({ get }) => {
 //     console.log(33333, new Date());
 //     console.log(33333);
-//     return get(asyncWatcherDepsAsyncAtom) + 1;
+//     return get(asyncComputeDepsAsyncAtom) + 1;
 //   },
 // });
 // const SyncComponent = ({ nodes }) => {
 //   const [status1, staticAtomValue] = useRecoilState(nodes[0]);
-//   const [status2, staticWatcherValue] = useRecoilStateLoadable(nodes[1]);
-//   // const [status3, staticWatcherValue3] = useRecoilStateLoadable(nodes[2]);
+//   const [status2, staticComputeValue] = useRecoilStateLoadable(nodes[1]);
+//   // const [status3, staticComputeValue3] = useRecoilStateLoadable(nodes[2]);
 //   const statusRef = useRef([]);
 //   statusRef.current = [...statusRef.current, status1];
 //   const statusRef2 = useRef([]);
@@ -51,7 +51,7 @@
 //     <div>
 //       <div>1: {staticAtomValue}</div>
 //       {statusRef.current.join('-')}
-//       <div>2: {JSON.stringify(staticWatcherValue)}</div>
+//       <div>2: {JSON.stringify(staticComputeValue)}</div>
 //       {JSON.stringify(statusRef2.current)}
 //     </div>
 //   );
@@ -61,7 +61,7 @@
 //     <RecoilRoot>
 //       <Suspense fallback={<div>111</div>}>
 //         <SyncComponent
-//           nodes={[asyncWatcherDepsAsyncAtom, asyncAtom]}
+//           nodes={[asyncComputeDepsAsyncAtom, asyncAtom]}
 //         ></SyncComponent>
 //       </Suspense>
 //     </RecoilRoot>

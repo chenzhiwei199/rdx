@@ -1,11 +1,8 @@
 import { NodeStatus } from '@czwcode/graph-core';
-import { ISnapShotTrigger} from '@czwcode/task-queue'
-import {
-  ShareContextClass,
-  DeliverOptions,
-} from './RdxContext/shareContext';
+import { ISnapShotTrigger } from '@czwcode/task-queue';
+import { ShareContextClass, DeliverOptions } from './RdxContext/shareContext';
 import { ActionType, TargetType } from './RdxContext/interface';
-import { RdxNode, RdxNodeType } from './RdxValues';
+import { RdxState, RdxNodeType } from './RdxValues';
 export * from '@czwcode/task-queue';
 export * from '@czwcode/graph-core';
 
@@ -23,7 +20,7 @@ export interface ReactionContext<GModel> extends BaseContext<GModel> {
   /**
    * 停止任务，并且不执行下游，并且任务不会重复利用
    */
-  close: () => void
+  close: () => void;
 }
 
 export type ASYNC_TASK<GModel> = (
@@ -49,7 +46,7 @@ export enum RENDER_STATUS {
 export type Status = NodeStatus | RENDER_STATUS;
 export const Status = { ...NodeStatus, ...RENDER_STATUS };
 export type IRdxAnyDeps = IRdxDeps<any>;
-export type IRdxDeps<GModel> = string | RdxNode<GModel>;
+export type IRdxDeps<GModel> = string | RdxState<GModel>;
 export type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 export type Retain<T, K> = Pick<T, Extract<keyof T, K>>;
 export type PartialNotOmit<T, K> = Partial<Omit<T, K>>;
@@ -147,7 +144,7 @@ export interface IRdxTask<GModel>
    */
   id: string;
   type: RdxNodeType;
-  reset: (context: ShareContextClass) => void
+  reset: (context: ShareContextClass) => void;
   getValue?: (id: string) => GModel;
   setValue?: (id: string, value: GModel) => void;
 }
@@ -186,7 +183,7 @@ export enum StateUpdateType {
   ReactionStatus = 'ReactionStatus',
   GlobalState = 'GlobalState',
   State = 'State',
-  TriggerTaskSchedule = 'TriggerTaskSchedule'
+  TriggerTaskSchedule = 'TriggerTaskSchedule',
 }
 export interface IStateInfo {
   actionType: ActionType;
@@ -197,7 +194,7 @@ export interface IStateInfo {
 
 export interface IRdxSnapShotTrigger extends ISnapShotTrigger {
   // 当前的所有task信息
-  tasks?: IRdxTask<any>[]
+  tasks?: IRdxTask<any>[];
 }
 // 当前节点的state
 // states: IStateInfo[];

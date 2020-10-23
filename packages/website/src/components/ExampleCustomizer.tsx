@@ -1,9 +1,9 @@
 import React, { ComponentType } from 'react';
 import { useCallback } from 'react';
-import { Box, Code, Database } from 'react-feather';
+import { Box, Code, Codesandbox } from 'react-feather';
 import { getParameters } from 'codesandbox/lib/api/define';
 
-const LinkToCodeSandBox = ({ code} :{code: string}) => {
+const LinkToCodeSandBox = ({ code }: { code: string }) => {
   const params = getParameters({
     files: {
       'App.tsx': {
@@ -11,13 +11,28 @@ const LinkToCodeSandBox = ({ code} :{code: string}) => {
         isBinary: false,
       },
       'index.tsx': {
-        content: `import * as React from "react";
+        content: `
+import * as React from "react";
 import { render } from "react-dom";
-
-import App from "./App";
-
+import * as App from "./App";
 const rootElement = document.getElementById("root");
-render(<App />, rootElement);`,
+function Main() {
+  return (
+    <div>
+      {Object.keys(App).map((item) => {
+        const Component = App[item];
+        return (
+          <div>
+            <h3>{item}</h3>
+            <Component />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+render(<Main />, rootElement);
+        `,
         isBinary: false,
       },
       'index.html': {
@@ -49,7 +64,7 @@ render(<App />, rootElement);`,
           ],
           "main": "src/index.tsx",
           "dependencies": {
-            "@czwcode/rdx": "*",
+            "@czwcode/rdx": "0.x",
             "react": "^16.12.0",
             "react-dom": "^16.12.0",
             "react-color": "^2.17.0",
@@ -58,7 +73,6 @@ render(<App />, rootElement);`,
           "devDependencies": {
             "@types/react": "16.9.19",
             "@types/react-dom": "16.9.5",
-            
             "typescript": "^4.1.0-beta"
           },
           "scripts": {
@@ -78,7 +92,20 @@ render(<App />, rootElement);`,
       },
     },
   });
-  return <a href={`https://codesandbox.io/api/v1/sandboxes/define?parameters=${params}`}>点击跳转</a>
+  return (
+    <a
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+      target='_blank'
+      href={`https://codesandbox.io/api/v1/sandboxes/define?parameters=${params}`}
+    >
+      <Codesandbox size={24} color='#23a3ff' />
+      <div style={{ color: '#23a3ff', marginLeft: 12 }}>Go To Codesandbox</div>
+    </a>
+  );
 };
 import { CodeSection } from './CodeSection';
 import { TogglerHeader } from './Toggler';
@@ -101,27 +128,19 @@ export default function ExampleCustomizer(props: ExampleCustomizerProps) {
       case 'Code':
         return (
           <CodeSection
-            language='js'
-            replace={{ "'[^']*?/universal'": `'uniforms-${1}'` }}
+            language='ts'
             source={code}
           />
         );
       case 'Example':
         return (
           <>
-            {Array.from(Object.keys(Example))
+            {Object.keys(Example)
               .filter((item) => item !== 'default')
               .map((key) => {
                 const NewExample = Example[key];
                 return (
-                  <div
-                    style={{
-                      boxShadow: 'rgba(0, 0, 0, 0.1) 0px 1px 2px 0px',
-                      borderRadius: '4px',
-                      padding: 12,
-                      marginBottom: 12,
-                    }}
-                  >
+                  <div key={key}>
                     <h3>{key}</h3>
                     <NewExample />
                   </div>
@@ -136,15 +155,24 @@ export default function ExampleCustomizer(props: ExampleCustomizerProps) {
   }, []);
   const [acticv, setActive] = React.useState(0);
   return (
-    <div>
+    <div
+      style={{
+        boxShadow: 'rgba(0, 0, 0, 0.1) 0px 1px 2px 0px',
+        borderRadius: '4px',
+        padding: 12,
+        border: '1px solid lightgrey',
+        marginBottom: 12,
+      }}
+    >
       <TogglerHeader
         activeToggle={acticv}
         onClick={(v) => {
           setActive(v);
         }}
         items={toggles}
-      />
+      >
       <LinkToCodeSandBox code={code}></LinkToCodeSandBox>
+      </TogglerHeader>
       <View name={toggles[acticv].name} />
     </div>
   );

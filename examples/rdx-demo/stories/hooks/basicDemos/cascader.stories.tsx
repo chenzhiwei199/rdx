@@ -1,16 +1,16 @@
 import React from 'react';
 import {
-  watcher,
+  compute,
   atom,
   RdxContext,
   useRdxState,
   useRdxValueLoader,
   Status,
-  RdxNode,
+  RdxState,
 } from '@czwcode/rdx';
 import axios from 'axios';
 import { Menu, Grid } from '@alifd/next';
-import { DevVisualTableTool } from '@czwcode/rdx-plugins';
+
 const { Row, Col } = Grid;
 export default {
   title: '简单例子/级联用法',
@@ -19,7 +19,7 @@ export default {
   },
 };
 
-const administrativeData = watcher<AdministrativeSource[]>({
+const administrativeData = compute<AdministrativeSource[]>({
   id: 'administrativeData',
   get: async () => {
     const res = await axios.get(
@@ -29,10 +29,9 @@ const administrativeData = watcher<AdministrativeSource[]>({
   },
 });
 
-const cityDataSource = watcher({
+const cityDataSource = compute({
   id: 'cityDataSource',
   get: ({ get }) => {
-    console.log('cityDataSource: ', get(administrativeData));
     const findItem = (get(administrativeData) || []).find(
       (item) => item.value === get(province)
     );
@@ -44,14 +43,13 @@ const cityDataSource = watcher({
   },
 });
 
-const areaDataSource = watcher({
+const areaDataSource = compute({
   id: 'areaDataSource',
   get: ({ get }) => {
     // 过滤第一层
     let findItem = (get(administrativeData) || []).find(
       (item) => item.value === get(province)
     );
-    console.log('findItem: ', findItem);
     findItem = (findItem ? findItem.children || [] : []).find(
       (item) => item.value === get(city)
     );
@@ -77,17 +75,16 @@ const area = atom({
 });
 
 const View = (props: {
-  atom: RdxNode<string>;
-  watcher: RdxNode<AdministrativeSource[]>;
+  atom: RdxState<string>;
+  compute: RdxState<AdministrativeSource[]>;
 }) => {
-  const { atom, watcher } = props;
+  const { atom, compute } = props;
 
   const [value, setValue] = useRdxState(atom);
-  const [status, dataSource] = useRdxValueLoader(watcher);
+  const [status, dataSource] = useRdxValueLoader(compute);
   if (status !== Status.IDeal) {
     return <div>loading...</div>;
   }
-  console.log('xxxxxxdataSource: ', dataSource);
   return (
     <Menu
       onItemClick={(key) => {
@@ -106,20 +103,20 @@ const View = (props: {
 
 export const 联动Hooks例子 = () => {
   return (
-    <RdxContext visualStatePlugins={<DevVisualTableTool />}>
+    <RdxContext>
       {/* <DevVisualGraphTool /> */}
       <Row>
         <Col>
           <h3>province</h3>
-          <View atom={province} watcher={administrativeData} />
+          <View atom={province} compute={administrativeData} />
         </Col>
         <Col>
           <h3>city</h3>
-          <View atom={city} watcher={cityDataSource} />
+          <View atom={city} compute={cityDataSource} />
         </Col>
         <Col>
           <h3>area</h3>
-          <View atom={area} watcher={areaDataSource} />
+          <View atom={area} compute={areaDataSource} />
         </Col>
       </Row>
     </RdxContext>

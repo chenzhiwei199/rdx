@@ -7,7 +7,7 @@ import {
   XComponentType,
   BaseType,
   IRdxFormItem,
-  IRdxFormWatcherGet,
+  IRdxFormComputeGet,
   useRdxFormGlboalState,
   useRdxFormAtomLoader,
   FormRdxStateContext,
@@ -17,15 +17,13 @@ import { RdxContext } from '@czwcode/rdx';
 import { Button, Notification } from '@alifd/next';
 import { parseGetParams, mockResult, jsonParse } from './utils';
 import { fetchData } from './dataUtils';
-import { DevVisualTableTool } from '../../../../../packages/rdx-plugins/src';
 import JsonView from 'react-json-view';
 
-const RdxFormItem =  <GBaseType extends BaseType>(
+const RdxFormItem = <GBaseType extends BaseType>(
   props: IRdxFormItem<HttpSettingState & { data: unknown }, GBaseType>
 ) => {
   return <UnDefinedRdxFormItem {...props} />;
 };
-
 
 export interface IHttpSetting {
   value: IHttpSettingValue;
@@ -150,7 +148,7 @@ const RequestInfo = () => {
       value: newUrl,
     });
   };
-  const get: IRdxFormWatcherGet<any, HttpSettingState & { data: unknown }> = ({
+  const get: IRdxFormComputeGet<any, HttpSettingState & { data: unknown }> = ({
     id,
     get,
   }) => {
@@ -311,9 +309,6 @@ export default function HttpSetting(props: IHttpSetting) {
       <RdxFormContext
         state={value}
         onChange={onChange}
-        visualStatePlugins={
-          <DevVisualTableTool context={FormRdxStateContext} />
-        }
         typescriptGenerateOptions={{ rootName: 'HttpSettingState' }}
         enabledStatePreview={true}
         enabledTypescriptGenerte={true}

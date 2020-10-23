@@ -1,4 +1,4 @@
-import {DataModel, RdxNode, RdxReset, ValueOrUpdater} from '@czwcode/rdx'
+import {DataModel, RdxState, RdxReset, ValueOrUpdater} from '@czwcode/rdx'
 export type Join<K , P > = K extends string | number ? P extends string | number ?  `${K}${"."}${ P}` : never : never;
 type valueof<T> = T[keyof T]
 type ArrayCondition<Conditon, Success, Fail> = Conditon extends [] ? Success : Fail;
@@ -36,12 +36,12 @@ type StringPathResolver<D> =
       : never
 // type IPath<ISource, IValueType> = StringPathResolver<ISource>| KeyPath<ISource> | RdxNode<IValueType> 
 
-type TPath<ISource, IValueType> =   StringPathResolver<ISource>| KeyPath<ISource>  | RdxNode<IModel<IValueType>>
+type TPath<ISource, IValueType> =   StringPathResolver<ISource>| KeyPath<ISource>  | RdxState<IModel<IValueType>>
 type TResult<ISource,IValueType, INode> =  ISource extends never ? IModel<IValueType> :INode extends string[]
 ? IModel<TGet<ISource, INode>>
 : INode extends string
 ? IModel<TGet<ISource, StringReturnResolver<INode>>>
-: INode extends RdxNode<IModel<IValueType>>
+: INode extends RdxState<IModel<IValueType>>
 ? IModel<IValueType>
 : never
 
@@ -69,7 +69,7 @@ export type RdxFormSet<ISource, IValueType> = <INode extends TPath<ISource, IVal
   value:ValueOrUpdater<TResult<ISource, IValueType, INode>>
 ) => void;
 
-export type IRdxFormWatcherGet<IValueType, ISource> = (config: {
+export type IRdxFormComputeGet<IValueType, ISource> = (config: {
   id: string;
   value: IModel<IValueType>;
   /**
@@ -81,7 +81,7 @@ export type IRdxFormWatcherGet<IValueType, ISource> = (config: {
   get: RdxFormGet<ISource, IValueType>;
 }) => DataModel<IModel<IValueType>>;
 
-export type IRdxFormWatcherSet<IValueType, ISource> = (
+export type IRdxFormComputeSet<IValueType, ISource> = (
   config: {
     id: string;
     value: IModel<IValueType>;

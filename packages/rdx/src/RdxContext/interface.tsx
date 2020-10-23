@@ -11,15 +11,15 @@ import { IRdxTask } from '../global';
 
 export type MapObject<T> = { [key: string]: T | null };
 
-export interface RdxContextProps<GModel> {
+export interface RdxContextProps {
   name?: string;
   children: React.ReactNode;
   context?: React.Context<ShareContextClass>;
-  withRef?: React.MutableRefObject<ShareContextClass>;
-  initializeState?: MapObject<GModel>;
-  onChange?: (state: MapObject<GModel>) => void;
+  // withRef?: React.MutableRefObject<ShareContextClass>;
+  initializeState?: MapObject<any>;
+  onChange?: (state: MapObject<any>) => void;
   onLoading?: () => void
-  createStore?: (data: any) => Base<GModel>;
+  createStore?: (data: any) => Base<any>;
   visualStatePlugins?: React.ReactNode | React.ReactNode[];
   // 依赖数据池
 }

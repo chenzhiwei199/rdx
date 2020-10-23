@@ -1,5 +1,5 @@
 import React from 'react';
-import { DevVisualTableTool } from '@czwcode/rdx-plugins';
+
 import '@alifd/next/dist/next.css';
 import { useState } from 'react';
 import {
@@ -64,7 +64,6 @@ export const 多对象嵌套 = () => {
         </RdxFormItem>
       </RdxFormItem>
 
-      <DevVisualTableTool />
     </RdxFormContext>
   );
 };
@@ -215,8 +214,6 @@ export const 数组对象 = () => {
           </RdxFormItem>
         </RdxFormItem>
       </RdxFormItem>
-      {/* <DevVisualGraphTool/>
-      <DevVisualTableTool /> */}
     </RdxFormContext>
   );
 };
@@ -225,7 +222,6 @@ export const 字符串数组_ArrayTable = () => {
   return (
     <RdxFormContext
       enabledStatePreview={true}
-      visualStatePlugins={<DevVisualTableTool context={FormRdxStateContext} />}
       enabledTypescriptGenerte={true}
       onChange={(value) => {}}
     >
@@ -238,8 +234,6 @@ export const 字符串数组_ArrayTable = () => {
         <RdxFormItem title='请输入字符串' type={'string'}></RdxFormItem>
         {/* <div></div> */}
       </RdxFormItem>
-      {/* <DevVisualGraphTool/>
-      <DevVisualTableTool /> */}
     </RdxFormContext>
   );
 };

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import echart from 'echarts';
-import { useRdxWatcher, useRdxAtom } from '../../../../../packages/rdx/src';
+import { useRdxCompute, useRdxAtom } from '../../../../../packages/rdx/src';
 import { DefineId } from '../constant';
 import ReactDOM from 'react-dom';
 
@@ -111,7 +111,7 @@ export interface IChart {
   merge?: boolean;
   width?: number;
   height?: number;
-  onChange?: (v: IChartEventHandlerValue) => void
+  onChange?: (v: IChartEventHandlerValue) => void;
   options: echart.EChartOption;
 }
 
@@ -125,10 +125,10 @@ export function Chart(props: IChart) {
   const { width = 400, height = 400, merge = false, options, onChange } = props;
   const [echartInstance, ref] = useChartUpdateHook({
     merge,
-    echartOptions: options
+    echartOptions: options,
   });
   useClickEventHook(echartInstance, {
-    onChange: onChange
+    onChange: onChange,
   });
   useSizeHook(echartInstance, { width, height });
   return <div ref={ref} style={{ width, height }}></div>;

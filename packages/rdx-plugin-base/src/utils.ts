@@ -1,5 +1,15 @@
-import { TaskEventType } from '@czwcode/rdx';
-import { DataPersistSnapShot } from './DataPersistence';
+import { IRdxSnapShotTrigger, IStateInfo, IStatusInfo, TaskEventType } from '@czwcode/rdx';
+
+export interface ISnapShot extends IRdxSnapShotTrigger {
+  // 事件类型
+  type: TaskEventType;
+  // 当前点的状态
+  status: IStatusInfo[];
+}
+
+export interface DataPersistSnapShot extends ISnapShot {
+  states: IStateInfo[];
+}
 
 export function getDefaultSnapShot(
   eventType: TaskEventType

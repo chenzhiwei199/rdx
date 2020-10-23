@@ -2,17 +2,97 @@
 id: Atom
 title: Atom
 ---
-
-
-Atom 持有应用的实际状态。可以通过 Atom 来进行状态的共享。
-
-
-### 通过atom进行组件间状态的共享 
 import ExampleCustomizer from '../../src/components/ExampleCustomizer';
 import * as Atom from '../../src/stories/atom';
 import AtomSource from '!!raw-loader!../../src/stories/atom';
 
+
+Atom 持有应用的实际状态。可以通过 Atom 来进行组件间的状态的共享。
+
+### 通过atom进行组件间状态的共享 
+
+通过atom()方法来建立一个状态节点，状态节点需要一个唯一的id，并且可以设置一个默认值。
+
+```jsx
+const ColorAtom = atom({
+  id: 'color',
+  defaultValue: 'white',
+});
+```
+
+通过 useRdxValue 这个hooks可以获取到ColorAtom中的状态。
+```jsx
+const Canvas = () => {
+  const color = useRdxValue(ColorAtom);
+  return (
+    <div>
+      <div style={{ position: 'relative' }}>
+        <div
+          style={{
+            width: 435,
+            height: 435,
+            background: color,
+            border: '1px solid grey',
+          }}
+        />
+        <div style={{ position: 'absolute', top: 10, left: 10 }}>
+          <ThemeEditor />
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+通过useRdxSetter 这个hooks 可以获取到一个setter方法，可以设置ColorAtom的状态。
+```jsx
+const ThemeEditor = () => {
+  const setColor = useRdxSetter(ColorAtom);
+  const dataSource = ['#fff', '#000'];
+  return (
+    <div>
+      <div style={{ display: 'flex' }}>
+        {dataSource.map((item) => (
+          <div
+            onClick={() => {
+              setColor(item);
+            }}
+            style={{
+              marginLeft: 12,
+              border: '1px solid grey',
+              background: item,
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+            }}
+          ></div>
+        ))}
+      </div>
+      <div style={{ color: 'orange' }}>点击我可以切换画布颜色哦!!</div>
+    </div>
+  );
+};
+```
+
+通过 useRdxState 可以同时获取到ColorAtom节点的状态和setter(设置器)。
+```jsx
+const ColorEditor = () => {
+  const [color, setColor] = useRdxState(ColorAtom);
+  return (
+    <SketchPicker
+      color={color}
+      onChange={(v) => {
+        const { a, r, g, b } = v.rgb;
+        setColor(`rgba(${r},${g},${b},${a}`);
+      }}
+    />
+  );
+};
+```
+
+### Sample
 <ExampleCustomizer code={AtomSource} Example={Atom}/>
+
 
 
 

@@ -18,12 +18,15 @@ import {
   GlobalErrorContextInstance,
 } from '../../hooks/formStatus';
 import { FormContextInstance } from '../../hooks/formContext';
-import { useRdxFormWatcherLoader } from '../../hooks/rdxStateFormHooks';
+import {
+  useRdxFormComputeLoader,
+  useRdxFormStateContext,
+} from '../../hooks/rdxStateFormHooks';
 import { getEmptyValue } from '../../utils/functions';
 import {
   IModel,
-  IRdxFormWatcherGet,
-  IRdxFormWatcherSet,
+  IRdxFormComputeGet,
+  IRdxFormComputeSet,
   RuleDetail,
 } from './types';
 import { Tooltip } from '../Tooltip';
@@ -48,7 +51,7 @@ export interface IFormBlock<T> {
   componentProps: IPenetrate<T>;
   layoutProps?: {
     span?: number;
-  }
+  };
 }
 export interface IFormTypes<T extends BaseType> {
   // 组件类型
@@ -58,7 +61,6 @@ export interface IFormTypes<T extends BaseType> {
 }
 // 组件消费属性
 export interface IPenetrate<T> {
-  
   // 是否可用
   disabled?: boolean;
   // 状态
@@ -116,9 +118,9 @@ export type IRdxFormItem<ISource, T extends BaseType> = {
   // 子节点
   children?: ReactNode;
   // 响应式函数
-  get?: IRdxFormWatcherGet<SuspectType<T>, ISource>;
+  get?: IRdxFormComputeGet<SuspectType<T>, ISource>;
   // 计算值
-  set?: IRdxFormWatcherSet<SuspectType<T>, ISource>;
+  set?: IRdxFormComputeSet<SuspectType<T>, ISource>;
   // 默认的可见状态
   defaultVisible?: boolean;
   // // 默认的不可用状态
@@ -190,19 +192,30 @@ export const RdxFormItem = <ISource, T extends BaseType>(
     defaultVisible,
     componentProps
   );
-  const [value = defaultValue, next, context] = useRdxFormWatcherLoader<
+  const rdxContext = useRdxFormStateContext();
+
+  const [value = defaultValue, next, context] = useRdxFormComputeLoader<
     IModel<SuspectType<T>>
   >({
-    defaultValue: defaultValue,
     virtual: currentVirtual,
     id: id,
     get: get
-      ? get
-      : ({ value }) => {
-          return value;
+      ? (config) => {
+          return get({
+            ...config,
+            value:
+              rdxContext.hasTask(id) && rdxContext.isTaskReady(id)
+                ? rdxContext.getTaskStateById(id)
+                : defaultValue,
+          });
+        }
+      : () => {
+          return context.value;
         },
     set: set
-      ? set
+      ? (config, newValue) => {
+          return set({ ...config, value: context.value }, newValue);
+        }
       : ({ set }, newValue) => {
           set(id, newValue);
         },
@@ -307,8 +320,8 @@ const FormItemWrapper = styled.div<{
   useMargin: boolean;
 }>`
   margin-bottom: ${(props) => {
-    console.log("props.useMargin", props.useMargin)
-    return (props.useMargin ? 12 : 0)
+    console.log('props.useMargin', props.useMargin);
+    return props.useMargin ? 12 : 0;
   }}px;
 `;
 export const FormItem = <T extends Object>(
@@ -326,15 +339,15 @@ export const FormItem = <T extends Object>(
     errorMsg,
   } = base;
   const Cmp = getRegistry().fields[xComponent || type];
-  const { containerStyle, labelStyle, contentStyle} = createLayout(layoutProps && layoutProps.span)
+  const { containerStyle, labelStyle, contentStyle } = createLayout(
+    layoutProps && layoutProps.span
+  );
   return (
     <>
       {visible && (
         <FormItemWrapper
           useMargin={type !== BaseType.Object}
-          style={
-            containerStyle
-          }
+          style={containerStyle}
           className='rdx-form-item'
         >
           {title && (

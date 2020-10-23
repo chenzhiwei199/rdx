@@ -8,6 +8,7 @@
     "bootstrap": "lerna bootstrap",
     "clean": " lerna exec -- rm -rf node_modules",
     "doc": "lerna run doc",
+    "tools-watch": "yarn workspace @czwcode/rdx-devtool watch",
     "lerna-build": "lerna run build",
     "pub": "lerna run build-lib && lerna publish ",
     "publish": "lerna exec -- npm publish . --parallel "

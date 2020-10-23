@@ -39,15 +39,18 @@ export type TogglerHeaderProps<T extends TogglerItem> = {
   activeToggle: number;
   items: T[];
   onClick: (tab: number) => void;
+  children?: React.ReactNode
 };
 
 export function TogglerHeader<T extends TogglerItem>({
   activeToggle,
   items,
   onClick,
+  children
 }: TogglerHeaderProps<T>) {
   return (
-    <section className={classNames(styles.toggler, styles.header)}>
+    <section style={{ position: 'relative'}} className={classNames(styles.toggler, styles.header)}>
+      <div style={{ position: 'absolute', left: 0}}>{children}</div>
       {items.map((item, key) => {
         return (
           <TogglerHeaderItem
@@ -58,6 +61,7 @@ export function TogglerHeader<T extends TogglerItem>({
           />
         );
       })}
+      
     </section>
   );
 }

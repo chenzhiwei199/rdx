@@ -1,4 +1,4 @@
-import  { Consumer, Provider } from 'react';
+import { Consumer, Provider } from 'react';
 import {
   IRdxTask,
   ReactionContext,
@@ -13,19 +13,18 @@ import { BaseMap, BaseObject, ScopeObject, Base } from './core';
 import { ProcessGraphContent, TargetType } from './interface';
 import EventEmitter from 'eventemitter3';
 import {
-  TaskEventType,
   PreDefinedTaskQueue,
   ISnapShotTrigger,
   ICallbackInfo,
   normalizeSingle2Arr,
-  TaskEventTriggerType,
 } from '@czwcode/task-queue';
 import { ActionType } from './interface';
 import { createBaseContext, getDepIds } from '../utils';
 import { NodeStatus, NotifyPoint, IEventType } from '@czwcode/task-queue';
 import logger from '../utils/log';
-import { RdxNode } from '../RdxValues/base';
-import { isDepsChange } from '..';
+import { RdxState } from '../RdxValues/base';
+import { TaskEventTriggerType, TaskEventType } from '../DataPersist/type';
+import { isDepsChange } from '../RdxValues/RdxCompute/utils';
 export interface TaskStatus {
   value: NodeStatus;
   quiet?: boolean;
@@ -36,7 +35,7 @@ export interface DeliverOptions {
 }
 
 export interface StoreValues<GModel> {
-  value: GModel | Promise<GModel> | RdxNode<GModel>;
+  value: GModel | Promise<GModel> | RdxState<GModel>;
   deps: IRdxAnyDeps[];
 }
 
@@ -278,7 +277,7 @@ export class ShareContextClass {
     } = callbackInfo;
     logger.info('onTaskExecuting', key, isEnd, this.taskState.getAll());
     if (isEnd) {
-      // this.getSubject().emit(TaskEventType.TaskExecutingEnd);
+      this.emitBase(TaskEventType.TaskExecutingEnd)
       this.cancelMap.removeAll();
       this.onPropsChange(this.taskState.getAll(), this.taskState);
       this.getCallbackQueue().forEach((item) => {
@@ -303,7 +302,7 @@ export class ShareContextClass {
       };
       const fail = (error) => {
         onError(error);
-      }
+      };
       if (currentTask.reaction) {
         // 执行reaction的时候，需要调用cancel callback
         const cancel = this.cancelMap.get(key);
@@ -363,9 +362,6 @@ export class ShareContextClass {
     deps: string[];
     scope?: string;
   }[] {
-    const m = new Map([[1,1], [2,2]])
-
-    console.log("getTaskgetTask",[...m.values()])
     const tasks = Array.from(this.getTasks().values());
     const newTasks = (tasks as IRdxTask<any>[]).map((task) => {
       // 判断是否是初始化应该在事件初始化的时候，如果放在回调中，那么判断就滞后了，用了回调时的taskMap判断了
@@ -627,9 +623,9 @@ export class ShareContextClass {
       tasks: Array.from(this.getTasks().values()),
     } as IRdxSnapShotTrigger;
   }
-  emitBase(type: string) {
+  emitBase(type: TaskEventType) {
     this._taskScheduler.updateTasks(this.createTaskForSchedule());
-    this.getSubject().emit(TaskEventType.TaskLoad, type);
+    this.getSubject().emit(type, this.getProcessInfo());
   }
   emit(
     type: TaskEventType,
@@ -647,7 +643,7 @@ export class ShareContextClass {
     taskKeys: NotifyPoint | NotifyPoint[],
     taskEventType: TaskEventTriggerType | string
   ) {
-    this._taskScheduler.updateTasks(this.createTaskForSchedule())
+    this._taskScheduler.updateTasks(this.createTaskForSchedule());
     const allFirePoint = this.getAllPointFired(taskKeys);
     const currentTaskKeys = normalizeSingle2Arr(taskKeys);
     // 不能复用的节点才需要调用cancel
@@ -662,6 +658,7 @@ export class ShareContextClass {
       this._taskScheduler.notifyDownstream(currentTaskKeys);
     } else {
       if (!this.taskScheduler.isRunning()) {
+        this.getSubject().emit(TaskEventType.TaskExecutingEnd)
         this.onPropsChange(this.taskState.getAll(), this.taskState);
       }
     }

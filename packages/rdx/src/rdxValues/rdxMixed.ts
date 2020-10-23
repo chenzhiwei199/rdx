@@ -3,11 +3,11 @@
 // import { ShareContextClass } from '../RdxContext/shareContext';
 // import { DataModel } from './types';
 // import {
-//   IRdxWatcherGet,
-//   IRdxWatcherOperate,
-//   IRdxWatcherSet,
-//   RdxWatcherNode,
-// } from './RdxWatcher';
+//   IRdxComputeGet,
+//   IRdxComputeOperate,
+//   IRdxComputeSet,
+//   RdxComputeNode,
+// } from './RdxCompute';
 // import { RdxAtomNode } from './rdxAtom';
 // import { detectValueAndDeps, IRdxTask } from '..';
 
@@ -18,15 +18,15 @@
 
 // export interface IRdxMixedNode<GModel>
 //   extends IRdxNode,
-//     IRdxWatcherOperate<GModel> {
+//     IRdxComputeOperate<GModel> {
 //   virtual?: boolean,
 //   defaultValue: GModel | Promise<GModel> | RdxNode<GModel>;
 // }
 // export class RdxMixedNode<GModel> extends RdxNode<GModel>
-//   implements IRdxWatcherOperate<GModel> {
+//   implements IRdxComputeOperate<GModel> {
 //   defaultValue: DataModel<GModel>;
-//   get: IRdxWatcherGet<GModel>;
-//   set?: IRdxWatcherSet<GModel>;
+//   get: IRdxComputeGet<GModel>;
+//   set?: IRdxComputeSet<GModel>;
 //   virtual?: boolean = false
 //   constructor(config: IRdxMixedNode<GModel>) {
 //     super(config);
@@ -37,25 +37,25 @@
 //   }
 
 //   getTaskInfo(context: ShareContextClass): IRdxTask<any> {
-//     const watcher = new RdxWatcherNode(this);
+//     const compute = new RdxComputeNode(this);
 //     const atom = new RdxAtomNode(this);
 //     const atomInfo = atom.getTaskInfo(context);
-//     const watcherInfo = watcher.getTaskInfo(context);
+//     const computeInfo = compute.getTaskInfo(context);
 //     return {
 //       ...atomInfo,
-//       ...watcherInfo,
-//       getValue: this.virtual ? watcherInfo.getValue : undefined,
-//       setValue: this.virtual ? watcherInfo.setValue : undefined,
+//       ...computeInfo,
+//       getValue: this.virtual ? computeInfo.getValue : undefined,
+//       setValue: this.virtual ? computeInfo.setValue : undefined,
 //       type: RdxNodeType.Mixed,
 //     };
 //   }
 //   load(context: ShareContextClass) {
 //     const atom = new RdxAtomNode(this);
-//     const watcher = new RdxWatcherNode(this);
-//     detectValueAndDeps(watcher, context, true)
+//     const compute = new RdxComputeNode(this);
+//     detectValueAndDeps(compute, context, true)
 //     // 捕获依赖和数据
 //     context.addOrUpdateTask(this.getId(), this.getTaskInfo(context));
 //     atom.init(context);
-//     watcher.init(context);
+//     compute.init(context);
 //   }
 // }

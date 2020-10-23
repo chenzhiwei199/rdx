@@ -1,9 +1,9 @@
 import React from 'react';
-import { RdxContext, useRdxAtom, useRdxWatcher } from '@czwcode/rdx';
+import { RdxContext, useRdxAtom, useRdxCompute } from '@czwcode/rdx';
 import { NumberPicker } from '@alifd/next';
 import ErrorBoundary from 'antd/lib/alert/ErrorBoundary';
 export default {
-  title: '简单例子/useRdxAtom&useRdxWatcher',
+  title: '简单例子/useRdxAtom&useRdxCompute',
   parameters: {
     info: { inline: true },
   },
@@ -46,7 +46,7 @@ const Amount = () => {
 };
 
 const Total = () => {
-  const [state, setState] = useRdxWatcher<number>({
+  const [state, setState] = useRdxCompute<number>({
     id: View.Total,
     get: ({ get }) => {
       return get<number>(View.Unit) * get<number>(View.Amount);

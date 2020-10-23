@@ -1,15 +1,15 @@
 import {
   createRdxHooks,
-  createRdxStaterContext,
+  createRdxStateContext,
   RdxNodeType,
 } from '@czwcode/rdx';
 import { useContext } from 'react';
-export const FormRdxStateContext = createRdxStaterContext();
+export const FormRdxStateContext = createRdxStateContext();
 const defaultHooks = createRdxHooks(FormRdxStateContext);
 export const useRdxFormAtom = defaultHooks.useRdxAtom;
 export const useRdxFormAtomLoader = defaultHooks.useRdxAtomLoader;
-export const useRdxFormWatcher = defaultHooks.useRdxWatcher;
-export const useRdxFormWatcherLoader = defaultHooks.useRdxWatcherLoader;
+export const useRdxFormCompute = defaultHooks.useRdxCompute;
+export const useRdxFormComputeLoader = defaultHooks.useRdxComputeLoader;
 export const useRdxFormGlboalState = defaultHooks.useRdxGlboalState;
 export const useRdxFormGlobalContext = defaultHooks.useRdxGlobalContext;
 export const useRdxFormRefrence = defaultHooks.useRdxRefrence;

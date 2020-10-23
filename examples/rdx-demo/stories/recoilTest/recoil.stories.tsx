@@ -1,6 +1,6 @@
 // import React, { Suspense } from 'react';
 // import {
-//   selector as watcher,
+//   selector as compute,
 //   atom,
 //   RecoilRoot as RdxContext,
 //   useRecoilValue as useRdxValue,
@@ -25,7 +25,7 @@
 //   key: 'city',
 //   default: '',
 // });
-// const administrativeData = watcher<AdministrativeSource[]>({
+// const administrativeData = compute<AdministrativeSource[]>({
 //   key: 'administrativeData',
 //   get: async () => {
 //     const res = await axios.get(
@@ -34,7 +34,7 @@
 //     return res.data;
 //   },
 // });
-// const cityDataSource = watcher({
+// const cityDataSource = compute({
 //   key: 'cityDataSource',
 //   get: ({ get }) => {
 //     console.log('cityDataSource: ', get(administrativeData));
@@ -53,7 +53,7 @@
 //   default: '',
 // });
 
-// const areaDataSource = watcher({
+// const areaDataSource = compute({
 //   key: 'areaDataSource',
 //   get: ({ get }) => {
 //     // 过滤第一层
@@ -74,11 +74,11 @@
 
 // const View = (props: {
 //   atom: RdxNode<string>;
-//   watcher: RdxNode<AdministrativeSource[]>;
+//   compute: RdxNode<AdministrativeSource[]>;
 // }) => {
-//   const { atom, watcher } = props;
+//   const { atom, compute } = props;
 //   const [value, setValue] = useRdxState(atom);
-//   const dataSource = useRdxValue(watcher);
+//   const dataSource = useRdxValue(compute);
 //   console.log('xxxxxdataSource: ', atom, dataSource);
 //   return (
 //     <Menu
@@ -102,13 +102,13 @@
 //       <Suspense fallback={<div>...</div>}>
 //         <Row>
 //           <Col>
-//             <View atom={province} watcher={administrativeData} />
+//             <View atom={province} compute={administrativeData} />
 //           </Col>
 //           <Col>
-//             <View atom={city} watcher={cityDataSource} />
+//             <View atom={city} compute={cityDataSource} />
 //           </Col>
 //           <Col>
-//             <View atom={area} watcher={areaDataSource} />
+//             <View atom={area} compute={areaDataSource} />
 //           </Col>
 //         </Row>
 //       </Suspense>

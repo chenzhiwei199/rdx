@@ -1,6 +1,6 @@
 import {
   atom,
-  watcher,
+  compute,
   useRdxState,
   RdxContext,
   useRdxStateLoader,
@@ -30,32 +30,32 @@ const asyncAtom = atom({
   }),
 });
 
-const syncWatcher = watcher({
-  id: 'staticWatcher',
+const syncCompute = compute({
+  id: 'staticCompute',
   get: ({ get }) => {
     return get(syncAtom) + 1;
   },
 });
 
-const syncWatcherDepsAsyncAtom = watcher({
-  id: 'syncWatcherDepsAsyncAtom',
+const syncComputeDepsAsyncAtom = compute({
+  id: 'syncComputeDepsAsyncAtom',
   get: ({ get }) => {
     return get(asyncAtom) + 1;
   },
 });
 
-const asyncWatcherDepsAsyncAtom = watcher({
-  id: 'asyncWatcherDepsAsyncAtom',
+const asyncComputeDepsAsyncAtom = compute({
+  id: 'asyncComputeDepsAsyncAtom',
   get: async ({ get }) => {
-    console.log('asyncWatcherDepsAsyncAtom__execute');
+    console.log('asyncComputeDepsAsyncAtom__execute');
     await pause(2000);
     const a = get(asyncAtom);
     return a + 2;
   },
 });
 
-const asyncWatcherDepsAsyncAtomSlow = watcher({
-  id: 'asyncWatcherDepsAsyncAtomSlow',
+const asyncComputeDepsAsyncAtomSlow = compute({
+  id: 'asyncComputeDepsAsyncAtomSlow',
   get: async ({ get }) => {
     await pause(5000);
     const a = get(asyncAtom);
@@ -63,8 +63,8 @@ const asyncWatcherDepsAsyncAtomSlow = watcher({
   },
 });
 const pause = (t: number) => new Promise((resolve) => setTimeout(resolve, t));
-const asyncWatcher = watcher({
-  id: 'asyncWatcher',
+const asyncCompute = compute({
+  id: 'asyncCompute',
   get: async ({ get }) => {
     await pause(2000);
     return get(syncAtom) + 1;
@@ -72,7 +72,7 @@ const asyncWatcher = watcher({
 });
 const SyncComponent = ({ nodes, tips }: { nodes: any; tips?: string }) => {
   const [status1, staticAtomValue] = useRdxStateLoader(nodes[0]);
-  const [status2, staticWatcherValue] = useRdxStateLoader(nodes[1]);
+  const [status2, staticComputeValue] = useRdxStateLoader(nodes[1]);
   const statusRef = useRef([]);
   statusRef.current = [...statusRef.current, status1];
   const statusRef2 = useRef([]);
@@ -85,52 +85,52 @@ const SyncComponent = ({ nodes, tips }: { nodes: any; tips?: string }) => {
       <Count />
       <div>1: {staticAtomValue}</div>
       {statusRef.current.join('-')}
-      <div>2: {staticWatcherValue}</div>
+      <div>2: {staticComputeValue}</div>
       {statusRef2.current.join('-')}
     </div>
   );
 };
-export const 同步Atom_同步watcher = () => {
+export const 同步Atom_同步compute = () => {
   return (
     <RdxContext>
-      <SyncComponent nodes={[syncAtom, syncWatcher]}></SyncComponent>
+      <SyncComponent nodes={[syncAtom, syncCompute]}></SyncComponent>
     </RdxContext>
   );
 };
 
-export const 同步Atom_异步Watcher = () => {
+export const 同步Atom_异步Compute = () => {
   return (
     <RdxContext>
-      <SyncComponent nodes={[syncAtom, asyncWatcher]}></SyncComponent>
+      <SyncComponent nodes={[syncAtom, asyncCompute]}></SyncComponent>
     </RdxContext>
   );
 };
 
-export const 异步Atom_同步Watcher = () => {
+export const 异步Atom_同步Compute = () => {
   return (
     <RdxContext>
       <SyncComponent
-        nodes={[asyncAtom, syncWatcherDepsAsyncAtom]}
+        nodes={[asyncAtom, syncComputeDepsAsyncAtom]}
       ></SyncComponent>
     </RdxContext>
   );
 };
 
-export const 异步Atom_异步Watcher = () => {
+export const 异步Atom_异步Compute = () => {
   return (
     <RdxContext>
       <SyncComponent
-        tips={'asyncWatcher加载完成的时候，asyncAtom还没有准备好，所以初始化触发一次，响应式触发一次，依赖更新再触发一次'}
-        nodes={[asyncAtom, asyncWatcherDepsAsyncAtom]}
+        tips={'asyncCompute加载完成的时候，asyncAtom还没有准备好，所以初始化触发一次，响应式触发一次，依赖更新再触发一次'}
+        nodes={[asyncAtom, asyncComputeDepsAsyncAtom]}
       ></SyncComponent>
     </RdxContext>
   );
 };
-export const 异步Atom_异步Watcher_slow = () => {
+export const 异步Atom_异步Compute_slow = () => {
   return (
     <RdxContext>
       <SyncComponent
-        nodes={[asyncAtom, asyncWatcherDepsAsyncAtomSlow]}
+        nodes={[asyncAtom, asyncComputeDepsAsyncAtomSlow]}
       ></SyncComponent>
     </RdxContext>
   );

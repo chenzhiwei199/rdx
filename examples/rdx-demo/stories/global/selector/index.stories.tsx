@@ -1,5 +1,5 @@
 import React from 'react';
-import { atom, RdxContext, watcher, useRdxState } from '@czwcode/rdx';
+import { atom, RdxContext, compute, useRdxState } from '@czwcode/rdx';
 import { Button, NumberPicker } from '@alifd/next';
 const CounterA = atom({
   id: 'count111A',
@@ -16,7 +16,7 @@ const CounterC = atom({
   defaultValue: 0,
 });
 
-const CounterSelector = watcher({
+const CounterSelector = compute({
   id: 'selectorxxx',
   get: ({ get }) => {
     return get(CounterA) + get(CounterB);
@@ -35,7 +35,10 @@ const BaseCounterView = ({ atom }) => {
       </Button>
       <span>
         {/* // @ts-ignore */}
-        <NumberPicker value={value} onChange={(v) => onChange(v)}></NumberPicker>
+        <NumberPicker
+          value={value}
+          onChange={(v) => onChange(v)}
+        ></NumberPicker>
       </span>
       <Button
         onClick={() => {

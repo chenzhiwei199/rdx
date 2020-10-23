@@ -1,6 +1,6 @@
 // import React, { Suspense } from 'react';
 // import {
-//   selector as watcher,
+//   selector as compute,
 //   atom,
 //   RecoilRoot as RdxContext,
 //   useRecoilValue as useRdxValue,

@@ -1,0 +1,42 @@
+---
+id: Compute
+title: Compute
+---
+
+import ExampleCustomizer from '../../src/components/ExampleCustomizer';
+import * as Compute from '../../src/stories/compute';
+import ComputeSource from '!!raw-loader!../../src/stories/compute';
+
+
+
+compute 代表着一个衍生状态。衍生状态可以通过一个纯函数来计算出一个新的状态。
+
+### 通过compute计算衍生状态
+
+通过compute()方法来建立一个计算节点，计算节点需要一个唯一的id，并且可以设置get 和 set的纯函数。
+
+get函数中可以通过get方法获取atom节点或者其他compute节点的数据。这里通过get函数获取ColorAtom中的配置的颜色，并计算相反的颜色, 让文字的展示颜色可以快速的根据背景颜色进行变化。
+```jsx
+const ColorAtom = atom({
+  id: 'color',
+  defaultValue: 'rgba(255,255,255,1)',
+});
+
+const  ContrastColor= compute({
+  id: 'contrast-color',
+  get: ({ get }) => {
+    const color = get(ColorAtom);
+    const rgba = color.replace(/[rgba\(\)]/g, '').split(',');
+    const colorContrast = `rgba(${[
+      ...rgba
+        .slice(0, 3)
+        .map(item => (255 - Number(item))),
+      rgba[3],
+    ].join(',')})`
+    return colorContrast;
+  },
+});
+```
+
+<ExampleCustomizer code={ComputeSource} Example={Compute}/>
+

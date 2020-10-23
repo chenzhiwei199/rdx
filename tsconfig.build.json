@@ -14,7 +14,8 @@
     "resolveJsonModule": true,
     "noImplicitAny": false,
     "noImplicitThis": false,             
-    "importHelpers": true,   
+    "importHelpers": false,   
+
     "noStrictGenericChecks": true,
     // leave JSX as it is
     "jsx": "react",
@@ -22,7 +23,8 @@
     "moduleResolution": "node",
     // leave imports as they are
     "module": "esnext",
+    "downlevelIteration": true,
     // do not transpile stuff like classes, async/await, ...
-    "target": "es2015",
+    "target": "es5",
   }
 }

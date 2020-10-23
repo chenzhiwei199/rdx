@@ -1,5 +1,5 @@
 import { ShareContextClass } from '../RdxContext/shareContext';
-import { RdxNode } from './base';
+import { RdxState } from './base';
 import { DataModel } from './types';
 import { isPromise } from '../utils';
 
@@ -19,7 +19,7 @@ export function checkValueIsSync<GModel>(
   // promise数据
   if (isPromise(value)) {
     return false;
-  } else if (value instanceof RdxNode) {
+  } else if (value instanceof RdxState) {
     // 保证节点的加载
     if (!context.hasTask(value.getId())) {
       value.load(context);
@@ -39,9 +39,9 @@ export function getSyncValue<GModel>(
   context: ShareContextClass,
   value: DataModel<GModel>
 ) {
-  if (value instanceof RdxNode) {
-    return context.getTaskStateById(value.getId())
+  if (value instanceof RdxState) {
+    return context.getTaskStateById(value.getId());
   } else {
-    return value
+    return value;
   }
 }

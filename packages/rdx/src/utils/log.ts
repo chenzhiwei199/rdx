@@ -1,4 +1,4 @@
-const dev = true;
+const dev = false;
 class Log {
   info(...args) {
     if (dev) {

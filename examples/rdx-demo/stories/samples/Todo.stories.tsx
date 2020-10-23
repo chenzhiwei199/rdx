@@ -1,5 +1,5 @@
 import React from 'react';
-import { RdxContext, atom, useRdxState, watcher } from '@czwcode/rdx';
+import { RdxContext, atom, useRdxState, compute } from '@czwcode/rdx';
 import uuid from 'uuid/v1';
 import 'todomvc-app-css/index.css';
 export default {
@@ -31,7 +31,7 @@ const filterhStatus = atom({
   id: 'filterStatus',
   defaultValue: VisibilityFilters.SHOW_ALL,
 });
-const todoListByFilterStatus = watcher({
+const todoListByFilterStatus = compute({
   id: 'todoListByFilterStatus',
   get: ({ get }) => {
     return get(todoList).filter((item) => {
@@ -139,7 +139,12 @@ const AddButton = () => {
   const [state, setState] = useRdxState(todoList);
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
-      <input style={{ width: 40, height: 40, opacity: 0}} checked={true} className='toggle' type='checkbox'></input>
+      <input
+        style={{ width: 40, height: 40, opacity: 0 }}
+        checked={true}
+        className='toggle'
+        type='checkbox'
+      ></input>
       <input
         onKeyDown={(e: any) => {
           const text = e.target.value.trim();
@@ -167,11 +172,9 @@ export const ToDo = () => {
     <div className='todoapp'>
       <RdxContext>
         <h1>todos</h1>
-        {/* <DevVisualTableTool /> */}
         <AddButton />
         <TodoList />
         <FilterList />
-        {/* <DevVisualGraphTool /> */}
       </RdxContext>
     </div>
   );

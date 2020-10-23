@@ -1,36 +1,45 @@
 import { IRdxDeps, IRdxTask } from '../global';
-import { IRdxNode, RdxNode, IRdxNodeLifeCycle, RdxNodeType } from './base';
-import { TaskEventType, TaskEventTriggerType} from '@czwcode/task-queue'
+import {
+  IRdxBaseState,
+  RdxState,
+  IRdxNodeLifeCycle,
+  RdxNodeType,
+} from './base';
 import { ShareContextClass } from '../RdxContext/shareContext';
 import { DataModel } from './types';
 import { checkValueIsSync, getSyncValue } from './core';
+import { TaskEventType, TaskEventTriggerType } from '../DataPersist/type';
 
-export function atom<GModel>(config: IRdxAtomNode<GModel>): RdxNode<GModel> {
+export function atom<GModel>(config: IRdxAtomState<GModel>): RdxState<GModel> {
   const atom = new RdxAtomNode<GModel>(config);
   return atom;
 }
 
-export interface IRdxAtomNode<GModel> extends IRdxNode {
-  virtual?: boolean
-  defaultValue: GModel | Promise<GModel> | RdxNode<GModel>;
+export interface IRdxAtomState<GModel> extends IRdxBaseState {
+  virtual?: boolean;
+  defaultValue: GModel | Promise<GModel> | RdxState<GModel>;
 }
 export function rdxNodeOperates(context, virtual) {
   return {
-    getValue: virtual ? (id) => {
-      return context.getVirtualTaskState(id);
-    }: undefined,
-    setValue: virtual ? (id, value) => {
-      return context.setVirtualTaskState(id, value);
-    }: undefined,
-  }
+    getValue: virtual
+      ? (id) => {
+          return context.getVirtualTaskState(id);
+        }
+      : undefined,
+    setValue: virtual
+      ? (id, value) => {
+          return context.setVirtualTaskState(id, value);
+        }
+      : undefined,
+  };
 }
-export class RdxAtomNode<GModel> extends RdxNode<GModel>
+export class RdxAtomNode<GModel> extends RdxState<GModel>
   implements IRdxNodeLifeCycle {
   private defaultValue: DataModel<GModel>;
-  constructor(config: IRdxAtomNode<GModel>) {
+  constructor(config: IRdxAtomState<GModel>) {
     super(config);
     this.defaultValue = config.defaultValue;
-    this.virtual = config.virtual
+    this.virtual = config.virtual;
   }
   getTaskInfo(context: ShareContextClass) {
     const taskInfos: IRdxTask<GModel> = {
@@ -62,19 +71,27 @@ export class RdxAtomNode<GModel> extends RdxNode<GModel>
         context.set(this.getId(), getSyncValue(context, this.defaultValue));
       }
       context.markIDeal(this.getId());
+      context.emitBase(TaskEventType.TaskLoadEnd)
     } else {
       context.markWaiting(this.getId());
-      context.executeTask({
-        key: this.getId(),
-        downStreamOnly: false,
-      },TaskEventTriggerType.TriggerByTaskInit + '-' + this.getId());
+      context.emitBase(TaskEventType.TaskLoadEnd)
+      context.executeTask(
+        {
+          key: this.getId(),
+          downStreamOnly: false,
+        },
+        TaskEventTriggerType.TriggerByTaskInit + '-' + this.getId()
+      );
     }
   }
   reset(context: ShareContextClass) {
     this.init(context, true);
   }
   load(context: ShareContextClass) {
-    context.emitBase(`${TaskEventType.TaskLoad}-${this.getId()}` )
+    context.emit(
+      TaskEventType.TaskLoad,
+      `${TaskEventType.TaskLoad}-${this.getId()}`
+    );
     context.addOrUpdateTask(this.getId(), this.getTaskInfo(context));
     this.init(context);
   }

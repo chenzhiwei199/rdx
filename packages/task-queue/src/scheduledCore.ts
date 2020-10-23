@@ -52,11 +52,9 @@ export default class ScheduledCore {
       return canReuse && canReuse(id);
     });
     
-    console.log('canReusePoints: ', currentStartPoints, canReusePoints, Array.from(this.taskQueue.keys()));
     // 关闭不可复用的任务
     for (let key of Array.from(this.taskQueue.keys())) {
       if (!canReusePoints.includes(key)) {
-        console.log('canReusePoints: closeTask',key)
         this.closeTask(key);
       }
     }
@@ -177,7 +175,6 @@ export class ScheduledTask {
   resolvePersist: () => void;
   // 暂停调用时的回调，当任务是fork出来的时候，需要关闭原来的task
   pauseCallback?: () => void
-  uniqId: string;
   constructor(config: {
     id: string;
     next: () => void;
@@ -186,7 +183,6 @@ export class ScheduledTask {
     pauseCallback?: () => void
   }) {
     const { id, next, close, executeCallback, pauseCallback } = config;
-    this.uniqId = uuid()
     this.id = id;
     this.next = next;
     this.close = close;
@@ -200,7 +196,6 @@ export class ScheduledTask {
     return this.pauseSignal;
   }
   pause() {
-    console.log('isPause: calll-' + this.id, '-',this.uniqId);
     this.pauseCallback && this.pauseCallback()
     this.pauseSignal = true;
   }
@@ -251,7 +246,6 @@ export class ScheduledTask {
         
       }
     });
-    task.uniqId = 'fork' + task.uniqId
     return task
   }
 }

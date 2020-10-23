@@ -14,7 +14,7 @@ import {
   RdxNextFormItem,
   FormRdxStateContext,
 } from '@czwcode/rdx-next-form';
-import { DevVisualTableTool } from '@czwcode/rdx-plugins';
+
 export default {
   title: '布局组件',
   parameters: {
@@ -120,9 +120,6 @@ export const 搜索列表 = () => {
       <RdxFormContext
         enabledStatePreview={true}
         enabledTypescriptGenerte={true}
-        visualStatePlugins={
-          <DevVisualTableTool context={FormRdxStateContext} />
-        }
       >
         <h3>搜索列表</h3>
         <SearchListLayout cols={[8]}>
@@ -130,10 +127,10 @@ export const 搜索列表 = () => {
             name='usename'
             rules={[
               async (value) => {
-                if(!value) {
-                  return '不能为空'
+                if (!value) {
+                  return '不能为空';
                 }
-              }
+              },
             ]}
             type='string'
             title={'用户名'}
@@ -170,10 +167,10 @@ export const 搜索列表 = () => {
             title={'职业'}
             rules={[
               async (value) => {
-                if(!value) {
-                  return '职业不能为空'
+                if (!value) {
+                  return '职业不能为空';
                 }
-              }
+              },
             ]}
           ></RdxNextFormItem>
           <RdxNextFormItem
@@ -204,16 +201,12 @@ export const 异步级联列表 = () => {
       <RdxFormContext
         enabledStatePreview={true}
         enabledTypescriptGenerte={true}
-        visualStatePlugins={
-          <DevVisualTableTool context={FormRdxStateContext} />
-        }
       >
         <h3>级联搜索列表</h3>
         <SearchListLayout cols={[8]}>
           <RdxNextFormItem
             name='单据日期'
             type='string'
-            
             get={async ({ value, get }) => {
               const data = await getDimension({
                 dimensions: '单据日期',
@@ -294,9 +287,6 @@ export const CascaderListSetDefault = () => {
       <RdxFormContext
         enabledStatePreview={true}
         enabledTypescriptGenerte={true}
-        visualStatePlugins={
-          <DevVisualTableTool context={FormRdxStateContext} />
-        }
       >
         <h3>级联搜索列表</h3>
         <SearchListLayout cols={[8]}>
@@ -363,8 +353,8 @@ export const CascaderListSetDefault = () => {
                 ],
               });
               callbackMapWhenConflict(() => {
-                console.log("我被取消啦")
-              })
+                console.log('我被取消啦');
+              });
               return {
                 ...(value as any),
                 value: data.data[0].value,

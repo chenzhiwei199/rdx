@@ -9,14 +9,9 @@ import {
   IStatusInfo,
   IRdxSnapShotTrigger,
 } from '@czwcode/rdx';
-import { getDefaultSnapShot } from './utils';
+import { DataPersistSnapShot, getDefaultSnapShot } from './utils';
 
-export interface ISnapShot extends IRdxSnapShotTrigger {
-  // 事件类型
-  type: TaskEventType;
-  // 当前点的状态
-  status: IStatusInfo[];
-}
+
 
 export enum DISPLAY_STATE {
   CANCEL = 'CANCEL',
@@ -60,9 +55,7 @@ export interface IGraphState {
   visible: boolean;
   statusVersion: number;
 }
-export interface DataPersistSnapShot extends ISnapShot {
-  states: IStateInfo[];
-}
+
 interface DataPersistenceHookState {
   snapShots: DataPersistSnapShot[];
   temporarySnapShots: DataPersistSnapShot;
@@ -79,13 +72,21 @@ const DataPersistenceHook = (
   const defaultData = {
     snapShots: [],
     temporarySnapShots: null,
-  }
+  };
   const context = useRdxStateContext(shareContext);
   const [state, setState] = React.useState<{
     snapShots: DataPersistSnapShot[];
     temporarySnapShots: DataPersistSnapShot;
   }>(defaultData);
-  
+
+  // React.useEffect(() => {
+  //   (window as any).__EASYCANVAS_DEVTOOL__ = true;
+  //   document.dispatchEvent(
+  //     new CustomEvent('__EASYCANVAS_BRIDGE_TOPANEL__', {
+  //       detail: '发送消息啦',
+  //     })
+  //   );
+  // }, [state]);
   const setStateProxy = (
     callback: (state) => Partial<DataPersistenceHookState>
   ) => {
@@ -120,15 +121,14 @@ const DataPersistenceHook = (
     context.getSubject().on(TaskEventType.TaskLoad, (type) => {
       initSnapShot(type);
     });
-    context.getSubject().on(TaskEventType.Trigger, ({ type, process}) => {
+    context.getSubject().on(TaskEventType.Trigger, ({ type, process }) => {
       initSnapShot(type);
       setStateProxy((state) => ({
         temporarySnapShots: { ...state.temporarySnapShots, ...process },
       }));
     });
     const endTypes = [
-      TaskEventType.InitEnd,
-      TaskEventType.UserActionEnd,
+      // TaskEventType.InitEnd,
       TaskEventType.TaskExecutingEnd,
     ];
     for (let type of endTypes) {
@@ -155,7 +155,6 @@ const DataPersistenceHook = (
     return () => {
       const ee = context.getSubject();
       ee.removeAllListeners(TaskEventType.TaskLoad);
-      ee.removeAllListeners(TaskEventType.RdxContextInit);
     };
   }, []);
   React.useEffect(() => {
@@ -165,7 +164,7 @@ const DataPersistenceHook = (
   }, []);
   return {
     clear: () => {
-      setState(defaultData)
+      setState(defaultData);
     },
     ...state,
     realTimeState: context.getAllTaskState(),

@@ -14,7 +14,7 @@ import { BaseType } from '../../global';
 import JsonToTS from 'json-to-ts';
 import Preview from '../Preview';
 import { IModel } from '../FromItem/types';
-export interface IRdxFormContext extends RdxContextProps<any> {
+export interface IRdxFormContext extends RdxContextProps {
   children: React.ReactNode;
   state?: any;
   initializeState?: any;
@@ -180,7 +180,6 @@ const RdxFormContext = <T extends Object>(props: IRdxFormContext) => {
     new FormStore({ state: {}, runningState: {} })
   );
   const formContextRef = useRef<any>(null);
-  const contextRef = useRef<ShareContextClass>(null);
   const errorContextRef = useRef<ErrorContextClass>(new ErrorContextClass());
 
   return (
@@ -188,7 +187,6 @@ const RdxFormContext = <T extends Object>(props: IRdxFormContext) => {
       {...rest}
       visualStatePlugins={visualStatePlugins}
       context={FormRdxStateContext}
-      withRef={contextRef}
       initializeState={
         state
           ? {

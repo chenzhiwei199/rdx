@@ -52,27 +52,7 @@ export enum TASK_PROCESS_TYPE {
   STATUS_CHANGE = 2,
 }
 
-export enum TaskEventTriggerType {
-  TriggerByTaskInit = 'TriggerByTaskInit',
-  DepsUpdate = 'DepsUpdate',
-  BatchEventTrigger = 'BatchEventTrigger',
-  BatchReactionOnMount = 'BatchReactionOnMount',
-  Reset = 'Reset',
-  ResetById = 'ResetById',
-  TaskCreated = 'TaskCreated',
-  Set = 'Set',
-}
-export enum TaskEventType {
-  Trigger = 'Trigger',
-  TaskLoad = 'TaskLoad',
-  Initializing = 'Initializing',
-  InitEnd = 'InitEnd',
-  UserAction = 'UserAction',
-  UserActionEnd = 'UserActionEnd',
-  TaskExecutingEnd = 'TaskExecutingEnd',
-  RdxContextInit = 'RdxContextInit',
-  StateChange = 'StateChange',
-}
+
 
 export interface IStatusInfo {
   id: string;

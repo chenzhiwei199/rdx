@@ -12,8 +12,8 @@ import {
   Status,
   RdxContext,
   useRdxAtom,
-  useRdxWatcher,
-  useRdxWatcherLoader,
+  useRdxCompute,
+  useRdxComputeLoader,
 } from '@czwcode/rdx';
 import { Chart, IChartEventHandlerValueType, ActiveStyle } from './chart';
 import BaseDataDesigner, { isMeasureField } from './dndFrame/BaseDataDesigner';
@@ -56,7 +56,7 @@ const ChartDemo = () => {
     defaultValue: [] as BaseAnalysisOperater[],
   });
 
-  const [fields] = useRdxWatcher<ClassficationField>({
+  const [fields] = useRdxCompute<ClassficationField>({
     id: DefineId.ClassfieldFields,
     get: ({ get }) => {
       const fields = get<Field[]>(DefineId.Fields);
@@ -74,7 +74,7 @@ const ChartDemo = () => {
     },
   });
 
-  const [data, setData, context] = useRdxWatcherLoader<any[]>({
+  const [data, setData, context] = useRdxComputeLoader<any[]>({
     id: DefineId.FetchData,
     get: async ({ get }) => {
       const classfieldFields = get<ClassficationField>(
@@ -270,19 +270,26 @@ const DragItem = (props: { code: string; domainType: DomainType }) => {
   );
 };
 const MetaList = () => {
-  const [dimensions, setDimensions, dimensionContext] = useRdxWatcherLoader<string[]>({
+  const [dimensions, setDimensions, dimensionContext] = useRdxComputeLoader<
+    string[]
+  >({
     id: DefineId.DimensionMeta,
     get: async () => {
       return (await getDimensions()).data;
     },
   });
-  const [measures, setMeasures, measureContext] = useRdxWatcherLoader<string[]>({
-    id: DefineId.MeasureMeta,
-    get: async () => {
-      return (await getMeasures()).data;
-    },
-  });
-  if (measureContext.status !== Status.IDeal || dimensionContext.status !== Status.IDeal) {
+  const [measures, setMeasures, measureContext] = useRdxComputeLoader<string[]>(
+    {
+      id: DefineId.MeasureMeta,
+      get: async () => {
+        return (await getMeasures()).data;
+      },
+    }
+  );
+  if (
+    measureContext.status !== Status.IDeal ||
+    dimensionContext.status !== Status.IDeal
+  ) {
     return <div>loading...</div>;
   }
   return (

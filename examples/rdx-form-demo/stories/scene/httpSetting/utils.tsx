@@ -13,8 +13,12 @@ export const jsonParse = (json) => {
 export function parseGetParams(url: string) {
   try {
     const urlInstance = new URL(url);
-    const keys = Array.from(urlInstance.searchParams.keys());
-    const values = Array.from(urlInstance.searchParams.values());
+    const keys = []
+    const values = []
+    urlInstance.searchParams.forEach((value, key) => {
+      keys.push(key)
+      keys.push(value)
+    })
     return keys.map((key, index) => ({
       key: key,
       value: values[index],

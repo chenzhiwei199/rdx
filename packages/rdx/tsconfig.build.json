@@ -3,9 +3,9 @@
   "exclude": ["node_modules"],
   "include": ["src/**/*"],
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["es6", "dom"],
-    "downlevelIteration": true,
+    "target": "es6",
+    // "lib": ["es6", "dom"],
+    // "downlevelIteration": true,
     "declaration": true,
     "declarationDir": "./dist",
     "outDir": "dist"

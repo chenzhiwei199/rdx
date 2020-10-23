@@ -7,18 +7,18 @@ import {
   RdxFormContext,
   RdxNextFormItem,
   LayoutType,
-  useRdxFormWatcher,
-  useRdxFormWatcherLoader,
+  useRdxFormCompute,
+  useRdxFormComputeLoader,
   SearchListLayout,
   SearchList,
 } from '@czwcode/rdx-next-form';
 import {
-  useRdxWatcherLoader,
+  useRdxComputeLoader,
   atom,
   useRdxState,
   RdxContext,
-  useRdxWatcher,
-  pendingWatcher,
+  useRdxCompute,
+  pendingCompute,
 } from '@czwcode/rdx';
 import { Table } from '@alifd/next';
 import {
@@ -28,7 +28,7 @@ import {
   getDimension,
   Operator,
 } from '@czwcode/mock-core';
-import { DevVisualTableTool } from '@czwcode/rdx-plugins';
+
 export default {
   title: '场景案例',
   parameters: {
@@ -68,7 +68,7 @@ const InputSearchList = () => {
 };
 
 const SearchListSelect = () => {
-  const { setValue } = pendingWatcher({ id: 'search'});
+  const { setValue } = pendingCompute({ id: 'search' });
   return (
     <RdxFormContext
       onChange={(value) => {
@@ -103,7 +103,7 @@ const SearchListSelect = () => {
 
 const MultiSelectCascader = () => {
   const dimensions = ['地区名称', '单据日期', '客户分类'];
-  const { setValue, setLoading } = pendingWatcher({ id: 'search'});
+  const { setValue, setLoading } = pendingCompute({ id: 'search' });
   return (
     <RdxFormContext
       onChange={(value) => {
@@ -138,6 +138,7 @@ const MultiSelectCascader = () => {
                 },
               };
             }}
+            
             xComponent={'select'}
             title={item}
           ></RdxNextFormItem>
@@ -149,7 +150,7 @@ const MultiSelectCascader = () => {
 
 const SearchListCascader = () => {
   const dimensions = ['地区名称', '单据日期', '客户分类'];
-  const { setValue } = pendingWatcher({ id: 'search'});
+  const { setValue } = pendingCompute({ id: 'search' });
   return (
     <SearchList
       cols={[8]}
@@ -232,7 +233,7 @@ const SearchListCascaderForm = (props: { children }) => {
 };
 const TableView = () => {
   const dimensions = ['地区名称', '单据日期', '客户分类'];
-  const [value, setValue, context] = useRdxWatcherLoader({
+  const [value, setValue, context] = useRdxComputeLoader({
     id: 'table',
     defaultValue: [],
     get: async ({ get }) => {
@@ -263,7 +264,7 @@ const TableView = () => {
 
 const FormTableView = () => {
   const dimensions = ['地区名称', '单据日期', '客户分类'];
-  const [value, setValue, context] = useRdxFormWatcherLoader({
+  const [value, setValue, context] = useRdxFormComputeLoader({
     id: 'table',
     defaultValue: {
       value: [],
@@ -297,7 +298,7 @@ const FormTableView = () => {
 };
 export const 模糊搜索列表 = () => {
   return (
-    <RdxContext visualStatePlugins={<DevVisualTableTool />}>
+    <RdxContext>
       <InputSearchList />
       <TableView />
     </RdxContext>
@@ -306,7 +307,7 @@ export const 模糊搜索列表 = () => {
 
 export const 下拉筛选搜索列表 = () => {
   return (
-    <RdxContext visualStatePlugins={<DevVisualTableTool />}>
+    <RdxContext>
       <SearchListSelect />
       <TableView />
     </RdxContext>
@@ -315,7 +316,7 @@ export const 下拉筛选搜索列表 = () => {
 
 export const 级联搜索列表 = () => {
   return (
-    <RdxContext visualStatePlugins={<DevVisualTableTool />}>
+    <RdxContext>
       <MultiSelectCascader></MultiSelectCascader>
       <TableView />
     </RdxContext>
@@ -323,7 +324,7 @@ export const 级联搜索列表 = () => {
 };
 export const 带查询按钮的级联搜索列表 = () => {
   return (
-    <RdxContext visualStatePlugins={<DevVisualTableTool />}>
+    <RdxContext>
       <SearchListCascader></SearchListCascader>
       <TableView />
     </RdxContext>

@@ -1,16 +1,15 @@
 import { ShareContextClass, StoreValues } from '../RdxContext/shareContext';
-import { IRdxAnyDeps, IRdxTask } from '../global';
 
 import { get } from 'lodash';
 export enum RdxNodeType {
   Atom = 'atom',
-  Watcher = 'watcher',
+  Compute = 'compute',
   Mixed = 'mixed',
-  WatcherFamily = 'watcherFamily',
+  ComputeFamily = 'computeFamily',
   Reaction = 'reaction',
 }
 
-export interface IRdxNode {
+export interface IRdxBaseState {
   id: string;
   type?: RdxNodeType;
 }
@@ -21,12 +20,12 @@ export interface IRdxNodeLifeCycle {
 /**
  * 基础节点
  */
-export class RdxNode<GModel> implements IRdxNodeLifeCycle {
+export class RdxState<GModel> implements IRdxNodeLifeCycle {
   load(context: ShareContextClass): void {}
   public id: string;
   public virtual?: boolean;
   public type: RdxNodeType = RdxNodeType.Atom;
-  constructor(config: IRdxNode) {
+  constructor(config: IRdxBaseState) {
     this.id = config.id;
     this.type = config.type;
   }
@@ -39,35 +38,16 @@ export class RdxNode<GModel> implements IRdxNodeLifeCycle {
   reset(context: ShareContextClass) {}
 }
 
-export class RdxNode2<GModel> implements IRdxNodeLifeCycle {
-  load(context: ShareContextClass): void {}
-  private id: string;
-  private type: RdxNodeType = RdxNodeType.Atom;
-  constructor(config: IRdxNode) {
-    this.id = config.id;
-    this.type = config.type;
-  }
-  getType() {
-    return this.type;
-  }
-  getId() {
-    return this.id;
-  }
-}
-
-export type TPath<GModel> = RdxNode<GModel> | string;
+export type TPath<GModel> = RdxState<GModel> | string;
 export type ValueOrUpdater<GModel> = ((preValue: GModel) => GModel) | GModel;
 
 export type RdxGet = <GModel>(node: TPath<GModel>) => GModel;
 
-// const a: RdxGet = null;
-// const c: RdxNode<string> = null;
-// const b = a(c);
 export type RdxSet = <GModel>(
   node: TPath<GModel>,
   value: ValueOrUpdater<GModel>
 ) => void;
-export type RdxReset = <GModel>(node: RdxNode<GModel>) => void;
+export type RdxReset = <GModel>(node: RdxState<GModel>) => void;
 
 export type get = <ISource, IPath>(node: IPath) => ISource[];
 

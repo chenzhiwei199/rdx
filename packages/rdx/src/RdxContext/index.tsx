@@ -1,19 +1,19 @@
 import * as React from 'react';
 import { initValue, ShareContextClass } from './shareContext';
-import { TaskEventTriggerType } from '@czwcode/task-queue';
 import { RdxContextProps } from './interface';
 import { ScopeObject } from './core';
 import { StateUpdateType } from '../global';
 import { DefaultContext } from '../hooks/stateHooks';
+import { DataPersistenceHook, TaskEventTriggerType } from '../DataPersist';
 export * from './core';
 export * from './interface';
-const Rdx = (props: RdxContextProps<any>) => {
+const Rdx = (props: RdxContextProps) => {
   const {
     initializeState = {},
     onChange = () => {},
     onLoading = () => {},
     name,
-    withRef,
+    // withRef,
     context = DefaultContext ,
     createStore,
     visualStatePlugins,
@@ -45,7 +45,7 @@ const Rdx = (props: RdxContextProps<any>) => {
     onLoading()
   })
 
-  withRef && (withRef.current = store.current);
+  // withRef && (withRef.current = store.current);
   let copyState = store.current.getAllTaskState();
   React.useEffect(() => {
     store.current.parentMounted = true;
@@ -63,10 +63,16 @@ const Rdx = (props: RdxContextProps<any>) => {
   }, []);
   return (
     <context.Provider value={store.current}>
+      <DevTool shareContext={context}/>
       {visualStatePlugins}
       {props.children}
     </context.Provider>
   );
 };
 
+const DevTool = (props: { shareContext?: React.Context<ShareContextClass>}) => {
+
+  DataPersistenceHook(props.shareContext)
+  return <></>
+}
 export const RdxContext = Rdx;
